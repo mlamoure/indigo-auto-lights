@@ -26,7 +26,6 @@ app = Flask(__name__)
 load_dotenv()
 SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev_secret")
 INDIGO_API_KEY = os.getenv("INDIGO_API_KEY", "")
-INDIGO_API_ENDPOINT = "https://example.com/api"  # static external API endpoint
 
 app.config["SECRET_KEY"] = SECRET_KEY
 
