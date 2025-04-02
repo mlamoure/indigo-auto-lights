@@ -197,8 +197,11 @@ def generate_form_class_from_schema(schema):
 
 # Load JSON schema from file.
 from collections import OrderedDict
+import os
 
-with open("config_schema.json") as f:
+current_dir = os.path.dirname(os.path.abspath(__file__))
+schema_path = os.path.join(current_dir, "config_schema.json")
+with open(schema_path) as f:
     config_schema = json.load(f, object_pairs_hook=OrderedDict)
 
 
