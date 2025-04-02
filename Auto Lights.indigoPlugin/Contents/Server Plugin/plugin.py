@@ -1,4 +1,6 @@
 import indigo
+import threading
+from config_web_editor.app import run_flask_app
 
 class Plugin(indigo.PluginBase):
 
@@ -50,7 +52,9 @@ class Plugin(indigo.PluginBase):
 
 
 	def start_configuration_web_server(self: indigo.PluginBase):
-		self.logger.info ("starting the web server...")
+		self.logger.info("Starting the configuration web server...")
+		thread = threading.Thread(target=run_flask_app, daemon=True)
+		thread.start()
 
 
 	def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
