@@ -58,3 +58,4 @@ venv.bak/
 # PyCharm specific
 .idea/
 *.iml
+.aider*

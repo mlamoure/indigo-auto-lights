@@ -35,6 +35,7 @@ class Plugin(indigo.PluginBase):
         :return:
         """
 		self.logger.debug("startup called")
+		self.start_configuration_web_server()
 
 	def shutdown(self: indigo.PluginBase) -> None:
 		"""
@@ -52,8 +53,10 @@ class Plugin(indigo.PluginBase):
 
 
 	def start_configuration_web_server(self: indigo.PluginBase):
-		self.logger.info("Starting the configuration web server...")
-		thread = threading.Thread(target=run_flask_app, args=("0.0.0.0", 9000), daemon=True)
+		address = "0.0.0.0"
+		port = 9000
+		self.logger.info(f"Starting the configuration web server... listening on address {address} and port {port}")
+		thread = threading.Thread(target=run_flask_app, args=(address, port), daemon=True)
 		thread.start()
 
 
