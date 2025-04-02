@@ -452,6 +452,6 @@ def get_luminance_value():
         avg = 0
     return {"average": avg}
 
-def run_flask_app() -> None:
+def run_flask_app(host: str = "0.0.0.0", port: int = 9000) -> None:
     # Configure host and port as needed
-    app.run(host="0.0.0.0", port=9000, debug=False)
+    app.run(host=host, port=port, debug=False)

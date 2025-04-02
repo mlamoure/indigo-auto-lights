@@ -53,7 +53,7 @@ class Plugin(indigo.PluginBase):
 
 	def start_configuration_web_server(self: indigo.PluginBase):
 		self.logger.info("Starting the configuration web server...")
-		thread = threading.Thread(target=run_flask_app, daemon=True)
+		thread = threading.Thread(target=run_flask_app, args=("0.0.0.0", 9000), daemon=True)
 		thread.start()
 
 
