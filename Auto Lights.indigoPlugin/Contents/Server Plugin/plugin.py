@@ -42,25 +42,17 @@ class Plugin(indigo.PluginBase):
         """
 		self.logger.debug("shutdown called")
 
-	def runConcurrentThread(self: indigo.PluginBase) -> None:
-		try:
-			while True:
-				pass
-
-		except self.StopThread:
-			pass
-
-	def deviceUpdated(self, orig_dev: indigo.Device, new_dev: indigo.Device) -> None:
+	def deviceUpdated(self: indigo.PluginBase, orig_dev: indigo.Device, new_dev: indigo.Device) -> None:
 		indigo.server.log(f"Changed: {orig_dev.name}")
 		# call base implementation
 		indigo.PluginBase.deviceUpdated(self, orig_dev, new_dev)
 
 
 
-	def start_configuration_web_server(self):
-		self.logger.info ("starting the Grafana server...")
+	def start_configuration_web_server(self: indigo.PluginBase):
+		self.logger.info ("starting the web server...")
 
 
-	def closedPrefsConfigUi(self, valuesDict, userCancelled):
-		if not userCancelled:
+	def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
+		if not user_cancelled:
 			pass
