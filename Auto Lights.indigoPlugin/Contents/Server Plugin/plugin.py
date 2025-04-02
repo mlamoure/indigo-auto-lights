@@ -1,26 +1,48 @@
-import sys
-
 import indigo
-import datetime
-import copy
-import os
-from json_adaptor import JSONAdaptor
-import subprocess
-import signal
 
 class Plugin(indigo.PluginBase):
-	def __init__(self, pluginId, pluginDisplayName, pluginVersion, pluginPrefs):
-		super(Plugin, self).__init__(pluginId, pluginDisplayName, pluginVersion, pluginPrefs)
 
+	def __init__(
+			self: indigo.PluginBase,
+			plugin_id: str,
+			plugin_display_name: str,
+			plugin_version: str,
+			plugin_prefs: indigo.Dict,
+			**kwargs: dict
+	) -> None:
+		"""
+		The init method that is called when a plugin is first instantiated.
 
-	def startup(self):
-		pass
+		:param plugin_id: the ID string of the plugin from Info.plist
+		:param plugin_display_name: the name string of the plugin from Info.plist
+		:param plugin_version: the version string from Info.plist
+		:param plugin_prefs: an indigo.Dict containing the prefs for the plugin
+		:param kwargs: passthrough for any other keyword args
+		"""
+		super().__init__(plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs)
 
-	# called after runConcurrentThread() exits
-	def shutdown(self):
-		pass
+		indigo.devices.subscribeToChanges()
+		indigo.variables.subscribeToChanges()
 
-	def runConcurrentThread(self):
+		self.debug: bool = True
+
+	def startup(self: indigo.PluginBase) -> None:
+		"""
+        Any logic needed at startup, but after __init__ is called.
+
+        :return:
+        """
+		self.logger.debug("startup called")
+
+	def shutdown(self: indigo.PluginBase) -> None:
+		"""
+        Any cleanup logic needed before the plugin is completely shut down.
+
+        :return:
+        """
+		self.logger.debug("shutdown called")
+
+	def runConcurrentThread(self: indigo.PluginBase) -> None:
 		try:
 			while True:
 				pass
@@ -28,26 +50,15 @@ class Plugin(indigo.PluginBase):
 		except self.StopThread:
 			pass
 
-	def deviceUpdated(self, origDev, newDev):
+	def deviceUpdated(self, orig_dev: indigo.Device, new_dev: indigo.Device) -> None:
+		indigo.server.log(f"Changed: {orig_dev.name}")
 		# call base implementation
-		indigo.PluginBase.deviceUpdated(self, origDev, newDev)
+		indigo.PluginBase.deviceUpdated(self, orig_dev, new_dev)
+
 
 
 	def start_configuration_web_server(self):
 		self.logger.info ("starting the Grafana server...")
-		runGrafanaCommand = os.getcwd().replace(" ", "\ ") + "/servers/grafana/grafana-server -homepath " + os.getcwd().replace(" ", "\ ") + "/servers/grafana/" + " -config " + self.GrafanaConfigFileLoc.replace(" ", "\ ")
-
-
-	def stop_configuration_web_server(self):
-		self.GrafanaServerPID = None
-
-		p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE)
-		out, err = p.communicate()
-		
-		for line in out.splitlines():
-			if b'grafana' in line:
-				pid = int(line.split(None, 1)[0])
-				os.kill(pid, signal.SIGKILL)		
 
 
 	def closedPrefsConfigUi(self, valuesDict, userCancelled):

@@ -1,0 +1,54 @@
+{% macro render_field(field) %}
+  {% if field.type == 'FormField' %}
+    <fieldset class="group-box">
+      <legend>{{ field.label.text }}</legend>
+      {% for subfield in field.form if subfield.name not in ['csrf_token', 'submit'] %}
+        {{ render_field(subfield) }}
+      {% endfor %}
+    </fieldset>
+  {% elif field.name.endswith('_dev_ids') or field.name == 'lighting_period_ids' %}
+    <div class="form-field">
+      <div class="multiple-select-row" style="display:flex; align-items:center;">
+        <label class="tooltip-label" data-tooltip="{{ field.description }}" style="display:inline-block; width:200px; vertical-align:middle;">{{ field.label.text }}</label>
+        <div class="multiple-select-container">
+          <select id="{{ field.name }}_available" multiple>
+            {% set selected = field.data or [] %}
+            {% for value, label in field.choices %}
+              {% if value not in selected %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+          <div class="select-block buttons">
+            <button type="button" onclick="moveRight('{{ field.name }}')">&gt;</button>
+            <button type="button" onclick="moveLeft('{{ field.name }}')">&lt;</button>
+          </div>
+          <select id="{{ field.name }}_selected" name="{{ field.name }}" multiple>
+            {% for value, label in field.choices %}
+              {% if value in (field.data or []) %}
+                <option value="{{ value }}" selected>{{ label }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="tooltip-info" style="display:none;"></div>
+    </div>
+  {% elif field.name.endswith('_var_id') %}
+    <div class="form-field">
+      <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
+      <div style="display:inline-block;">
+        {{ field() }}
+        <button type="button" class="create-new-var-btn" data-field-name="{{ field.name }}" disabled>Create New Variable</button>
+        <button type="button" class="refresh-var-list-btn" data-field-name="{{ field.name }}">Refresh Variable List</button>
+      </div>
+      <div class="tooltip-info" style="display:none;"></div>
+    </div>
+  {% else %}
+    <div class="form-field">
+      <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
+      {{ field() }}
+      <div class="tooltip-info" style="display:none;"></div>
+    </div>
+  {% endif %}
+{% endmacro %}

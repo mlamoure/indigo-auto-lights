@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Lighting Period Configuration - Indigo Auto Lights</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+<div id="header">
+    <div>Indigo Auto Lights - Lighting Period Configuration</div>
+</div>
+<div id="container">
+    {% include "navigation.html" %}
+    <div id="content">
+        <form method="POST" id="lighting-period-config-form" class="edit-form">
+            {{ lighting_period_form.hidden_tag() }}
+
+            {% for field in lighting_period_form if field.name != 'submit' %}
+                <div class="form-field">
+                    {% if field.name in ['from_time_hour', 'to_time_hour'] %}
+                        <label class="tooltip-label"
+                               data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
+                        <div class="tooltip-info" style="display:none;"></div>
+                        <select name="{{ field.name }}">
+                            {% for i in range(0, 24) %}
+                                <option value="{{ i }}"
+                                        {% if field.data|default(0)|int == i %}selected="selected"{% endif %}>{{ i }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif field.name in ['from_time_minute', 'to_time_minute'] %}
+                        <label class="tooltip-label"
+                               data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
+                        <div class="tooltip-info" style="display:none;"></div>
+                        <select name="{{ field.name }}">
+                            {% for m in [0, 15, 30, 45, 59] %}
+                                <option value="{{ m }}"
+                                        {% if field.data|default(0)|int == m %}selected="selected"{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    {% elif field.name == 'mode' %}
+                        <label class="tooltip-label"
+                               data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
+                        <div class="tooltip-info" style="display:none;"></div>
+                        <select name="{{ field.name }}">
+                            {% for option in field.choices %}
+                                <option value="{{ option[0] }}"
+                                        {% if field.data == option[0] %}selected="selected"{% endif %}>{{ option[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <label class="tooltip-label"
+                               data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
+                        <div class="tooltip-info" style="display:none;"></div>
+                        {{ field() }}
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div>
+                <input type="submit" value="Save" class="btn">
+                <button type="button" class="btn" onclick="window.location.href='/lighting_periods'">Cancel</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var triggers = document.querySelectorAll('.tooltip-label');
+            triggers.forEach(function (el) {
+                el.style.cursor = 'pointer';
+                el.addEventListener('click', function (e) {
+                    var formField = this.closest('.form-field');
+                    var info = formField.querySelector('.tooltip-info');
+                    if (info) {
+                        var label = formField.querySelector('.tooltip-label');
+                        var tooltip = label ? label.getAttribute('data-tooltip') : '';
+                        if (info.style.display === 'none' || info.style.display === '') {
+                            info.textContent = tooltip;
+                            info.style.display = 'block';
+                        } else {
+                            info.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

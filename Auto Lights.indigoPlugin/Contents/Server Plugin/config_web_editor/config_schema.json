@@ -1,0 +1,341 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Auto Lights Configuration Schema",
+  "type": "object",
+  "properties": {
+    "plugin_config": {
+      "type": "object",
+      "properties": {
+        "guest_mode_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Guest Mode Variable",
+          "tooltip": "Set the identifier for the guest mode variable."
+        },
+        "someone_home_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Someone Home Variable",
+          "tooltip": "Set the identifier for the someone home variable."
+        },
+        "gone_to_bed_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Gone To Bed Variable",
+          "tooltip": "Set the identifier for the gone to bed variable."
+        },
+        "enabled_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Enabled Variable",
+          "tooltip": "Set the identifier for the enabled variable."
+        },
+        "debug_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Debug Variable",
+          "tooltip": "Set the identifier for the debug variable."
+        },
+        "debug_maximum_run_time": {
+          "type": "number",
+          "title": "Debug Maximum Run Time",
+          "tooltip": "Specify the maximum run time for debugging."
+        },
+        "default_lock_duration": {
+          "type": "integer",
+          "title": "Default Lock Duration",
+          "tooltip": "Set the default duration for locks in seconds."
+        },
+        "default_lock_extension_duration": {
+          "type": "integer",
+          "title": "Default Lock Extension Duration",
+          "tooltip": "Set the duration by which the lock is extended in seconds."
+        },
+        "threading_enabled": {
+          "type": "boolean",
+          "title": "Threading Enabled",
+          "tooltip": "Enable or disable threading."
+        },
+        "rapid_execution_lock": {
+          "type": "boolean",
+          "title": "Rapid Execution Lock",
+          "tooltip": "Enable or disable rapid execution lock."
+        },
+        "early_hours_starts": {
+          "type": "integer",
+          "title": "Early Hours Starts",
+          "tooltip": "Specify the starting hour for early hours."
+        },
+        "early_hours_ends": {
+          "type": "integer",
+          "title": "Early Hours Ends",
+          "tooltip": "Specify the ending hour for early hours."
+        },
+        "night_hours_starts": {
+          "type": "integer",
+          "title": "Night Hours Starts",
+          "tooltip": "Specify the starting hour for night hours."
+        },
+        "night_hours_ends": {
+          "type": "integer",
+          "title": "Night Hours Ends",
+          "tooltip": "Specify the ending hour for night hours."
+        },
+        "early_hours_brightness_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Early Hours Brightness Variable",
+          "tooltip": "Set the identifier for the early hours brightness variable."
+        },
+        "day_hours_brightness_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Day Hours Brightness Variable",
+          "tooltip": "Set the identifier for the day hours brightness variable."
+        },
+        "night_hours_brightness_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Night Hours Brightness Variable",
+          "tooltip": "Set the identifier for the night hours brightness variable."
+        },
+        "sleeping_hours_brightness_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Sleeping Hours Brightness Variable",
+          "tooltip": "Set the identifier for the sleeping hours brightness variable."
+        }
+      },
+      "required": [
+        "guest_mode_var_id",
+        "someone_home_var_id",
+        "gone_to_bed_var_id",
+        "enabled_var_id",
+        "debug_var_id"
+      ]
+    },
+    "zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "tooltip": "Provide a name for the zone.  This is purely for recognition purposes, and will be used in the Indigo log to display actions being taken for the zone."
+          },
+          "enabled_var_id": {
+            "type": "integer",
+            "x-drop-down": true,
+            "title": "Variable controlling Zone enablement",
+            "tooltip": "This variable will expect a true/false value on whether the zone is enabled.  This allows you to independently turn on/off a zone for auto lights using other actions in Indigo."
+          },
+          "lighting_period_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "x-drop-down": true,
+            "title": "Linked Lighting Periods",
+            "tooltip": "Select one or more lighting periods associated with this zone."
+          },
+          "device_settings": {
+            "type": "object",
+            "title": "Device Settings",
+            "properties": {
+              "on_lights_dev_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "x-drop-down": true,
+                "x-include-device-classes": "indigo.DimmerDevice",
+                "title": "On / Off Lights for this Zone",
+                "tooltip": "List of device IDs that turn lights on and off in the zone."
+              },
+              "off_lights_dev_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "x-drop-down": true,
+                "x-include-device-classes": "indigo.DimmerDevice",
+                "title": "Off Lights for this Zone",
+                "tooltip": "List of device IDs that turn lights off in the zone.  Note: On/Off lights to DOT need to be added to this list."
+              },
+              "lumaninance_dev_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "x-drop-down": true,
+                "x-include-device-classes": "indigo.SensorDevice",
+                "title": "Luminance Device IDs",
+                "tooltip": "List of device IDs for luminance sensors."
+              },
+              "presence_dev_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "x-drop-down": true,
+                "x-include-device-classes": "indigo.SensorDevice",
+                "title": "Presence Device IDs",
+                "tooltip": "List of device IDs for presence sensors."
+              }
+            }
+          },
+          "minimum_luminance_settings": {
+            "type": "object",
+            "title": "Minimum Luminance Settings",
+            "properties": {
+              "minimum_luminance": {
+                "type": "integer",
+                "title": "Minimum Luminance",
+                "tooltip": "Provide minimum luminance for the zone."
+              },
+              "minimum_luminance_use_variable": {
+                "type": "boolean",
+                "title": "Use Variable for Minimum Luminance",
+                "tooltip": "When true, the minimum luminance is determined from a variable."
+              },
+              "minimum_luminance_var_id": {
+                "type": "integer",
+                "x-drop-down": true,
+                "title": "Minimum Luminance Variable",
+                "tooltip": "Set the identifier for the minimum luminance variable."
+              }
+            }
+          },
+          "behavior_settings": {
+            "type": "object",
+            "title": "Lighting Behavior Settings",
+            "properties": {
+              "adjust_brightness": {
+                "type": "boolean",
+                "title": "Adjust Dimmer Brightness",
+                "tooltip": "Auto Lights will adjust the brightness of dimmer devices periodically based on the luminance of the zone, and the defined minimum luminance.",
+                "default": true
+              },
+              "lock_duration": {
+                "type": "integer",
+                "title": "Lock Duration",
+                "tooltip": "Specify the duration for which the zone lock is active.",
+                "default": -1
+              },
+              "extend_lock_when_active": {
+                "type": "boolean",
+                "title": "Extend Lock When Presence is Active",
+                "tooltip": "Enable to extend the lock duration when the zone is active.",
+                "default": true
+              },
+              "perform_confirm": {
+                "type": "boolean",
+                "title": "Perform Confirm",
+                "tooltip": "Plugin will confirm that the change will be applied to the device, and continue to retry if failed.",
+                "default": true
+              },
+              "turn_off_while_sleeping": {
+                "type": "boolean",
+                "title": "Turn Off While Sleeping",
+                "tooltip": "Enable to automatically turn off lights when sleeping.",
+                "default": true
+              },
+              "unlock_when_no_presence": {
+                "type": "boolean",
+                "title": "Unlock When No Presence",
+                "tooltip": "Enable to unlock the zone when no presence is detected.",
+                "default": true
+              }
+            }
+          }
+        },
+        "required": [
+          "name",
+          "enabled_var_id"
+        ]
+      }
+    },
+    "lighting_periods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "ID",
+            "tooltip": "Unique identifier for the lighting period."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "tooltip": "Provide a name for the lighting period."
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "OnOffZone",
+              "OffZone"
+            ],
+            "title": "Mode",
+            "tooltip": "Select the mode for the lighting period."
+          },
+          "from_time_hour": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "title": "From Time Hour",
+            "tooltip": "Specify the starting hour (0-23) for the lighting period."
+          },
+          "from_time_minute": {
+            "type": "integer",
+            "enum": [
+              0,
+              15,
+              30,
+              45
+            ],
+            "title": "From Time Minute",
+            "tooltip": "Specify the starting minute for the lighting period."
+          },
+          "to_time_hour": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "title": "To Time Hour",
+            "tooltip": "Specify the ending hour (0-23) for the lighting period."
+          },
+          "to_time_minute": {
+            "type": "integer",
+            "enum": [
+              0,
+              15,
+              30,
+              45
+            ],
+            "title": "To Time Minute",
+            "tooltip": "Specify the ending minute for the lighting period."
+          },
+          "lock_duration": {
+            "type": "integer",
+            "title": "Override Lock Duration",
+            "tooltip": "If desired different from the default, specify the lock duration in seconds for the lighting period."
+          }
+        },
+        "required": [
+          "name",
+          "mode",
+          "from_time_hour",
+          "from_time_minute",
+          "to_time_hour",
+          "to_time_minute"
+        ]
+      }
+    }
+  },
+  "required": [
+    "plugin_config",
+    "zones",
+    "lighting_periods"
+  ]
+}
