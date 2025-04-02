@@ -452,6 +452,6 @@ def get_luminance_value():
         avg = 0
     return {"average": avg}
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
+def run_flask_app() -> None:
+    # Configure host and port as needed
+    app.run(host="0.0.0.0", port=9000, debug=False)
