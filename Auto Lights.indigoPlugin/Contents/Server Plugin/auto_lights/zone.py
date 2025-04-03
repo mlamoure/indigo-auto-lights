@@ -25,7 +25,7 @@ class Zone(object):
         self._name = name
 
         # List of device IDs reporting presence
-        self.presence_dev_id = []
+        self.presence_dev_ids = []
 
         # Device lists for lights: devices to be turned on and off
         self._on_lights_dev_ids = []
@@ -49,7 +49,7 @@ class Zone(object):
         # Brightness scheduling and sensor settings
         self._minimum_luminance = 10000
         self._minimum_luminance_var_id = None
-        self._luminance_dev_id = []
+        self._luminance_dev_ids = []
 
         # Lock configuration variables to avoid rapid changes
         self._lock_enabled = True
@@ -146,11 +146,11 @@ class Zone(object):
     def last_changed(self) -> datetime.datetime:
         device_last_changed = datetime.datetime(1900, 0o1, 0o1)
 
-        for dev_id in self.presence_dev_id:
+        for dev_id in self.presence_dev_ids:
             if indigo.devices[dev_id].lastChanged > device_last_changed:
                 device_last_changed = indigo.devices[dev_id].lastChanged
 
-        for dev_id in self._luminance_dev_id:
+        for dev_id in self.luminance_dev_ids:
             if indigo.devices[dev_id].lastChanged > device_last_changed:
                 device_last_changed = indigo.devices[dev_id].lastChanged
 
@@ -335,21 +335,21 @@ class Zone(object):
         ].getValue(float)
 
     @property
-    def luminance_dev_id(self) -> List[int]:
-        return self._luminance_dev_id
+    def luminance_dev_ids(self) -> List[int]:
+        return self._luminance_dev_ids
 
-    @luminance_dev_id.setter
-    def luminance_dev_id(self, value: List[int]) -> None:
-        self._luminance_dev_id = value
+    @luminance_dev_ids.setter
+    def luminance_dev_ids(self, value: List[int]) -> None:
+        self._luminance_dev_ids = value
 
     @property
     def luminance(self) -> int:
         self._luminance = 0
 
-        for devId in self.luminance_dev_id:
+        for devId in self.luminance_dev_ids:
             self._luminance = self._luminance + indigo.devices[devId].sensorValue
 
-        self._luminance = int(self._luminance / len(self.luminance_dev_id))
+        self._luminance = int(self._luminance / len(self.luminance_dev_ids))
 
         return self._luminance
 
@@ -723,10 +723,10 @@ class Zone(object):
         ):
             return self.luminance >= self.current_lighting_period.minimum_luminance
 
-        if len(self.luminance_dev_id) == 0:
+        if len(self.luminance_dev_ids) == 0:
             return True
 
-        for dev_id in self.luminance_dev_id:
+        for dev_id in self.luminance_dev_ids:
             if indigo.devices[dev_id].sensorValue < self.minimum_luminance:
                 return True
 
@@ -912,8 +912,8 @@ class Zone(object):
             return "on_lights_dev_ids"
         if dev_id in self.off_lights_dev_ids:
             return "off_lights_dev_ids"
-        if dev_id in self.presence_dev_id:
-            return "presence_dev_id"
-        if dev_id in self.luminance_dev_id:
-            return "luminance_dev_id"
+        if dev_id in self.presence_dev_ids:
+            return "presence_dev_ids"
+        if dev_id in self.luminance_dev_ids:
+            return "luminance_dev_ids"
         return ""
