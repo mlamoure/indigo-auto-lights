@@ -834,3 +834,4 @@ class Zone(object):
         if dev_id in self.luminance_dev_ids:
             return "luminance_dev_ids"
         return ""
+

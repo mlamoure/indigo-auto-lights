@@ -169,14 +169,6 @@ class AutoLightsAgent:
         ################################################################
 
         if self._config.debug:
-            for zone in zones:
-                debug_str = (
-                    debug_str
-                    + zone.write_debug_output(self._config)
-                    + "\n----------------------------------------\n"
-                )
-
-        if self._config.debug:
             indigo.server.log(debug_str)
 
         return True
@@ -186,4 +178,15 @@ class AutoLightsAgent:
         # First, iterate through each self._zone
 
             # For each zone, call has_device(orig_dev.id)
-            # if this returns "on_lights_dev_ids" or "off_lights_dev_ids" then
+                # if this returns "on_lights_dev_ids" or "off_lights_dev_ids" then
+                    # if the zone.current_lights_status == target_brightness
+                        # Note: this likely means that the plugin made the change.
+                        # return
+                    # else
+                        # This likely means it was changed outside of hte plugin, and so needs to be a lock
+                        # set zone.lock = True
+
+                # if reutrns presence_id or luminance_id
+                    # process the change
+
+
