@@ -49,7 +49,24 @@ class Plugin(indigo.PluginBase):
 		# call base implementation
 		indigo.PluginBase.deviceUpdated(self, orig_dev, new_dev)
 
+		# Convert the payload objects from indigo.Dict() objects to Python dict() objects.
+		orig_dict = {}
+		for (k, v) in orig_dev:
+			orig_dict[k] = v
 
+		new_dict = {}
+		for (k, v) in new_dev:
+			new_dict[k] = v
+
+		# Create a dictionary that contains only those properties and attributes that have changed.
+		diff = {k: new_dict[k] for k in orig_dict if k in new_dict and orig_dict[k] != new_dict[k]}
+
+		# process the change
+		self._agent.process_device_change(orig_dev, diff)
+
+	def variableUpdated(self, orig_var: indigo.Variable, new_var: indigo.Variable) -> None:
+		# call base implementation
+		indigo.PluginBase.variableUpdated(self, new_var, new_var)
 
 	def start_configuration_web_server(self: indigo.PluginBase):
 		address = "0.0.0.0"
