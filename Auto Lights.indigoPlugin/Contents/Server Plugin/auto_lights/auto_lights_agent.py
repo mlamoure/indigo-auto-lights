@@ -1,7 +1,4 @@
-import random
 import threading
-import time
-from typing import List
 
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone
@@ -31,7 +28,7 @@ class AutoLightsAgent:
         debug = False
 
         if not self._config.enabled:
-            return 0
+            return False
 
         if debug:
             indigo.server.log(
@@ -106,35 +103,9 @@ class AutoLightsAgent:
                 and zone.is_dark()
                 and zone.use_timed_brightness
             ):
-                if self._config.is_day_time_hours():
-                    # during the day, we adjust the target brightness based on the brightness of the room
 
-                    # don't adjust some lights when they are already on (luminance brightness changes are disabled) for some zones
-                    if (
-                        zone.current_state_any_light_is_on
-                        and not zone.adjust_brightness_when_active
-                    ):
-                        action_reason = "did not adjust brightness because lights are already on and adjustBrightnessWhenActive is off"
-                    else:
-                        action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are using Timed Brightness Mode with adjustments for the current brightness level"
-
-                        # Check to see if Timed Brightness Adjustments are off, which only applies when lights are already on, and we don't wish to adjust the brightness further.
-                        if (
-                            not zone.target_brightness_all_off
-                            and hasattr(zone, "use_timed_brightness_adjustments")
-                            and not zone.use_timed_brightness_adjustments
-                        ):
-                            zone.target_brightness = zone.current_lights_status
-                        else:
-                            zone.target_brightness = abs(
-                                int(
-                                    (1 - (zone.luminance / zone.minimum_luminance))
-                                    * 100
-                                )
-                            )
-                else:
-                    zone.target_brightness = self._config.get_timed_brightness()
-                    action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are using Timed Brightness Mode"
+                zone.calculate_target_brightness()
+                action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are using Timed Brightness Mode"
             elif (
                 zone.current_lighting_period.mode == "OnOffZone"
                 and zone.has_presence_detected()
@@ -175,15 +146,8 @@ class AutoLightsAgent:
                 + ") : "
             )
 
-            if self._config.threading_enabled:
-                thread = threading.Thread(target=zone.save_brightness_changes, args=())
-                threads.append(thread)
-                thread.start()
-            else:
-                zone.save_brightness_changes()
+            zone.save_brightness_changes()
 
-            if hasattr(zone, "special_rules_adjustment"):
-                indigo.server.log("       " + zone.special_rules_adjustment)
         else:
             if self._config.debug:
                 indigo.server.log(
@@ -199,22 +163,6 @@ class AutoLightsAgent:
 
         ###### END ZONE LOOP #######
 
-        # Wait for the threads to complete, re-join them together
-        for thread in threads:
-            thread.join()
-
-        ################################################################
-        # CheckIn
-        ################################################################
-        for zone in zones:
-            if zone.checked_out:
-                if self._config.debug:
-                    indigo.server.log(
-                        "auto_lights script for Zone '"
-                        + zone.name
-                        + "': completed and checked in"
-                    )
-                zone.check_in()
 
         ################################################################
         # Debug
@@ -231,10 +179,11 @@ class AutoLightsAgent:
         if self._config.debug:
             indigo.server.log(debug_str)
 
-        return zones_ran
+        return True
 
     def process_device_change(orig_dev: indigo.Device, diff: dict) -> bool:
 
         # First, iterate through each self._zone
 
             # For each zone, call has_device(orig_dev.id)
+            # if this returns "on_lights_dev_ids" or "off_lights_dev_ids" then

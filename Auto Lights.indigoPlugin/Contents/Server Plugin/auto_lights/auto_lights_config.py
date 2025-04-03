@@ -28,7 +28,6 @@ class AutoLightsConfig:
         self._someone_home_var_id = -1
         self._gone_to_bed_var_id = -1
         self._guest_mode_var_id = -1
-        self._threading_enabled = False
         self._rapid_execution_lock = False
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0

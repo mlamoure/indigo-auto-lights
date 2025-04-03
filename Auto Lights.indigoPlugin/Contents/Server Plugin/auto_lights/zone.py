@@ -1,11 +1,10 @@
 import ast
 import datetime
-import threading
-from typing import List, Union, Any
+from typing import List, Union, Any, Optional
 
-from auto_lights import utils
-from auto_lights.auto_lights_config import AutoLightsConfig
-from auto_lights.lighting_period import LightingPeriod
+from . import utils
+from .auto_lights_config import AutoLightsConfig
+from .lighting_period import LightingPeriod
 
 try:
     import indigo
@@ -157,7 +156,7 @@ class Zone(object):
         return device_last_changed
 
     @property
-    def current_lighting_period(self) -> LightingPeriod:
+    def current_lighting_period(self) -> Optional[LightingPeriod]:
         if self._current_lighting_period is None:
             if self.lighting_periods is None:
                 indigo.server.log("no periods for zone " + self._name)
@@ -834,14 +833,7 @@ class Zone(object):
                 )
                 continue
 
-            if self._config.threading_enabled:
-                thread = threading.Thread(
-                    target=self._send_to_indigo, args=(dev_id, dev_target)
-                )
-                threads.append(thread)
-                thread.start()
-            else:
-                self._send_to_indigo(dev_id, dev_target)
+            self._send_to_indigo(dev_id, dev_target)
 
         # Wait for all threads to finish
         for thread in threads:
@@ -851,14 +843,6 @@ class Zone(object):
         indigo.variable.updateValue(
             self.previous_target_var_name, str(self.target_save_state)
         )
-
-        # If rapid execution locking is enabled, lock the zone for 15 seconds to prevent rapid consecutive changes
-        if self._config.rapid_execution_lock:
-            lock_expiration_dt = datetime.datetime.now() + datetime.timedelta(
-                seconds=15
-            )
-            self._lock_expiration = lock_expiration_dt.strftime("%Y-%m-%d %H:%M:%S")
-            indigo.variable.updateValue(self.lock_var, self._lock_expiration)
 
     def write_debug_output(self, config) -> str:
         """
