@@ -25,7 +25,7 @@ class Zone(object):
         self._name = name
 
         # List of device IDs reporting presence
-        self.presence_dev_ids = []
+        self._presence_dev_ids = []
 
         # Device lists for lights: devices to be turned on and off
         self._on_lights_dev_ids = []
@@ -184,7 +184,7 @@ class Zone(object):
         ):
             return self.current_lighting_period.has_presence_detected()
 
-        for dev_id in self.presence_dev_id:
+        for dev_id in self.presence_dev_ids:
             if "onOffState" in indigo.devices[dev_id].states:
                 if indigo.devices[dev_id].states["onOffState"]:
                     return True
@@ -215,6 +215,14 @@ class Zone(object):
     def on_lights_dev_ids(self, value: List[int]) -> None:
         self._on_lights_dev_ids = value
         self.target_brightness = self.current_lights_status
+
+    @property
+    def presence_dev_ids(self) -> List[int]:
+        return self._presence_dev_ids
+
+    @presence_dev_ids.setter
+    def presence_dev_ids(self, value: List[int]) -> None:
+        self._presence_dev_ids = value
 
     @property
     def target_save_state(self) -> List[Union[bool, int]]:
