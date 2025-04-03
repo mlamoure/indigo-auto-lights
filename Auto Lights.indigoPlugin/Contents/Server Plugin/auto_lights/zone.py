@@ -74,6 +74,7 @@ class Zone(object):
 
         self._enforce_off = "always"
         self._special_rules_adjustment = ""
+        self._adjust_brightness = False
 
     @property
     def name(self) -> str:
@@ -130,6 +131,14 @@ class Zone(object):
     @use_timed_brightness.setter
     def use_timed_brightness(self, value: bool) -> None:
         self._use_timed_brightness = value
+
+    @property
+    def adjust_brightness(self) -> Union[bool, int]:
+        return self._adjust_brightness
+
+    @adjust_brightness.setter
+    def adjust_brightness(self, value: Union[bool, int]) -> None:
+        self._adjust_brightness = value
 
     @property
     def enabled_var_id(self) -> int:
