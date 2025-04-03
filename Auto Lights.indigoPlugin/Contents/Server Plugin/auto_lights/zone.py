@@ -895,3 +895,25 @@ class Zone(object):
         Placeholder for child classes to implement zone-specific rules.
         """
         pass
+
+    def has_device(self, dev_id: int) -> str:
+        """
+        Check if the provided device ID exists in any of the device ID lists.
+
+        Args:
+            dev_id (int): The device ID to look for.
+
+        Returns:
+            str: The property name where the device ID is found 
+                 (one of: on_lights_dev_ids, off_lights_dev_ids, presence_dev_id, luminance_dev_id).
+                 If not found, returns an empty string.
+        """
+        if dev_id in self.on_lights_dev_ids:
+            return "on_lights_dev_ids"
+        if dev_id in self.off_lights_dev_ids:
+            return "off_lights_dev_ids"
+        if dev_id in self.presence_dev_id:
+            return "presence_dev_id"
+        if dev_id in self.luminance_dev_id:
+            return "luminance_dev_id"
+        return ""
