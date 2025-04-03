@@ -22,58 +22,56 @@ class Zone(object):
         """
         # Zone identification
         self._name = name
+        self._enabled = False
+        self._enabled_var_id = None
 
-        # List of device IDs reporting presence
-        self._presence_dev_ids = []
+        # Lighting periods configuration and saved target state for change detection
+        self._lighting_periods = []
+        self._current_lighting_period = None
 
         # Device lists for lights: devices to be turned on and off
         self._on_lights_dev_ids = []
         self._off_lights_dev_ids = []
         self._exclude_from_lock_dev_ids = []
 
-        # Lighting periods configuration and saved target state for change detection
-        self._lighting_periods = []
-        self._current_lighting_period = None
-        self._target_save_state = []
+        # Luminance
+        self._luminance_dev_ids = []
+        self._luminance = 0
 
-        # Zone behavior state variables
-        self._enabled = False
-        self._enabled_var_id = None
-        self._perform_confirm = True
+        # List of device IDs reporting presence
+        self._presence_dev_ids = []
+
+        # Lumanance Behavior
+        self._minimum_luminance = 10000
+        self._minimum_luminance_var_id = None
+
+        self._current_lights_status = []
+        self._target_brightness = None
+        self._target_brightness_all_off = None
+
+        # Behavior
+        self._adjust_brightness = False
         self._adjust_brightness_when_active = True
+        self._perform_confirm = True
+        self._lock_duration = None
+        self._extend_lock_when_active = True
         self._turn_off_while_sleeping = False
         self._unlock_when_no_presence = True
 
-        # Brightness scheduling and sensor settings
-        self._minimum_luminance = 10000
-        self._minimum_luminance_var_id = None
-        self._luminance_dev_ids = []
 
-        # Lock configuration variables to avoid rapid changes
-        self._lock_enabled = True
-        self._extend_lock_when_active = True
-        self._lock_duration = None
-        self._lock_extension_duration = None
+        # need to clean up
         self._lock_expiration = None
         self._config = config
 
         # Metadata for tracking changes from external systems
         self._last_changed_by = "none"
-        self._last_changed_by_var_id = None
 
         # Variables for managing current lighting status
-        self._current_lights_status = []
         self._previous_execution_lights_target = None
 
-        # Additional internal variables
-        self._target_brightness = None
-        self._luminance = 0
-        self._target_brightness_all_off = None
         self._locked = None
 
         self._enforce_off = "always"
-        self._special_rules_adjustment = ""
-        self._adjust_brightness = False
 
     @property
     def name(self) -> str:
@@ -224,26 +222,6 @@ class Zone(object):
         self._presence_dev_ids = value
 
     @property
-    def target_save_state(self) -> List[Union[bool, int]]:
-        """
-        Property to retrieve the saved state for on/off lights excluding devices marked to be bypassed for locking.
-        This state is used to compare current device states and determine if a lock has occurred.
-        """
-        self._target_save_state = []
-
-        for idx, dev in enumerate(self.on_lights_dev_ids):
-            if dev not in self.exclude_from_lock_dev_ids:
-                self._target_save_state.append(self.target_brightness[idx])
-
-        for idx, dev in enumerate(self.off_lights_dev_ids):
-            if dev not in self.exclude_from_lock_dev_ids:
-                self._target_save_state.append(
-                    self.target_brightness[idx + len(self.on_lights_dev_ids)]
-                )
-
-        return self._target_save_state
-
-    @property
     def target_brightness(self) -> List[Union[bool, int]]:
         """Get the target brightness for zone devices."""
         if self._target_brightness is None:
@@ -371,15 +349,6 @@ class Zone(object):
     @property
     def last_changed_by(self) -> str:
         return self._last_changed_by
-
-    @property
-    def last_changed_by_var_id(self) -> int:
-        return self._last_changed_by_var_id
-
-    @last_changed_by_var_id.setter
-    def last_changed_by_var_id(self, value: int) -> None:
-        self._last_changed_by_var_id = value
-        self._last_changed_by = indigo.variables[self._last_changed_by_var_id].value
 
     @property
     def off_lights_dev_ids(self) -> List[int]:
