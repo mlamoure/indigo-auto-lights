@@ -173,19 +173,29 @@ class AutoLightsAgent:
 
         return True
 
-    def process_device_change(orig_dev: indigo.Device, diff: dict) -> bool:
-        # First, iterate through each self._zone
-            # For each zone, call has_device(orig_dev.id)
-                # if this returns "on_lights_dev_ids" or "off_lights_dev_ids" then
-                    # if the zone.current_lights_status == target_brightness
-                        # Note: this likely means that the plugin made the change.
-                        # return
-                    # else
-                        # This likely means it was changed outside of hte plugin, and so needs to be a lock
-                        # set zone.lock = True
+    def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> bool:
+        """
+        Process a device change event.
 
-                # if reutrns presence_id or luminance_id
-                    # process the change by calling self.process_zone(zone)
+        For each zone in the agent:
+          - Call zone.has_device(orig_dev.id)
+          - If the returned property is 'on_lights_dev_ids' or 'off_lights_dev_ids':
+              - If the zone's current_lights_status does not equal its target_brightness,
+                set zone.locked to True.
+          - If the property is 'presence_dev_ids' or 'luminance_dev_ids':
+              - Process the change by calling self.process_zone(zone, orig_dev, orig_dev)
 
-
-        pass
+        Returns:
+            bool: True if any device change was processed; False otherwise.
+        """
+        processed = False
+        for zone in self._zones:
+            device_prop = zone.has_device(orig_dev.id)
+            if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
+                if zone.current_lights_status != zone.target_brightness:
+                    zone.locked = True
+                    processed = True
+            elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
+                if self.process_zone(zone, orig_dev, orig_dev):
+                    processed = True
+        return processed
