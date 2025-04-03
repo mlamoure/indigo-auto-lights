@@ -46,7 +46,6 @@ class Plugin(indigo.PluginBase):
 		self.logger.debug("shutdown called")
 
 	def deviceUpdated(self: indigo.PluginBase, orig_dev: indigo.Device, new_dev: indigo.Device) -> None:
-		indigo.server.log(f"Changed: {orig_dev.name}")
 		# call base implementation
 		indigo.PluginBase.deviceUpdated(self, orig_dev, new_dev)
 
