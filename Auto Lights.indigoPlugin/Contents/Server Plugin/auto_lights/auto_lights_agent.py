@@ -174,9 +174,7 @@ class AutoLightsAgent:
         return True
 
     def process_device_change(orig_dev: indigo.Device, diff: dict) -> bool:
-
         # First, iterate through each self._zone
-
             # For each zone, call has_device(orig_dev.id)
                 # if this returns "on_lights_dev_ids" or "off_lights_dev_ids" then
                     # if the zone.current_lights_status == target_brightness
@@ -187,6 +185,7 @@ class AutoLightsAgent:
                         # set zone.lock = True
 
                 # if reutrns presence_id or luminance_id
-                    # process the change
+                    # process the change by calling self.process_zone(zone)
 
 
+        pass
