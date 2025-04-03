@@ -124,11 +124,11 @@ class Zone(object):
         self._unlock_when_no_presence = value
 
     @property
-    def adjust_brightness(self) -> Union[bool, int]:
+    def adjust_brightness(self) -> bool:
         return self._adjust_brightness
 
     @adjust_brightness.setter
-    def adjust_brightness(self, value: Union[bool, int]) -> None:
+    def adjust_brightness(self, value: bool) -> None:
         self._adjust_brightness = value
 
     @property
@@ -887,6 +887,18 @@ class Zone(object):
         Placeholder for child classes to implement zone-specific rules.
         """
         pass
+
+    def calculate_target_brightness(self) -> None:
+        """
+        Calculate and set the target_brightness based on adjust_brightness.
+        If adjust_brightness is True, then set the target_brightness for on lights to 
+        the non-negative difference between luminance and minimum_luminance, and off lights to 0.
+        """
+        if self.adjust_brightness:
+            diff = self.luminance - self.minimum_luminance
+            diff = diff if diff > 0 else 0
+            new_tb = [diff] * len(self.on_lights_dev_ids) + [0] * len(self.off_lights_dev_ids)
+            self.target_brightness = new_tb
 
     def has_device(self, dev_id: int) -> str:
         """
