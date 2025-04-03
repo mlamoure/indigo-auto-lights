@@ -575,6 +575,10 @@ class Zone(object):
 
         return self._locked
 
+    @locked.setter
+    def locked(self, value: bool) -> None:
+        self._locked = value
+
     def reset_lock(self, reason):
         """
         Reset the lock for the zone.
