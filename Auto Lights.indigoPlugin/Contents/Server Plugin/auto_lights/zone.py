@@ -43,7 +43,6 @@ class Zone(object):
         self._adjust_brightness_when_active = True
         self._turn_off_while_sleeping = False
         self._unlock_when_no_presence = True
-        self._use_timed_brightness = False
 
         # Brightness scheduling and sensor settings
         self._minimum_luminance = 10000
@@ -123,14 +122,6 @@ class Zone(object):
     @unlock_when_no_presence.setter
     def unlock_when_no_presence(self, value: bool) -> None:
         self._unlock_when_no_presence = value
-
-    @property
-    def use_timed_brightness(self) -> bool:
-        return self._use_timed_brightness
-
-    @use_timed_brightness.setter
-    def use_timed_brightness(self, value: bool) -> None:
-        self._use_timed_brightness = value
 
     @property
     def adjust_brightness(self) -> Union[bool, int]:
