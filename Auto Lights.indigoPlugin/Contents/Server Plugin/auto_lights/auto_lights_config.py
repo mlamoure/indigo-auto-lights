@@ -18,35 +18,17 @@ class AutoLightsConfig:
 
         The properties can be adjusted as needed to fine-tune lighting behavior.
         """
-        self.early_hours_starts: int = 0
-        self.early_hours_ends: int = 0
-        self.night_hours_starts: int = 0
-        self.night_hours_ends: int = 0
-        self.target_brightness: int = 0
-        self._debug = False
         self._enabled = False
 
         self._guest_mode = False
         self._someone_home = False
         self._gone_to_bed = False
-        self._early_hours_brightness = 0
-        self._day_hours_brightness = 0
-        self._night_hours_brightness = 0
-        self._sleeping_hours_brightness = 0
-
-        self._debug_var_id = -1
         self._enabled_var_id = -1
-
         self._someone_home_var_id = -1
         self._gone_to_bed_var_id = -1
-        self._early_hours_brightness_var_id = -1
-        self._day_hours_brightness_var_id = -1
-        self._night_hours_brightness_var_id = -1
-        self._sleeping_hours_brightness_var_id = -1
         self._guest_mode_var_id = -1
         self._threading_enabled = False
         self._rapid_execution_lock = False
-        self._debug_maximum_run_time = 0.0
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0
 
