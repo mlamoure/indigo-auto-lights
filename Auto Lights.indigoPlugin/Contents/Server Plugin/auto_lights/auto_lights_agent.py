@@ -26,7 +26,6 @@ class AutoLightsAgent:
         Returns:
             int: The number of zones that actually ran automation logic.
         """
-        zones = list(orig_zones)
         debug_str = ""
 
         if not self._config.enabled:
@@ -35,8 +34,6 @@ class AutoLightsAgent:
                     "auto_lights script DEBUG: auto lights is disabled globally."
                 )
             return 0
-
-        zones_ran = 0
 
         if self._config.debug:
             debug_str = "\n\n auto_lights script DEBUG output: \n\n"
