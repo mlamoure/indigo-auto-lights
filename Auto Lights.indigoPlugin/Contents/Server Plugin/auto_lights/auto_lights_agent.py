@@ -232,3 +232,9 @@ class AutoLightsAgent:
             indigo.server.log(debug_str)
 
         return zones_ran
+
+    def process_device_change(orig_dev: indigo.Device, diff: dict) -> bool:
+
+        # First, iterate through each self._zone
+
+            # For each zone, call has_device(orig_dev.id)

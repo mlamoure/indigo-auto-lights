@@ -1,6 +1,12 @@
-import indigo
 import threading
+
 from config_web_editor.app import run_flask_app
+from auto_lights.auto_lights_config import AutoLightsConfig
+
+try:
+    import indigo
+except ImportError:
+    pass
 
 class Plugin(indigo.PluginBase):
 
@@ -27,6 +33,7 @@ class Plugin(indigo.PluginBase):
 		indigo.variables.subscribeToChanges()
 
 		self.debug: bool = True
+		self._agent = None
 
 	def startup(self: indigo.PluginBase) -> None:
 		"""
@@ -36,6 +43,9 @@ class Plugin(indigo.PluginBase):
         """
 		self.logger.debug("startup called")
 		self.start_configuration_web_server()
+
+		config = AutoLightsConfig("config_web_editor/config/auto_lights_conf.json")
+
 
 	def shutdown(self: indigo.PluginBase) -> None:
 		"""

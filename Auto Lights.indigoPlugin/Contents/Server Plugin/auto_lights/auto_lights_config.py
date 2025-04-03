@@ -1,4 +1,5 @@
 import datetime
+import json
 
 try:
     import indigo
@@ -31,6 +32,8 @@ class AutoLightsConfig:
         self._rapid_execution_lock = False
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0
+
+        self._zones = []
 
     @property
     def enabled(self):
@@ -112,3 +115,20 @@ class AutoLightsConfig:
     @default_lock_extension_duration.setter
     def default_lock_extension_duration(self, value: int) -> None:
         self._default_lock_extension_duration = value
+
+
+    def load_config(self, config_file: str) -> None:
+        with open(config_file, "r") as f:
+            data = json.load(f)
+
+        plugin_config = data.get("plugin_config", {})
+
+        # Initialize config from plugin_config
+        for key, value in plugin_config.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+        self._zones = []
+        for zone_data in data.get("zones", []):
+            pass
+
