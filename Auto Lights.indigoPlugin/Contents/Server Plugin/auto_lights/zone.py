@@ -573,67 +573,7 @@ class Zone(object):
         if not self.lock_enabled:
             return False
 
-        now = datetime.datetime.now()
-
-        # Use cached lock value if previously calculated
-        # Note: this is important as it impacts correct functionality.
-        #       This property is intended to be called early in execution, but is also called in debug
-        #       later in the execution which can trigger a lock as the state has changed.
-        if self._locked is not None:
-            return self._locked
-
-        # Parse or initialize lock expiration time
-        if self._lock_expiration is None:
-            try:
-                self._lock_expiration = datetime.datetime.strptime(
-                    self.lock_var.value, "%Y-%m-%d %H:%M:%S"
-                )
-            except (ValueError, TypeError):
-                self._lock_expiration = now - datetime.timedelta(
-                    minutes=self.lock_duration
-                )
-
-        # If still within lock period, use existing lock
-        if self._lock_expiration > now:
-            self._locked = True
-            indigo.variable.updateValue(
-                self.previous_target_var_name, str(self.target_save_state)
-            )
-            return True
-
-        # Determine if a new lock is needed due to brightness/state change
-        current_status = self.current_lights_status
-        previous_status = self.previous_execution_lights_target
-        for idx, (cur, prev) in enumerate(zip(current_status, previous_status)):
-            if cur != prev:
-                self._lock_expiration = now + datetime.timedelta(
-                    minutes=self.lock_duration
-                )
-                indigo.variable.updateValue(self.lock_var, self.lock_expiration_str)
-                indigo.variable.updateValue(
-                    self.previous_target_var_name, str(self.target_save_state)
-                )
-
-                device_ids = [
-                    dev_id
-                    for dev_id in self.on_lights_dev_ids + self.off_lights_dev_ids
-                    if dev_id not in self.exclude_from_lock_dev_ids
-                ]
-                device_name = (
-                    indigo.devices[device_ids[idx]].name
-                    if idx < len(device_ids)
-                    else "unknown"
-                )
-                indigo.server.log(
-                    f"... Zone '{self.name}': new lock created due to brightness change "
-                    f"on device '{device_name}' from {prev} to {cur}",
-                    isError=False,
-                )
-                self._locked = True
-                return True
-
-        self._locked = False
-        return False
+        return self._locked
 
     def reset_lock(self, reason):
         """
