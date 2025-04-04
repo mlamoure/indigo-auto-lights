@@ -128,7 +128,6 @@ class AutoLightsConfig:
             if hasattr(self, key):
                 setattr(self, key, value)
 
-        self._zones = []
-        for zone_data in data.get("zones", []):
-            pass
+        self._zones = data.get("zones", [])
+        self._lighting_periods = data.get("lighting_periods", [])
 
