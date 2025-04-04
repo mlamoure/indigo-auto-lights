@@ -72,7 +72,7 @@ class AutoLightsAgent:
             # Even though there are no active periods, we want to pass if there is no one home or the house is asleep so that the lights will be turned off.
             if not self._config.someone_home or self._config.gone_to_bed:
                 if debug:
-                    indigo.server.log(
+                    self.logger.info(
                         "auto_lights script DEBUG for Zone '"
                         + zone.name
                         + "': outside of applicable time periods for this zone, but continuing because there is no one home / gone to bed."
