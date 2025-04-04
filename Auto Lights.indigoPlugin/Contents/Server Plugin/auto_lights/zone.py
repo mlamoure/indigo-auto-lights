@@ -4,7 +4,6 @@ from typing import List, Union, Any, Optional
 import logging
 
 from . import utils
-from .auto_lights_config import AutoLightsConfig
 from .lighting_period import LightingPeriod
 
 try:
@@ -22,7 +21,7 @@ class Zone:
     # (2) Class variables or constants would go here if we had any.
 
     # (3) Constructor
-    def __init__(self, name: str, config: AutoLightsConfig):
+    def __init__(self, name: str, config: 'AutoLightsConfig'):
         """
         Initialize a Zone instance.
         
