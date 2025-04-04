@@ -12,13 +12,19 @@ except ImportError:
     pass
 
 
-class Zone(object):
+class Zone:
+    """
+    Represents an AutoLights zone, encompassing configuration, devices,
+    lighting periods, and states for controlling lighting behavior.
+    """
+
     def __init__(self, name: str, config: AutoLightsConfig):
         """
         Initialize a Zone instance.
 
         Args:
             name (str): The name of the zone.
+            config (AutoLightsConfig): The global auto lights configuration.
         """
         # Zone identification
         self._name = name
@@ -129,10 +135,22 @@ class Zone(object):
 
     @property
     def enabled_var_id(self) -> int:
+        """
+        The Indigo variable ID that controls whether this zone is enabled.
+
+        Returns:
+            int: The Indigo variable ID.
+        """
         return self._enabled_var_id
 
     @enabled_var_id.setter
     def enabled_var_id(self, value: int) -> None:
+        """
+        Set the Indigo variable ID that controls the zone's enabled state.
+
+        Args:
+            value (int): The Indigo variable ID.
+        """
         self._enabled_var_id = value
         self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         # indigo.server.log(f"Zone {self._name}: enabled set to: {str(self._enabled)}")
