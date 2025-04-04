@@ -628,6 +628,18 @@ class Zone:
         return ""
 
     def has_variable(self, var_id: int) -> bool:
+        """
+        Check if the provided variable id is associated with this zone.
+
+        This method determines if the given variable id matches the zone's minimum luminance variable id 
+        or the enabled variable id.
+
+        Args:
+            var_id (int): The variable id to check.
+
+        Returns:
+            bool: True if the variable is used by this zone, False otherwise.
+        """
         if self._minimum_luminance_var_id is not None and var_id == self._minimum_luminance_var_id:
             return True
         elif var_id == self._enabled_var_id:
