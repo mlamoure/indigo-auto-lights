@@ -1,6 +1,7 @@
 import ast
 import datetime
 from typing import List, Union, Any, Optional
+import logging
 
 from . import utils
 from .auto_lights_config import AutoLightsConfig
@@ -24,11 +25,12 @@ class Zone:
     def __init__(self, name: str, config: AutoLightsConfig):
         """
         Initialize a Zone instance.
-
+        
         Args:
             name (str): The name of the zone.
             config (AutoLightsConfig): The global auto lights configuration.
         """
+        self.logger = logging.getLogger("com.vtmikel.autolights.Zone")
         self._name = name
         self._enabled = False
         self._enabled_var_id = None
@@ -292,7 +294,7 @@ class Zone:
     def current_lighting_period(self) -> Optional[LightingPeriod]:
         if self._current_lighting_period is None:
             if not self.lighting_periods:
-                indigo.server.log("no periods for zone " + self._name)
+                self.logger.info("no periods for zone " + self._name)
                 return None
             for period in self.lighting_periods:
                 if period.is_active_period():
@@ -500,7 +502,7 @@ class Zone:
     def force_check_in(self):
         """Force check in the zone, logging a message if it was previously checked out."""
         if self.checked_out:
-            indigo.server.log("       ... zone " + self._name + ": forced check in")
+            self.logger.info("       ... zone " + self._name + ": forced check in")
         indigo.variable.updateValue(self.check_out_var, str(False))
 
     def check_out(self):
@@ -517,7 +519,7 @@ class Zone:
         self._locked = False
         self._previous_execution_lights_target = self.current_lights_status
         indigo.variable.updateValue(self.previous_target_var_name, str(self._current_lights_status))
-        indigo.server.log(f"auto_lights script for Zone '{self._name}', zone lock reset because {reason}")
+        self.logger.info(f"auto_lights script for Zone '{self._name}', zone lock reset because {reason}")
 
     def has_brightness_changes(self) -> bool:
         """

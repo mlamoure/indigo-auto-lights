@@ -1,5 +1,6 @@
 import threading
 from typing import List
+import logging
 
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone
@@ -14,6 +15,7 @@ class AutoLightsAgent:
     def __init__(self, config: AutoLightsConfig) -> None:
         self._config = config
         self._zones = []
+        self.logger = logging.getLogger("com.vtmikel.autolights.AutoLightsAgent")
 
     def process_zone(self, zone: Zone) -> bool:
         """
@@ -32,13 +34,13 @@ class AutoLightsAgent:
             return False
 
         if debug:
-            indigo.server.log(
+            self.logger.info(
                 "auto_lights script DEBUG for Zone '" + zone.name + "':   processing."
             )
 
         if not zone.enabled:
             if debug:
-                indigo.server.log(
+                self.logger.info(
                     "auto_lights script DEBUG for Zone '"
                     + zone.name
                     + "': auto lights is disabled for this zone."
@@ -78,7 +80,7 @@ class AutoLightsAgent:
                 # pass
             else:
                 if debug:
-                    indigo.server.log(
+                    self.logger.info(
                         "auto_lights script DEBUG for Zone '"
                         + zone.name
                         + "': outside of applicable time periods for this zone."
@@ -121,7 +123,7 @@ class AutoLightsAgent:
         # Save and write log
         ################################################################
         if zone.has_brightness_changes():
-            indigo.server.log(
+            self.logger.info(
                 "auto_lights script for Zone '"
                 + zone.name
                 + "': processing change to "
@@ -135,7 +137,7 @@ class AutoLightsAgent:
 
         else:
             if self._config.debug:
-                indigo.server.log(
+                self.logger.info(
                     "auto_lights script for Zone '"
                     + zone.name
                     + "': no changes to make, checked in"
@@ -154,7 +156,7 @@ class AutoLightsAgent:
         ################################################################
 
         if self.debug:
-            indigo.server.log(debug_str)
+            self.logger.info(debug_str)
 
         return True
 
