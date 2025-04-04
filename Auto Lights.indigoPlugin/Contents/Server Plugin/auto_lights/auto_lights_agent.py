@@ -1,4 +1,5 @@
 import threading
+from typing import List
 
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone
@@ -157,7 +158,7 @@ class AutoLightsAgent:
 
         return True
 
-    def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> bool:
+    def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> List[Zone]:
         """
         Process a device change event.
 
@@ -170,21 +171,22 @@ class AutoLightsAgent:
               - Process the change by calling self.process_zone(zone)
 
         Returns:
-            bool: True if any device change was processed; False otherwise.
+            List[Zone]: List of Zone's processed
         """
-        processed = False
+        processed = []
         for zone in self._zones:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 if zone.current_lights_status != zone.target_brightness:
                     zone.locked = True
-                    processed = True
+                    processed.append(zone)
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if self.process_zone(zone):
-                    processed = True
+                    processed.append(zone)
+
         return processed
 
-    def process_variable_change(self, orig_var, new_var) -> bool:
+    def process_variable_change(self, orig_var, new_var) -> List[Zone]:
         """
         Process a variable change event.
 
@@ -194,13 +196,13 @@ class AutoLightsAgent:
           - return False
 
         Returns:
-            bool: True if any device change was processed; False otherwise.
+            List[Zone]: List of Zone's processed
         """
 
+        processed = []
         for zone in self._zones:
-            # Check if variable change pertains to this zone.
-            # Here we assume a zone is affected if its enabled_var_id or minimum_luminance_var_id matches new_var.id.
-            if (hasattr(zone, "enabled_var_id") and zone.enabled_var_id == new_var.id) or \
-               (hasattr(zone, "minimum_luminance_var_id") and zone.minimum_luminance_var_id == new_var.id):
-                return self.process_zone(zone)
-        return False
+            if zone.has_variable(orig_var.id):
+                if self.process_zone(zone):
+                    processed.append(zone)
+
+        return processed
