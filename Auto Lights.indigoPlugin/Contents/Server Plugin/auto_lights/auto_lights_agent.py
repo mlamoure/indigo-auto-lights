@@ -197,4 +197,10 @@ class AutoLightsAgent:
             bool: True if any device change was processed; False otherwise.
         """
 
-        pass
+        for zone in self._zones:
+            # Check if variable change pertains to this zone.
+            # Here we assume a zone is affected if its enabled_var_id or minimum_luminance_var_id matches new_var.id.
+            if (hasattr(zone, "enabled_var_id") and zone.enabled_var_id == new_var.id) or \
+               (hasattr(zone, "minimum_luminance_var_id") and zone.minimum_luminance_var_id == new_var.id):
+                return self.process_zone(zone)
+        return False
