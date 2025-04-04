@@ -186,7 +186,7 @@ class AutoLightsAgent:
 
         return processed
 
-    def process_variable_change(self, orig_var, new_var) -> List[Zone]:
+    def process_variable_change(self, orig_var: indigo.Variable, new_var: indigo.Variable) -> List[Zone]:
         """
         Process a variable change event.
 
