@@ -1,4 +1,6 @@
 import json
+from .zone import Zone
+from .lighting_period import LightingPeriod
 
 try:
     import indigo
@@ -129,7 +131,6 @@ class AutoLightsConfig:
                 setattr(self, key, value)
 
         # Process zones into Zone objects
-        from .zone import Zone
         self._zones = []
         zones_data = data.get("zones", [])
         for zone_d in zones_data:
@@ -138,7 +139,6 @@ class AutoLightsConfig:
             self._zones.append(z)
 
         # Process lighting periods into LightingPeriod objects
-        from .lighting_period import LightingPeriod
         self._lighting_periods = []
         lp_data = data.get("lighting_periods", [])
         for lp in lp_data:
