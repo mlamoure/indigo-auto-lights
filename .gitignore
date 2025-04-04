@@ -60,4 +60,4 @@ venv.bak/
 *.iml
 .aider*
 
-Auto Lights.indigoPlugin/Contents*
+Auto Lights.indigoPlugin/Contents/Packages*

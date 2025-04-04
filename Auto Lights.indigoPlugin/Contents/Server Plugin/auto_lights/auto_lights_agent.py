@@ -14,7 +14,7 @@ class AutoLightsAgent:
         self._config = config
         self._zones = []
 
-    def process_zone(self, zone: Zone, orig_dev: indigo.Device, new_dev: indigo.Device) -> bool:
+    def process_zone(self, zone: Zone) -> bool:
         """
         Main automation function that processes a series of lighting zones.
 
@@ -101,7 +101,6 @@ class AutoLightsAgent:
                 zone.current_lighting_period.mode == "OnOffZone"
                 and zone.has_presence_detected()
                 and zone.is_dark()
-                and zone.use_timed_brightness
             ):
 
                 zone.calculate_target_brightness()
@@ -110,27 +109,12 @@ class AutoLightsAgent:
                 zone.current_lighting_period.mode == "OnOffZone"
                 and zone.has_presence_detected()
                 and zone.is_dark()
-                and not zone.use_timed_brightness
             ):
                 zone.target_brightness = 100
                 action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are NOT using Timed Brightness Mode"
             elif not zone.has_presence_detected():
                 zone.target_brightness = 0
                 action_reason = "presence is not detected for a OnOffZone or OffZone"
-            elif not zone.is_dark() and zone.enforce_off != "presenceOnly":
-                zone.target_brightness = 0
-                action_reason = "the minimum room luminance has been met"
-
-        ################################################################
-        # Special rules
-        ################################################################
-
-        if (
-            zone.current_lighting_period is not None
-            and self._config.someone_home
-            and not self._config.gone_to_bed
-        ):
-            zone.run_special_rules()
 
         ################################################################
         # Save and write log
@@ -168,7 +152,7 @@ class AutoLightsAgent:
         # Debug
         ################################################################
 
-        if self._config.debug:
+        if self.debug:
             indigo.server.log(debug_str)
 
         return True
@@ -196,6 +180,6 @@ class AutoLightsAgent:
                     zone.locked = True
                     processed = True
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
-                if self.process_zone(zone, orig_dev, orig_dev):
+                if self.process_zone(zone):
                     processed = True
         return processed
