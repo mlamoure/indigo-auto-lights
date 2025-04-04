@@ -34,13 +34,13 @@ class AutoLightsAgent:
             return False
 
         if debug:
-            self.logger.info(
+            self.logger.debug(
                 "auto_lights script DEBUG for Zone '" + zone.name + "':   processing."
             )
 
         if not zone.enabled:
             if debug:
-                self.logger.info(
+                self.logger.debug(
                     "auto_lights script DEBUG for Zone '"
                     + zone.name
                     + "': auto lights is disabled for this zone."
@@ -72,7 +72,7 @@ class AutoLightsAgent:
             # Even though there are no active periods, we want to pass if there is no one home or the house is asleep so that the lights will be turned off.
             if not self._config.someone_home or self._config.gone_to_bed:
                 if debug:
-                    self.logger.info(
+                    self.logger.debug(
                         "auto_lights script DEBUG for Zone '"
                         + zone.name
                         + "': outside of applicable time periods for this zone, but continuing because there is no one home / gone to bed."
@@ -80,7 +80,7 @@ class AutoLightsAgent:
                 # pass
             else:
                 if debug:
-                    self.logger.info(
+                    self.logger.debug(
                         "auto_lights script DEBUG for Zone '"
                         + zone.name
                         + "': outside of applicable time periods for this zone."
@@ -137,7 +137,7 @@ class AutoLightsAgent:
 
         else:
             if self._config.debug:
-                self.logger.info(
+                self.logger.debug(
                     "auto_lights script for Zone '"
                     + zone.name
                     + "': no changes to make, checked in"
@@ -156,7 +156,7 @@ class AutoLightsAgent:
         ################################################################
 
         if self.debug:
-            self.logger.info(debug_str)
+            self.logger.debug(debug_str)
 
         return True
 
