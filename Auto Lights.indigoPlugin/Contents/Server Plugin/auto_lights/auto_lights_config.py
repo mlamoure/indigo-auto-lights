@@ -118,69 +118,31 @@ class AutoLightsConfig:
 
 
     def load_config(self, config_file: str) -> None:
-        import datetime
-        from .zone import Zone
-        from .lighting_period import LightingPeriod
-
         with open(config_file, "r") as f:
             data = json.load(f)
+        self.from_config_dict(data)
 
+    def from_config_dict(self, data: dict) -> None:
+        # Process plugin_config
         plugin_config = data.get("plugin_config", {})
-
-        # Initialize config from plugin_config
         for key, value in plugin_config.items():
             if hasattr(self, key):
                 setattr(self, key, value)
 
         # Process zones into Zone objects
+        from .zone import Zone
         self._zones = []
         zones_data = data.get("zones", [])
         for zone_d in zones_data:
             z = Zone(zone_d.get("name"), self)
-            if "enabled_var_id" in zone_d:
-                z.enabled_var_id = zone_d["enabled_var_id"]
-            if "device_settings" in zone_d:
-                ds = zone_d["device_settings"]
-                if "on_lights_dev_ids" in ds:
-                    z.on_lights_dev_ids = ds["on_lights_dev_ids"]
-                if "off_lights_dev_ids" in ds:
-                    z.off_lights_dev_ids = ds["off_lights_dev_ids"]
-                if "lumaninance_dev_ids" in ds:
-                    z.luminance_dev_ids = ds["lumaninance_dev_ids"]
-                if "presence_dev_ids" in ds:
-                    z.presence_dev_ids = ds["presence_dev_ids"]
-            if "minimum_luminance_settings" in zone_d:
-                mls = zone_d["minimum_luminance_settings"]
-                if "minimum_luminance" in mls:
-                    z.minimum_luminance = mls["minimum_luminance"]
-                if "minimum_luminance_var_id" in mls:
-                    z.minimum_luminance_var_id = mls["minimum_luminance_var_id"]
-            if "behavior_settings" in zone_d:
-                bs = zone_d["behavior_settings"]
-                if "adjust_brightness" in bs:
-                    z.adjust_brightness = bs["adjust_brightness"]
-                if "lock_duration" in bs:
-                    z.lock_duration = bs["lock_duration"]
-                if "extend_lock_when_active" in bs:
-                    z.extend_lock_when_active = bs["extend_lock_when_active"]
-                if "perform_confirm" in bs:
-                    z.perform_confirm = bs["perform_confirm"]
-                if "turn_off_while_sleeping" in bs:
-                    z.turn_off_while_sleeping = bs["turn_off_while_sleeping"]
-                if "unlock_when_no_presence" in bs:
-                    z.unlock_when_no_presence = bs["unlock_when_no_presence"]
+            z.from_config_dict(zone_d)
             self._zones.append(z)
 
         # Process lighting periods into LightingPeriod objects
+        from .lighting_period import LightingPeriod
         self._lighting_periods = []
         lp_data = data.get("lighting_periods", [])
         for lp in lp_data:
-            name = lp.get("name")
-            mode = lp.get("mode")
-            from_time = datetime.time(lp.get("from_time_hour"), lp.get("from_time_minute"))
-            to_time = datetime.time(lp.get("to_time_hour"), lp.get("to_time_minute"))
-            lperiod = LightingPeriod(name, mode, from_time, to_time)
-            if "lock_duration" in lp:
-                lperiod._lock_duration = lp["lock_duration"]
-            self._lighting_periods.append(lperiod)
+            lp_instance = LightingPeriod.from_config_dict(lp)
+            self._lighting_periods.append(lp_instance)
 

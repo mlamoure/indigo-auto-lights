@@ -73,6 +73,40 @@ class Zone:
         self._lock_enabled = False
         self._lock_extension_duration = None
 
+    def from_config_dict(self, cfg: dict) -> None:
+        if "enabled_var_id" in cfg:
+            self.enabled_var_id = cfg["enabled_var_id"]
+        if "device_settings" in cfg:
+            ds = cfg["device_settings"]
+            if "on_lights_dev_ids" in ds:
+                self.on_lights_dev_ids = ds["on_lights_dev_ids"]
+            if "off_lights_dev_ids" in ds:
+                self.off_lights_dev_ids = ds["off_lights_dev_ids"]
+            if "lumaninance_dev_ids" in ds:
+                self.luminance_dev_ids = ds["lumaninance_dev_ids"]
+            if "presence_dev_ids" in ds:
+                self.presence_dev_ids = ds["presence_dev_ids"]
+        if "minimum_luminance_settings" in cfg:
+            mls = cfg["minimum_luminance_settings"]
+            if "minimum_luminance" in mls:
+                self.minimum_luminance = mls["minimum_luminance"]
+            if "minimum_luminance_var_id" in mls:
+                self.minimum_luminance_var_id = mls["minimum_luminance_var_id"]
+        if "behavior_settings" in cfg:
+            bs = cfg["behavior_settings"]
+            if "adjust_brightness" in bs:
+                self.adjust_brightness = bs["adjust_brightness"]
+            if "lock_duration" in bs:
+                self.lock_duration = bs["lock_duration"]
+            if "extend_lock_when_active" in bs:
+                self.extend_lock_when_active = bs["extend_lock_when_active"]
+            if "perform_confirm" in bs:
+                self.perform_confirm = bs["perform_confirm"]
+            if "turn_off_while_sleeping" in bs:
+                self.turn_off_while_sleeping = bs["turn_off_while_sleeping"]
+            if "unlock_when_no_presence" in bs:
+                self.unlock_when_no_presence = bs["unlock_when_no_presence"]
+
     # (4) Properties
     @property
     def name(self) -> str:
