@@ -1,8 +1,10 @@
 import ast
 import datetime
-from typing import List, Union, Any, Optional
+from typing import List, Union, Any, Optional, TYPE_CHECKING
 import logging
 
+if TYPE_CHECKING:
+    from .auto_lights_config import AutoLightsConfig
 from . import utils
 from .lighting_period import LightingPeriod
 
