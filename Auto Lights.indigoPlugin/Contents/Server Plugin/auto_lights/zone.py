@@ -627,6 +627,14 @@ class Zone:
             return "luminance_dev_ids"
         return ""
 
+    def has_variable(self, var_id: int) -> bool:
+        if self._minimum_luminance_var_id is not None and var_id == self._minimum_luminance_var_id:
+            return True
+        elif var_id == self._enabled_var_id:
+            return True
+
+        return False
+
     # (6) Private methods
     def _send_to_indigo(self, device_id: int, desired_brightness: int | bool) -> None:
         """
