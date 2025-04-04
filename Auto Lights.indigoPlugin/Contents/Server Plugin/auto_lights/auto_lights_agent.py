@@ -167,7 +167,7 @@ class AutoLightsAgent:
               - If the zone's current_lights_status does not equal its target_brightness,
                 set zone.locked to True.
           - If the property is 'presence_dev_ids' or 'luminance_dev_ids':
-              - Process the change by calling self.process_zone(zone, orig_dev, orig_dev)
+              - Process the change by calling self.process_zone(zone)
 
         Returns:
             bool: True if any device change was processed; False otherwise.
@@ -183,3 +183,18 @@ class AutoLightsAgent:
                 if self.process_zone(zone):
                     processed = True
         return processed
+
+    def process_variable_change(self, orig_var, new_var) -> bool:
+        """
+        Process a variable change event.
+
+        For each zone in the agent:
+          - Call zone.has_variable(new_var.id)
+            - If True, then return self.process_zone(zone)
+          - return False
+
+        Returns:
+            bool: True if any device change was processed; False otherwise.
+        """
+
+        pass

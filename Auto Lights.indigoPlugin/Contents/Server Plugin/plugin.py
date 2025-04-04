@@ -78,6 +78,9 @@ class Plugin(indigo.PluginBase):
 		# call base implementation
 		indigo.PluginBase.variableUpdated(self, new_var, new_var)
 
+		# process the change
+		self._agent.process_variable_change(orig_var, new_var)
+
 	def start_configuration_web_server(self: indigo.PluginBase):
 		address = "0.0.0.0"
 		port = 9000
