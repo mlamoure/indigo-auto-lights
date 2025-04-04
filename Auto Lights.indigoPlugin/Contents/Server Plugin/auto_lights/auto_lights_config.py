@@ -33,6 +33,7 @@ class AutoLightsConfig:
         self._default_lock_extension_duration = 0
 
         self._zones = []
+        self._lighting_periods = []
 
     @property
     def enabled(self):
