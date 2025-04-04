@@ -71,8 +71,6 @@ class Zone(object):
 
         self._locked = None
 
-        self._enforce_off = "always"
-
     @property
     def name(self) -> str:
         return self._name
@@ -337,14 +335,6 @@ class Zone(object):
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
 
         return self._luminance
-
-    @property
-    def enforce_off(self) -> str:
-        return self._enforce_off
-
-    @enforce_off.setter
-    def enforce_off(self, value: str) -> None:
-        self._enforce_off = value
 
     @property
     def last_changed_by(self) -> str:
