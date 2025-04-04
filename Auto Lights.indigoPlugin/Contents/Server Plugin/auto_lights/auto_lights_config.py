@@ -13,7 +13,7 @@ class AutoLightsConfig:
     Configuration handler for the auto_lights script, managing time-of-day logic, presence, and brightness values.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config: str) -> None:
         """
         Initialize the AutoLightsConfig with default numeric values for
         early hours, night hours, and the target brightness.
