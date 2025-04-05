@@ -127,7 +127,7 @@
           "enabled_var_id": {
             "type": "integer",
             "x-drop-down": true,
-            "title": "Variable controlling Zone enablement",
+            "title": "Zone enabled variable",
             "tooltip": "This variable will expect a true/false value on whether the zone is enabled.  This allows you to independently turn on/off a zone for auto lights using other actions in Indigo."
           },
           "lighting_period_ids": {
