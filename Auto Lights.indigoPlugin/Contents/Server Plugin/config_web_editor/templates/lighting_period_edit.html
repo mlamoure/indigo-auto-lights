@@ -62,15 +62,19 @@
                 el.addEventListener('click', function (e) {
                     var formField = this.closest('.form-field');
                     var info = formField.querySelector('.tooltip-info');
-                    if (info) {
+                    if (!info) {
+                        info = document.createElement('span');
+                        info.className = 'tooltip-info';
                         var label = formField.querySelector('.tooltip-label');
-                        var tooltip = label ? label.getAttribute('data-tooltip') : '';
-                        if (info.style.display === 'none' || info.style.display === '') {
-                            info.textContent = tooltip;
-                            info.style.display = 'block';
-                        } else {
-                            info.style.display = 'none';
-                        }
+                        label.parentNode.insertBefore(info, label.nextSibling);
+                    }
+                    var label = formField.querySelector('.tooltip-label');
+                    var tooltip = label ? label.getAttribute('data-tooltip') : '';
+                    if (info.style.display === 'none' || info.style.display === '') {
+                        info.textContent = tooltip;
+                        info.style.display = 'inline';
+                    } else {
+                        info.style.display = 'none';
                     }
                 });
             });
