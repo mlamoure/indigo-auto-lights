@@ -31,7 +31,7 @@
         "global_behavior_variables": {
           "type": "array",
           "title": "Global Behavior Variables",
-          "tooltip": "A list of variables where if the value of the variable matches the defined value, all lights will be off.  Use this for if you have a variable defined for someone being home, or if the house is asleep.",
+          "tooltip": "A list of variables where if the value of the variable matches the defined value, all lights will be off.  This is an OR condition, so any being true will turn off all lights for all zones.  Use this for if you have a variable defined for someone being home, or if the house is asleep.",
           "items": {
             "type": "object",
             "properties": {
