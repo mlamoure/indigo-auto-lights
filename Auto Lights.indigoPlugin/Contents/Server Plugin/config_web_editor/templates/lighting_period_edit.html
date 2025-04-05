@@ -22,8 +22,7 @@
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
                         <select name="{{ field.name }}">
                             {% for i in range(0, 24) %}
-                                <option value="{{ i }}"
-                                        {% if field.data|default(0)|int == i %}selected="selected"{% endif %}>{{ i }}</option>
+                                <option value="{{ i }}" {% if field.data|default(0)|int == i %}selected="selected"{% endif %}>{{ i }}</option>
                             {% endfor %}
                         </select>
                     {% elif field.name in ['from_time_minute', 'to_time_minute'] %}
@@ -31,8 +30,7 @@
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
                         <select name="{{ field.name }}">
                             {% for m in [0, 15, 30, 45, 59] %}
-                                <option value="{{ m }}"
-                                        {% if field.data|default(0)|int == m %}selected="selected"{% endif %}>{{ m }}</option>
+                                <option value="{{ m }}" {% if field.data|default(0)|int == m %}selected="selected"{% endif %}>{{ m }}</option>
                             {% endfor %}
                         </select>
                     {% elif field.name == 'mode' %}
@@ -40,8 +38,7 @@
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
                         <select name="{{ field.name }}">
                             {% for option in field.choices %}
-                                <option value="{{ option[0] }}"
-                                        {% if field.data == option[0] %}selected="selected"{% endif %}>{{ option[1] }}</option>
+                                <option value="{{ option[0] }}" {% if field.data == option[0] %}selected="selected"{% endif %}>{{ option[1] }}</option>
                             {% endfor %}
                         </select>
                     {% else %}
