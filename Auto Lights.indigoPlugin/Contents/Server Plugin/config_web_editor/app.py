@@ -164,6 +164,7 @@ def create_field(field_name, field_schema):
                 dev
                 for dev in options
                 if str(dev.get("class", "")).strip() in allowed_types
+                or str(dev.get("deviceTypeId", "")).strip() in allowed_types
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectField(
