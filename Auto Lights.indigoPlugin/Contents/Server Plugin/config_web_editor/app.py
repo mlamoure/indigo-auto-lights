@@ -16,6 +16,37 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
+import threading
+import time
+from datetime import datetime, timedelta
+
+# Set refresh interval (default: 15 minutes)
+REFRESH_INTERVAL_SECONDS = 900  # 15 minutes
+
+# Global caches for devices and variables
+_indigo_devices_cache = {"data": None}
+_indigo_variables_cache = {"data": None}
+
+# Lock for synchronizing access to caches
+_cache_lock = threading.Lock()
+
+def refresh_indigo_caches():
+    while True:
+        try:
+            new_devices = indigo_get_all_house_devices()
+            new_variables = indigo_get_all_house_variables()
+            with _cache_lock:
+                _indigo_devices_cache["data"] = new_devices
+                _indigo_variables_cache["data"] = new_variables
+            app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
+        except Exception as e:
+            app.logger.error(f"Error refreshing caches: {e}")
+        time.sleep(REFRESH_INTERVAL_SECONDS)
+
+def start_cache_refresher():
+    thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
+    thread.start()
+
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
     indigo_get_all_house_devices,
@@ -52,15 +83,13 @@ def get_lighting_period_choices():
 
 
 def get_cached_indigo_variables():
-    if not hasattr(g, "_indigo_variables"):
-        g._indigo_variables = indigo_get_all_house_variables()
-    return g._indigo_variables
+    with _cache_lock:
+        return _indigo_variables_cache["data"]
 
 
 def get_cached_indigo_devices():
-    if not hasattr(g, "_indigo_devices"):
-        g._indigo_devices = indigo_get_all_house_devices()
-    return g._indigo_devices
+    with _cache_lock:
+        return _indigo_devices_cache["data"]
 
 
 def create_field(field_name, field_schema):
