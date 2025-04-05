@@ -56,6 +56,7 @@ from .tools.indigo_api_tools import (
 )
 
 app = Flask(__name__)
+app.jinja_env.globals.update(enumerate=enumerate)
 
 load_dotenv()
 SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev_secret")
