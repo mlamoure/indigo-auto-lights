@@ -181,9 +181,7 @@
       "luminance_dev_id": [
         748404286
       ],
-      "presence_dev_id": [
-        1743152426
-      ],
+      "presence_dev_id": 1743152426,
       "minimum_luminance": 150,
       "use_timed_brightness": false,
       "turn_off_while_sleeping": true,
@@ -218,9 +216,7 @@
       "luminance_dev_id": [
         1237063200
       ],
-      "presence_dev_id": [
-        1444838879
-      ],
+      "presence_dev_id": 1444838879,
       "minimum_luminance_var_id": 1894949425,
       "use_timed_brightness": true,
       "turn_off_while_sleeping": true,
@@ -253,10 +249,7 @@
       "luminance_dev_id": [
         117501951
       ],
-      "presence_dev_id": [
-        1845597426,
-        1724907613
-      ],
+      "presence_dev_id": 1845597426,
       "minimum_luminance_var_id": 395275223,
       "use_timed_brightness": true,
       "turn_off_while_sleeping": true,
@@ -286,9 +279,7 @@
       "luminance_dev_id": [
         397050121
       ],
-      "presence_dev_id": [
-        99267001
-      ],
+      "presence_dev_id": 99267001,
       "minimum_luminance_var_id": 1055597227,
       "use_timed_brightness": true,
       "turn_off_while_sleeping": true,
@@ -355,9 +346,7 @@
       "luminance_dev_id": [
         1233274862
       ],
-      "presence_dev_id": [
-        963726168
-      ],
+      "presence_dev_id": 963726168,
       "minimum_luminance_var_id": 338672815,
       "turn_off_while_sleeping": false,
       "use_timed_brightness": false,
@@ -527,9 +516,7 @@
       "luminance_dev_id": [
         705055874
       ],
-      "presence_dev_id": [
-        1504871896
-      ],
+      "presence_dev_id": 1504871896,
       "minimum_luminance_var_id": 1820193880,
       "use_timed_brightness": false,
       "turn_off_while_sleeping": true,
@@ -670,9 +657,7 @@
       "luminance_dev_id": [
         1612437029
       ],
-      "presence_dev_id": [
-        589044884
-      ],
+      "presence_dev_id": 589044884,
       "minimum_luminance": 100,
       "use_timed_brightness": false,
       "turn_off_while_sleeping": false,
@@ -742,9 +727,7 @@
       "luminance_dev_id": [
         524252587
       ],
-      "presence_dev_id": [
-        1135522275
-      ],
+      "presence_dev_id": 1135522275,
       "minimum_luminance": 100000,
       "use_timed_brightness": false,
       "applicable_time_from": 6,
@@ -804,10 +787,7 @@
       "luminance_dev_id": [
         1233274862
       ],
-      "presence_dev_id": [
-        458359032,
-        1023104080
-      ],
+      "presence_dev_id": 458359032,
       "minimum_luminance": 45,
       "use_timed_brightness": true,
       "turn_off_while_sleeping": false,
@@ -884,9 +864,7 @@
       "luminance_dev_id": [
         1595146704
       ],
-      "presence_dev_id": [
-        845195989
-      ],
+      "presence_dev_id": 845195989,
       "minimum_luminance_var_id": 578574150,
       "has_special_rules": true,
       "use_timed_brightness": false,
