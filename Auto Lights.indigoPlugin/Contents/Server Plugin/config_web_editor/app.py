@@ -84,7 +84,7 @@ def create_field(field_name, field_schema):
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
         validators = []
-        if field_schema.get("required"):
+        if field_schema.get("required") or field_name in ["on_lights_dev_ids", "lumaninance_dev_ids", "presence_dev_ids"]:
             validators.append(DataRequired())
         options = get_cached_indigo_devices()
         if allowed_types:
