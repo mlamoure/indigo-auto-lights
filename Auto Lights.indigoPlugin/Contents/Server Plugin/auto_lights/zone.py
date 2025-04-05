@@ -242,7 +242,8 @@ class Zone:
     @minimum_luminance_var_id.setter
     def minimum_luminance_var_id(self, value: int) -> None:
         self._minimum_luminance_var_id = value
-        self._minimum_luminance = indigo.variables[value].getValue(float)
+        if value is not None:
+            self._minimum_luminance = indigo.variables[value].getValue(float)
 
     @property
     def luminance(self) -> int:
