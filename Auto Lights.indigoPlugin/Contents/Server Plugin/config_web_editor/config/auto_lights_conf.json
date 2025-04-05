@@ -1,23 +1,10 @@
 {
   "plugin_config": {
     "guest_mode_var_id": 874336279,
-    "someone_home_var_id": 1451030242,
-    "gone_to_bed_var_id": 115713944,
     "enabled_var_id": 1972107582,
-    "debug_var_id": 64467219,
-    "debug_maximum_run_time": 1.75,
     "default_lock_duration": 30,
     "default_lock_extension_duration": 10,
-    "threading_enabled": false,
-    "rapid_execution_lock": false,
-    "early_hours_starts": 5,
-    "early_hours_ends": 6,
-    "night_hours_starts": 19,
-    "night_hours_ends": 22,
-    "early_hours_brightness_var_id": 1616880441,
-    "day_hours_brightness_var_id": 1885415621,
-    "night_hours_brightness_var_id": 93624619,
-    "sleeping_hours_brightness_var_id": 1039430164
+    "global_behavior_variables": null
   },
   "zones": [
     {
