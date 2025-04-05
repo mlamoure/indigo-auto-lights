@@ -2,6 +2,11 @@
   {% if field.type == 'FormField' %}
     <fieldset class="group-box">
       <legend>{{ field.label.text }}</legend>
+      {% if field.name == 'minimum_luminance_settings' %}
+        <div class="static-label">
+          <strong>Current Luminance for this zone: </strong><span id="current-luminance-value">loading...</span>
+        </div>
+      {% endif %}
       {% for subfield in field.form if subfield.name not in ['csrf_token', 'submit'] %}
         {{ render_field(subfield) }}
       {% endfor %}
@@ -52,3 +57,27 @@
     </div>
   {% endif %}
 {% endmacro %}
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const luminosityEl = document.getElementById("current-luminance-value");
+  if (luminosityEl) {
+    // Replace the empty array with actual device IDs if available
+    fetch("/get_luminance_value", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ device_ids: [] })
+    })
+      .then(response => response.json())
+      .then(data => {
+        luminosityEl.textContent = data.average;
+      })
+      .catch(err => {
+        console.error("Error fetching luminance:", err);
+        luminosityEl.textContent = "error";
+      });
+  }
+});
+</script>
