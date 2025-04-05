@@ -1,7 +1,99 @@
 {% macro render_field(field) %}
   {% set is_required = 'required' in field.flags or field.validators|selectattr('__class__.__name__', 'equalto', 'DataRequired')|list %}
   {% set has_default = field.default is not none %}
-  {% if field.type == 'FormField' %}
+  {% if field.name == 'global_behavior_variables' %}
+      <div class="form-field">
+        <label class="tooltip-label" data-tooltip="{{ field.description }}">
+          {{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}
+        </label>
+        <table id="global-behavior-variables-table" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="border:1px solid #ccc; padding:4px;">Variable</th>
+              <th style="border:1px solid #ccc; padding:4px;">Value</th>
+              <th style="border:1px solid #ccc; padding:4px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for idx, entry in enumerate(field.data or []) %}
+            <tr>
+              <td style="border:1px solid #ccc; padding:4px;">
+                <select name="global_behavior_variables-{{ idx }}-var_id">
+                  {% for var in get_cached_indigo_variables() %}
+                    <option value="{{ var.id }}" {% if var.id == entry.var_id %}selected{% endif %}>{{ var.name }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td style="border:1px solid #ccc; padding:4px;">
+                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value | default('') }}">
+              </td>
+              <td style="border:1px solid #ccc; padding:4px;">
+                <button type="button" class="remove-row">Remove</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <button type="button" id="add-behavior-variable-row" class="btn">Add Row</button>
+        <script>
+          document.addEventListener('DOMContentLoaded', function(){
+            var tableBody = document.querySelector('#global-behavior-variables-table tbody');
+            document.getElementById('add-behavior-variable-row')
+              .addEventListener('click', function(){
+                var rowCount = tableBody.rows.length;
+                var row = document.createElement('tr');
+              
+                // Create cell for variable drop-down
+                var varCell = document.createElement('td');
+                var select = document.createElement('select');
+                select.name = 'global_behavior_variables-' + rowCount + '-var_id';
+                {% for var in get_cached_indigo_variables() %}
+                var option = document.createElement('option');
+                option.value = '{{ var.id }}';
+                option.text = '{{ var.name }}';
+                select.appendChild(option);
+                {% endfor %}
+                varCell.appendChild(select);
+                varCell.style.border = "1px solid #ccc";
+                varCell.style.padding = "4px";
+              
+                // Create cell for value input field
+                var valCell = document.createElement('td');
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'global_behavior_variables-' + rowCount + '-var_value';
+                valCell.appendChild(input);
+                valCell.style.border = "1px solid #ccc";
+                valCell.style.padding = "4px";
+              
+                // Create cell for remove action
+                var actCell = document.createElement('td');
+                var removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.textContent = 'Remove';
+                removeButton.className = 'remove-row';
+                removeButton.addEventListener('click', function(){
+                  row.parentNode.removeChild(row);
+                });
+                actCell.appendChild(removeButton);
+                actCell.style.border = "1px solid #ccc";
+                actCell.style.padding = "4px";
+              
+                row.appendChild(varCell);
+                row.appendChild(valCell);
+                row.appendChild(actCell);
+                tableBody.appendChild(row);
+              });
+          
+            document.querySelectorAll('.remove-row').forEach(function(btn){
+              btn.addEventListener('click', function(){
+                this.closest('tr').remove();
+              });
+            });
+          });
+        </script>
+      </div>
+  {% elif field.type == 'FormField' %}
     <fieldset class="group-box">
       <legend>{{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}</legend>
       {% if field.name == 'minimum_luminance_settings' %}
