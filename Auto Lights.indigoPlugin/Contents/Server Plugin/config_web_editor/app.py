@@ -1,10 +1,12 @@
 import json
 import os
+import threading
+import time
 from collections import OrderedDict
+from datetime import datetime
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask import g
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -16,10 +18,6 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
-import threading
-import time
-from datetime import datetime, timedelta
-
 # Set refresh interval (default: 15 minutes)
 REFRESH_INTERVAL_SECONDS = 900  # 15 minutes
 
@@ -29,6 +27,7 @@ _indigo_variables_cache = {"data": None}
 
 # Lock for synchronizing access to caches
 _cache_lock = threading.Lock()
+
 
 def refresh_indigo_caches():
     while True:
@@ -43,9 +42,11 @@ def refresh_indigo_caches():
             app.logger.error(f"Error refreshing caches: {e}")
         time.sleep(REFRESH_INTERVAL_SECONDS)
 
+
 def start_cache_refresher():
     thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
     thread.start()
+
 
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
@@ -176,7 +177,11 @@ def create_field(field_name, field_schema):
             choices=get_dropdown_options(),
             coerce=int,
         )
-    elif field_name in ["lock_duration", "default_lock_duration"]:
+    elif field_name in [
+        "lock_duration",
+        "default_lock_duration",
+        "default_lock_extension_duration",
+    ]:
         f = SelectField(
             label=label_text,
             description=tooltip_text,
@@ -248,7 +253,9 @@ with open(schema_path) as f:
 
 
 def load_config():
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json")
+    config_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
+    )
     try:
         with open(config_path) as f:
             return json.load(f)
@@ -257,7 +264,9 @@ def load_config():
 
 
 def save_config(config_data):
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json")
+    config_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
+    )
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=2)
 
