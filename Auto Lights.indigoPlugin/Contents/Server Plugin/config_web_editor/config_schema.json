@@ -114,7 +114,7 @@
                 },
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice",
-                "title": "Luminance Device IDs",
+                "title": "Luminance Device(s)",
                 "tooltip": "List of device IDs for luminance sensors."
               },
               "presence_dev_ids": {
@@ -123,8 +123,8 @@
                   "type": "integer"
                 },
                 "x-drop-down": true,
-                "x-include-device-classes": "indigo.SensorDevice",
-                "title": "Presence Device IDs",
+                "x-include-device-classes": "indigo.SensorDevice,thresholdTimer,persistenceTimer,activityTimer",
+                "title": "Presence Device(s)",
                 "tooltip": "List of device IDs for presence sensors."
               }
             }

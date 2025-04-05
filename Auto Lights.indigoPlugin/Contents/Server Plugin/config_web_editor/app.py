@@ -90,12 +90,16 @@ def get_cached_indigo_variables():
             try:
                 new_variables = indigo_get_all_house_variables()
                 _indigo_variables_cache["data"] = new_variables
-                app.logger.info(f"[{datetime.now()}] Indigo variables cache manually refreshed")
+                app.logger.info(
+                    f"[{datetime.now()}] Indigo variables cache manually refreshed"
+                )
             except Exception as e:
                 app.logger.error(f"Error manually refreshing variables cache: {e}")
         return _indigo_variables_cache["data"]
 
+
 app.jinja_env.globals.update(get_cached_indigo_variables=get_cached_indigo_variables)
+
 
 def get_cached_indigo_devices():
     with _cache_lock:
@@ -103,7 +107,9 @@ def get_cached_indigo_devices():
             try:
                 new_devices = indigo_get_all_house_devices()
                 _indigo_devices_cache["data"] = new_devices
-                app.logger.info(f"[{datetime.now()}] Indigo devices cache manually refreshed")
+                app.logger.info(
+                    f"[{datetime.now()}] Indigo devices cache manually refreshed"
+                )
             except Exception as e:
                 app.logger.error(f"Error manually refreshing devices cache: {e}")
         return _indigo_devices_cache["data"]
@@ -141,6 +147,7 @@ def create_field(field_name, field_schema):
                 dev
                 for dev in options
                 if str(dev.get("class", "")).strip() in allowed_types
+                or str(dev.get("devTypeId", "")).strip() in allowed_types
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectMultipleField(
@@ -307,15 +314,19 @@ def plugin_config():
                 if len(parts) >= 3:
                     index = parts[1]
                     var_id_value = request.form.get(key)
-                    var_value_value = request.form.get(f"global_behavior_variables-{index}-var_value", "")
+                    var_value_value = request.form.get(
+                        f"global_behavior_variables-{index}-var_value", ""
+                    )
                     try:
                         var_id_int = int(var_id_value)
                     except (ValueError, TypeError):
                         continue
-                    global_vars.append({
-                        "var_id": var_id_int,
-                        "var_value": var_value_value,
-                    })
+                    global_vars.append(
+                        {
+                            "var_id": var_id_int,
+                            "var_value": var_value_value,
+                        }
+                    )
         updated_config["global_behavior_variables"] = global_vars
         # --- End new code ---
         config_data["plugin_config"] = updated_config
