@@ -39,7 +39,7 @@
           "type": "integer",
           "title": "Default Lock Extension Duration",
           "tooltip": "Set the duration by which the lock is extended in seconds."
-        },
+        }
       },
       "required": [
         "guest_mode_var_id",
