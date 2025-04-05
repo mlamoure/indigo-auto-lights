@@ -36,6 +36,10 @@ class AutoLightsConfig:
         self._zones = []
         self._lighting_periods = []
 
+        self._config_file = config
+
+        self.load_config()
+
     @property
     def enabled(self):
         return self._enabled
@@ -118,8 +122,8 @@ class AutoLightsConfig:
         self._default_lock_extension_duration = value
 
 
-    def load_config(self, config_file: str) -> None:
-        with open(config_file, "r") as f:
+    def load_config(self) -> None:
+        with open(self._config_file, "r") as f:
             data = json.load(f)
         self.from_config_dict(data)
 

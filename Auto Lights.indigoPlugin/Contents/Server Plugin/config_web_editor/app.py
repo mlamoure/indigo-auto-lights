@@ -178,7 +178,7 @@ def generate_form_class_from_schema(schema):
         required_fields = schema.get("required", [])
         if not isinstance(required_fields, list):
             required_fields = []
-        subschema["required"] = (prop in required_fields)
+        subschema["required"] = prop in required_fields
         if subschema.get("type") == "object":
             from wtforms import FormField
 
@@ -454,6 +454,7 @@ def get_luminance_value():
         avg = 0
     return {"average": avg}
 
-def run_flask_app(host: str = "0.0.0.0", port: int = 9000) -> None:
+
+def run_flask_app(host: str = "0.0.0.0", port: int = 9500, debug: bool = False) -> None:
     # Configure host and port as needed
-    app.run(host=host, port=port, debug=False)
+    app.run(host=host, port=port, debug=debug)
