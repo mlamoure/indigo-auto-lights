@@ -654,6 +654,8 @@ class Zone:
         """
         Check if the given device ID exists in this zone's device lists.
         """
+        if dev_id in self.exclude_from_lock_dev_ids:
+            return "exclude_from_lock_dev_ids"
         if dev_id in self._on_lights_dev_ids:
             return "on_lights_dev_ids"
         if dev_id in self._off_lights_dev_ids:
