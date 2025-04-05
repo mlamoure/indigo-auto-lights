@@ -12,29 +12,16 @@
     <div id="container">
       {% include "navigation.html" %}
       <div id="content">
+        {% from "_form_macros.html" import render_field %}
         <form method="POST" id="plugin-config-form" class="edit-form">
             {{ plugin_form.hidden_tag() }}
-          
-          {% for field in plugin_form if field.name != 'submit' %}
-            <div class="form-field">
-              <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
-              {% if field.name.endswith('_var_id') %}
-                <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
-                <div style="display:inline-block;">
-                  {{ field() }}
-                  <button type="button" class="create-new-var-btn" data-field-name="{{ field.name }}" disabled>Create New Variable</button>
-                  <button type="button" class="refresh-var-list-btn" data-field-name="{{ field.name }}">Refresh Variable List</button>
-                </div>
-              {% else %}
-                {{ field() }}
-              {% endif %}
-              <div class="tooltip-info" style="display:none;"></div>
+            {% for field in plugin_form if field.name not in ['submit', 'csrf_token'] %}
+                {{ render_field(field) }}
+            {% endfor %}
+            <div>
+                <input type="submit" value="Save" class="btn">
+                <button type="button" class="btn" onclick="window.location.href='/'">Cancel</button>
             </div>
-          {% endfor %}
-          <div>
-            <input type="submit" value="Save" class="btn">
-            <button type="button" class="btn" onclick="window.location.href='/'">Cancel</button>
-          </div>
         </form>
         <div id="create-var-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
           <div style="background:#fff; padding:20px; margin:100px auto; width:300px; border-radius:8px; position:relative;">
