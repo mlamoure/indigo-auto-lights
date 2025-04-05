@@ -27,6 +27,27 @@
           "type": "integer",
           "title": "Default Lock Extension Duration",
           "tooltip": "Set the duration by which the lock is extended in seconds."
+        },
+        "global_behavior_variables": {
+          "type": "array",
+          "title": "Global Behavior Variables",
+          "tooltip": "A list of tuples each containing a variable ID\nand a corresponding value.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "var_id": {
+                "type": "integer",
+                "title": "Variable ID",
+                "tooltip": "Identifier for the variable."
+              },
+              "var_value": {
+                "type": "string",
+                "title": "Variable Value",
+                "tooltip": "Value for the variable."
+              }
+            },
+            "required": ["var_id", "var_value"]
+          }
         }
       },
       "required": [
