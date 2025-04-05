@@ -513,4 +513,5 @@ def run_flask_app(
     host: str = "127.0.0.1", port: int = 9500, debug: bool = False
 ) -> None:
     # Configure host and port as needed
+    start_cache_refresher()
     app.run(host=host, port=port, debug=debug)
