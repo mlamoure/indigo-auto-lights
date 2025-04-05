@@ -50,6 +50,9 @@ class Plugin(indigo.PluginBase):
 
         confg_file_str = "config_web_editor/config/auto_lights_conf.json"
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
+        if not os.path.exists(confg_file_str):
+            import shutil
+            shutil.copyfile(confg_file_empty_str, confg_file_str)
 
         self.start_configuration_web_server()
         conf_path = os.path.abspath(confg_file_str)
