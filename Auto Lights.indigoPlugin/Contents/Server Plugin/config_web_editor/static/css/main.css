@@ -204,3 +204,5 @@ table.zones-table th {
 .multiple-select-container select {
     min-width: 90px;
 }
+
+.required-marker { color: red; margin-left: 4px; font-weight: bold; }
