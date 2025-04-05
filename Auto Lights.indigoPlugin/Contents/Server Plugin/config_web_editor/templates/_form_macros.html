@@ -111,7 +111,7 @@
       <div class="multiple-select-row" style="display:flex; align-items:center;">
         <label class="tooltip-label" data-tooltip="{{ field.description }}" style="display:inline-block; width:200px; vertical-align:middle;">{{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}</label>
         <div class="multiple-select-container">
-          <select id="{{ field.name }}_available" multiple>
+          <select id="{{ field.name|replace('.', '-') }}_available" multiple>
             {% set selected = field.data or [] %}
             {% for value, label in field.choices %}
               {% if value not in selected %}
@@ -123,7 +123,7 @@
             <button type="button" onclick="moveRight('{{ field.name }}')">&gt;</button>
             <button type="button" onclick="moveLeft('{{ field.name }}')">&lt;</button>
           </div>
-          <select id="{{ field.name }}_selected" name="{{ field.name }}" multiple>
+          <select id="{{ field.name|replace('.', '-') }}_selected" name="{{ field.name }}" multiple>
             {% for value, label in field.choices %}
               {% if value in (field.data or []) %}
                 <option value="{{ value }}" selected>{{ label }}</option>

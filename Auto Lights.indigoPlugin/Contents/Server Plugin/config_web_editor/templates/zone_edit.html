@@ -130,8 +130,8 @@ document.addEventListener('DOMContentLoaded', function() {
       </script>
       <script>
 function moveRight(fieldName) {
-  var available = document.getElementById(fieldName + "_available");
-  var selected = document.getElementById(fieldName + "_selected");
+  var available = document.getElementById(fieldName.replace('.', '-') + "_available");
+  var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
   for (var i = available.options.length - 1; i >= 0; i--) {
     var option = available.options[i];
     if (option.selected) {
@@ -144,8 +144,8 @@ function moveRight(fieldName) {
   }
 }
 function moveLeft(fieldName) {
-  var available = document.getElementById(fieldName + "_available");
-  var selected = document.getElementById(fieldName + "_selected");
+  var available = document.getElementById(fieldName.replace('.', '-') + "_available");
+  var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
   for (var i = selected.options.length - 1; i >= 0; i--) {
     var option = selected.options[i];
     if (option.selected) {
