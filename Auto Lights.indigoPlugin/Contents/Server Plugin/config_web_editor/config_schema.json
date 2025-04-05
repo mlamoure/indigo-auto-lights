@@ -117,7 +117,7 @@
                 "title": "Luminance Device(s)",
                 "tooltip": "List of device IDs for luminance sensors."
               },
-              "presence_dev_ids": {
+              "presence_dev_id": {
                 "type": "array",
                 "items": {
                   "type": "integer"
