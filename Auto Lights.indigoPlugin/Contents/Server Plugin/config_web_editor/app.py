@@ -228,7 +228,8 @@ def load_config():
 
 
 def save_config(config_data):
-    with open("config/auto_lights_conf.json", "w") as f:
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json")
+    with open(config_path, "w") as f:
         json.dump(config_data, f, indent=2)
 
 
