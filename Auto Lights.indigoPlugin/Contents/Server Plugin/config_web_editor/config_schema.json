@@ -93,7 +93,7 @@
                   "type": "integer"
                 },
                 "x-drop-down": true,
-                "x-include-device-classes": "indigo.DimmerDevice",
+                "x-include-device-classes": "indigo.DimmerDevice,indigo.RelayDevice",
                 "title": "On / Off Lights for this Zone",
                 "tooltip": "List of device IDs that turn lights on and off in the zone."
               },
