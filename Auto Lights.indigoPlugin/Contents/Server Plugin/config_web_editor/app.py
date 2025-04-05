@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_wtf import FlaskForm
+from flask import g
 from wtforms import (
     StringField,
     IntegerField,
@@ -49,9 +50,6 @@ def get_lighting_period_choices():
     return choices
 
 
-from flask import g
-
-
 def get_cached_indigo_variables():
     if not hasattr(g, "_indigo_variables"):
         g._indigo_variables = indigo_get_all_house_variables()
@@ -84,7 +82,11 @@ def create_field(field_name, field_schema):
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
         validators = []
-        if field_schema.get("required") or field_name in ["on_lights_dev_ids", "lumaninance_dev_ids", "presence_dev_ids"]:
+        if field_schema.get("required") or field_name in [
+            "on_lights_dev_ids",
+            "lumaninance_dev_ids",
+            "presence_dev_ids",
+        ]:
             validators.append(DataRequired())
         options = get_cached_indigo_devices()
         if allowed_types:
@@ -95,7 +97,11 @@ def create_field(field_name, field_schema):
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectMultipleField(
-            label=label_text, description=tooltip_text, choices=choices, coerce=int, validators=validators
+            label=label_text,
+            description=tooltip_text,
+            choices=choices,
+            coerce=int,
+            validators=validators,
         )
     elif field_name.endswith("_dev_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_devices()
@@ -120,7 +126,7 @@ def create_field(field_name, field_schema):
             description=tooltip_text,
             choices=get_lighting_period_choices(),
             coerce=int,
-            validators=validators
+            validators=validators,
         )
     elif "_ids" in field_name and field_schema.get("x-drop-down"):
         validators = []
@@ -131,7 +137,7 @@ def create_field(field_name, field_schema):
             description=tooltip_text,
             choices=get_dropdown_options(),
             coerce=int,
-            validators=validators
+            validators=validators,
         )
     elif "_id" in field_name and field_schema.get("x-drop-down"):
         f = SelectField(
@@ -475,6 +481,8 @@ def get_luminance_value():
     return {"average": avg}
 
 
-def run_flask_app(host: str = "0.0.0.0", port: int = 9500, debug: bool = False) -> None:
+def run_flask_app(
+    host: str = "127.0.0.1", port: int = 9500, debug: bool = False
+) -> None:
     # Configure host and port as needed
     app.run(host=host, port=port, debug=debug)
