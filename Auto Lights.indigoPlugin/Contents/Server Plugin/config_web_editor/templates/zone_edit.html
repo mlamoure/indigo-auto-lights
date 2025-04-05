@@ -173,10 +173,10 @@ function updateLuminanceValue() {
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById("luminance-value").textContent = data.average.toFixed(2);
+        document.getElementById("current-luminance-value").textContent = data.average.toFixed(2);
     })
     .catch(err => {
-        document.getElementById("luminance-value").textContent = "Error";
+        document.getElementById("current-luminance-value").textContent = "Error";
     });
 }
 </script>
