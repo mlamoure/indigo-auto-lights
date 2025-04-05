@@ -57,8 +57,12 @@
                     if (!info) {
                         info = document.createElement('span');
                         info.className = 'tooltip-info';
-                        var label = formField.querySelector('.tooltip-label');
-                        label.parentNode.insertBefore(info, label.nextSibling);
+                        var selectElem = formField.querySelector('select');
+                        if (selectElem) {
+                            selectElem.parentNode.insertBefore(info, selectElem.nextSibling);
+                        } else {
+                            formField.appendChild(info);
+                        }
                     }
                     var label = formField.querySelector('.tooltip-label');
                     var tooltip = label ? label.getAttribute('data-tooltip') : '';
