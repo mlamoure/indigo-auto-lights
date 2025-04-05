@@ -219,8 +219,9 @@ with open(schema_path) as f:
 
 
 def load_config():
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json")
     try:
-        with open("config/auto_lights_conf.json") as f:
+        with open(config_path) as f:
             return json.load(f)
     except Exception:
         return {"plugin_config": {}, "zones": []}
