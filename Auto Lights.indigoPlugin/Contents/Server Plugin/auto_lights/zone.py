@@ -73,6 +73,7 @@ class Zone:
         self._special_rules_adjustment = ""
         self._lock_enabled = False
         self._lock_extension_duration = None
+        self._global_behavior_variables = []
 
     def from_config_dict(self, cfg: dict) -> None:
         if "enabled_var_id" in cfg:
@@ -107,6 +108,8 @@ class Zone:
                 self.turn_off_while_sleeping = bs["turn_off_while_sleeping"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
+        if "global_behavior_variables" in cfg:
+            self.global_behavior_variables = cfg["global_behavior_variables"]
 
     # (4) Properties
     @property
@@ -485,6 +488,22 @@ class Zone:
             if (isinstance(tb, int) and tb != 0) or (isinstance(tb, bool) and tb):
                 return False
         return True
+
+    @property
+    def global_behavior_variables(self) -> list:
+        """
+        A list of tuples each containing a variable ID (int) and a variable value (str)
+        available for global behavior adjustments.
+        """
+        return self._global_behavior_variables
+
+    @global_behavior_variables.setter
+    def global_behavior_variables(self, value: list) -> None:
+        """
+        Set the list of global behavior variables.
+        Each item should be an object with 'var_id' (int) and 'var_value' (str).
+        """
+        self._global_behavior_variables = value
 
     @property
     def special_rules_adjustment(self) -> str:
