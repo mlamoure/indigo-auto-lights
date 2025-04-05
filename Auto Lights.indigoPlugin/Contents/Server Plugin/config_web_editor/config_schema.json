@@ -249,7 +249,7 @@
               }
             }
           },
-          "advanced": {
+          "advanced_settings": {
             "type": "object",
             "title": "Advanced",
             "properties": {
