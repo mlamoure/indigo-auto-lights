@@ -1,10 +1,11 @@
 import json
 import os
+from collections import OrderedDict
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_wtf import FlaskForm
 from flask import g
+from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
     IntegerField,
@@ -210,10 +211,6 @@ def generate_form_class_from_schema(schema):
 
     return type("DynamicFormNoCSRF", (DynamicFormNoCSRF,), attrs)
 
-
-# Load JSON schema from file.
-from collections import OrderedDict
-import os
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 schema_path = os.path.join(current_dir, "config_schema.json")
