@@ -4,7 +4,16 @@
     "enabled_var_id": 1972107582,
     "default_lock_duration": 30,
     "default_lock_extension_duration": 10,
-    "global_behavior_variables": null
+    "global_behavior_variables": [
+      {
+        "var_id": 1451030242,
+        "var_value": "False"
+      },
+      {
+        "var_id": 115713944,
+        "var_value": "True"
+      }
+    ]
   },
   "zones": [
     {

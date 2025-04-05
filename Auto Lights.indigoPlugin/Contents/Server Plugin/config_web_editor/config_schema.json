@@ -107,7 +107,7 @@
                 "title": "Off Lights for this Zone",
                 "tooltip": "List of device IDs that turn lights off in the zone.  Note: On/Off lights to DOT need to be added to this list."
               },
-              "lumaninance_dev_ids": {
+              "luminance_dev_ids": {
                 "type": "array",
                 "items": {
                   "type": "integer"
