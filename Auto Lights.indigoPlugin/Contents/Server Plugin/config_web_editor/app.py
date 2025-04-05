@@ -299,6 +299,25 @@ def plugin_config():
             for field_name, field in plugin_form._fields.items()
             if field_name != "submit"
         }
+        # --- Begin new code to process global_behavior_variables ---
+        global_vars = []
+        for key in request.form:
+            if key.startswith("global_behavior_variables-") and key.endswith("-var_id"):
+                parts = key.split("-")
+                if len(parts) >= 3:
+                    index = parts[1]
+                    var_id_value = request.form.get(key)
+                    var_value_value = request.form.get(f"global_behavior_variables-{index}-var_value", "")
+                    try:
+                        var_id_int = int(var_id_value)
+                    except (ValueError, TypeError):
+                        continue
+                    global_vars.append({
+                        "var_id": var_id_int,
+                        "var_value": var_value_value,
+                    })
+        updated_config["global_behavior_variables"] = global_vars
+        # --- End new code ---
         config_data["plugin_config"] = updated_config
         save_config(config_data)
         flash("Plugin configuration saved.")
