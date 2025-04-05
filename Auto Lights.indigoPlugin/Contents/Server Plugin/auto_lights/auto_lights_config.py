@@ -23,11 +23,7 @@ class AutoLightsConfig:
         self._enabled = False
 
         self._guest_mode = False
-        self._someone_home = False
-        self._gone_to_bed = False
         self._enabled_var_id = -1
-        self._someone_home_var_id = -1
-        self._gone_to_bed_var_id = -1
         self._guest_mode_var_id = -1
         self._rapid_execution_lock = False
         self._default_lock_duration = 0
@@ -71,39 +67,6 @@ class AutoLightsConfig:
         self._guest_mode_var_id = value
         self._guest_mode = indigo.variables[self._guest_mode_var_id].getValue(bool)
 
-    @property
-    def someone_home(self):
-        return self._someone_home
-
-    @someone_home.setter
-    def someone_home(self, value):
-        self._someone_home = value
-
-    @property
-    def someone_home_var_id(self):
-        return self._someone_home_var_id
-
-    @someone_home_var_id.setter
-    def someone_home_var_id(self, value):
-        self._someone_home_var_id = value
-        self._someone_home = indigo.variables[self._someone_home_var_id].getValue(bool)
-
-    @property
-    def gone_to_bed(self):
-        return self._gone_to_bed
-
-    @gone_to_bed.setter
-    def gone_to_bed(self, value):
-        self._gone_to_bed = value
-
-    @property
-    def gone_to_bed_var_id(self):
-        return self._gone_to_bed_var_id
-
-    @gone_to_bed_var_id.setter
-    def gone_to_bed_var_id(self, value):
-        self._gone_to_bed_var_id = value
-        self._gone_to_bed = indigo.variables[self._gone_to_bed_var_id].getValue(bool)
 
     @property
     def default_lock_duration(self) -> int:

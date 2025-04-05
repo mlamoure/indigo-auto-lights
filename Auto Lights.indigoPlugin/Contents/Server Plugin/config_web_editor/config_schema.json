@@ -12,18 +12,6 @@
           "title": "Guest Mode Variable",
           "tooltip": "Set the identifier for the guest mode variable."
         },
-        "someone_home_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Someone Home Variable",
-          "tooltip": "Set the identifier for the someone home variable."
-        },
-        "gone_to_bed_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Gone To Bed Variable",
-          "tooltip": "Set the identifier for the gone to bed variable."
-        },
         "enabled_var_id": {
           "type": "integer",
           "x-drop-down": true,
@@ -43,8 +31,6 @@
       },
       "required": [
         "guest_mode_var_id",
-        "someone_home_var_id",
-        "gone_to_bed_var_id",
         "enabled_var_id"
       ]
     },
