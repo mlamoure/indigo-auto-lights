@@ -410,40 +410,40 @@
       ]
     },
     {
-      "type": "Zone",
       "name": "Living Room",
       "enabled_var_id": 591744714,
-      "last_changed_by_var_id": 644543016,
-      "on_lights_dev_ids": [
-        1183208037,
-        1214639462
-      ],
-      "off_lights_dev_ids": [
-        1442978166
-      ],
-      "luminance_dev_id": [
-        1166795092
-      ],
-      "presence_dev_id": [
-        273722637
-      ],
-      "minimum_luminance_var_id": 462919412,
-      "use_timed_brightness": false,
-      "turn_off_while_sleeping": true,
-      "lighting_periods": [
-        {
-          "name": "6am to 6pm OnOffZone",
-          "mode": "OnOffZone",
-          "from_time": [
-            6,
-            0
-          ],
-          "to_time": [
-            19,
-            30
-          ]
-        }
-      ]
+      "lighting_period_ids": [],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1214639462,
+          1183208037
+        ],
+        "off_lights_dev_ids": [
+          1442978166
+        ],
+        "luminance_dev_ids": [
+          1166795092
+        ],
+        "presence_dev_ids": [
+          273722637
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 462919412
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "perform_confirm": false,
+        "turn_off_while_sleeping": false,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
     },
     {
       "type": "Zone",

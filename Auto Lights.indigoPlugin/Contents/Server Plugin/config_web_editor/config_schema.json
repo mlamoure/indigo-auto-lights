@@ -124,7 +124,7 @@
                 },
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice,thresholdTimer,persistenceTimer,activityTimer",
-                "title": "Presence Device(s)",
+                "title": "Presence Device",
                 "tooltip": "List of device IDs for presence sensors."
               }
             }
