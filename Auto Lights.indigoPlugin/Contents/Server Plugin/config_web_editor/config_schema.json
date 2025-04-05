@@ -247,7 +247,8 @@
                 "tooltip": "Enable to unlock the zone when no presence is detected.",
                 "default": true
               }
-            },
+            }
+          },
           "advanced": {
             "type": "object",
             "title": "Advanced",
@@ -262,7 +263,6 @@
                 "tooltip": "These devices will not be used to trigger a lock for the zone."
               }
             }
-          }
           }
         },
         "required": [
