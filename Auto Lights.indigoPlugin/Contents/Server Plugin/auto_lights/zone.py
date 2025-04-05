@@ -47,7 +47,7 @@ class Zone:
         self._luminance_dev_ids = []
         self._luminance = 0
 
-        self._presence_dev_ids = []
+        self._presence_dev_id = None
         self._minimum_luminance = 10000
         self._minimum_luminance_var_id = None
 
@@ -86,8 +86,8 @@ class Zone:
                 self.off_lights_dev_ids = ds["off_lights_dev_ids"]
             if "lumaninance_dev_ids" in ds:
                 self.luminance_dev_ids = ds["lumaninance_dev_ids"]
-            if "presence_dev_ids" in ds:
-                self.presence_dev_ids = ds["presence_dev_ids"]
+            if "presence_dev_id" in ds:
+                self.presence_dev_id = ds["presence_dev_id"]
         if "minimum_luminance_settings" in cfg:
             mls = cfg["minimum_luminance_settings"]
             if "minimum_luminance" in mls:
@@ -214,13 +214,13 @@ class Zone:
         self.target_brightness = self.current_lights_status
 
     @property
-    def presence_dev_ids(self) -> List[int]:
-        """List of device IDs reporting presence."""
-        return self._presence_dev_ids
+    def presence_dev_id(self) -> int:
+        """Identifier for device reporting presence."""
+        return self._presence_dev_id
 
-    @presence_dev_ids.setter
-    def presence_dev_ids(self, value: List[int]) -> None:
-        self._presence_dev_ids = value
+    @presence_dev_id.setter
+    def presence_dev_id(self, value: int) -> None:
+        self._presence_dev_id = value
 
     @property
     def luminance_dev_ids(self) -> List[int]:
@@ -352,9 +352,8 @@ class Zone:
     @property
     def last_changed(self) -> datetime.datetime:
         device_last_changed = datetime.datetime(1900, 1, 1)
-        for dev_id in self.presence_dev_ids:
-            if indigo.devices[dev_id].lastChanged > device_last_changed:
-                device_last_changed = indigo.devices[dev_id].lastChanged
+        if self.presence_dev_id is not None and indigo.devices[self.presence_dev_id].lastChanged > device_last_changed:
+            device_last_changed = indigo.devices[self.presence_dev_id].lastChanged
         for dev_id in self.luminance_dev_ids:
             if indigo.devices[dev_id].lastChanged > device_last_changed:
                 device_last_changed = indigo.devices[dev_id].lastChanged
@@ -520,11 +519,11 @@ class Zone:
         """
         if self.current_lighting_period and self.current_lighting_period.uses_presence_override:
             return self.current_lighting_period.has_presence_detected()
-        for dev_id in self.presence_dev_ids:
-            if "onOffState" in indigo.devices[dev_id].states:
-                if indigo.devices[dev_id].states["onOffState"]:
+        if self.presence_dev_id is not None:
+            if "onOffState" in indigo.devices[self.presence_dev_id].states:
+                if indigo.devices[self.presence_dev_id].states["onOffState"]:
                     return True
-            elif indigo.devices[dev_id].onState:
+            elif indigo.devices[self.presence_dev_id].onState:
                 return True
         return False
 
@@ -680,8 +679,8 @@ class Zone:
             return "on_lights_dev_ids"
         if dev_id in self._off_lights_dev_ids:
             return "off_lights_dev_ids"
-        if dev_id in self._presence_dev_ids:
-            return "presence_dev_ids"
+        if self._presence_dev_id == dev_id:
+            return "presence_dev_id"
         if dev_id in self._luminance_dev_ids:
             return "luminance_dev_ids"
         return ""
