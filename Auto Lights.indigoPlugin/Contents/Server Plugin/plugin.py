@@ -1,8 +1,9 @@
+import os
 import threading
 
-from config_web_editor.app import run_flask_app
+from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
-import os
+from config_web_editor.app import run_flask_app
 
 try:
     import indigo
@@ -47,8 +48,11 @@ class Plugin(indigo.PluginBase):
         """
         self.logger.debug("startup called")
         self.start_configuration_web_server()
+
         conf_path = os.path.abspath("config_web_editor/config/auto_lights_conf.json")
+
         config = AutoLightsConfig(conf_path)
+        self._agent = AutoLightsAgent(config)
 
     def shutdown(self: indigo.PluginBase) -> None:
         """
