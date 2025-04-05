@@ -522,5 +522,14 @@ def run_flask_app(
     host: str = "127.0.0.1", port: int = 9500, debug: bool = False
 ) -> None:
     # Configure host and port as needed
+    try:
+        new_devices = indigo_get_all_house_devices()
+        new_variables = indigo_get_all_house_variables()
+        with _cache_lock:
+            _indigo_devices_cache["data"] = new_devices
+            _indigo_variables_cache["data"] = new_variables
+        app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
+    except Exception as e:
+        app.logger.error(f"Error refreshing caches: {e}")
     start_cache_refresher()
     app.run(host=host, port=port, debug=debug)
