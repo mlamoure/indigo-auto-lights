@@ -30,9 +30,7 @@
         "luminance_dev_ids": [
           1830390569
         ],
-        "presence_dev_ids": [
-          1059102247
-        ]
+        "presence_dev_id": 1059102247
       },
       "minimum_luminance_settings": {
         "minimum_luminance": 100,
@@ -63,10 +61,7 @@
           1800709152,
           6264435
         ],
-        "presence_dev_ids": [
-          1007593469,
-          1099605699
-        ]
+        "presence_dev_id": 1007593469
       },
       "minimum_luminance_settings": {
         "minimum_luminance": null,
@@ -97,9 +92,7 @@
           285751791,
           1166795092
         ],
-        "presence_dev_ids": [
-          1338303349
-        ]
+        "presence_dev_id": 1338303349
       },
       "minimum_luminance_settings": {
         "minimum_luminance": null,
@@ -129,9 +122,7 @@
         "luminance_dev_ids": [
           1233274862
         ],
-        "presence_dev_ids": [
-          249494446
-        ]
+        "presence_dev_id": 249494446
       },
       "minimum_luminance_settings": {
         "minimum_luminance": null,
@@ -424,9 +415,7 @@
         "luminance_dev_ids": [
           1166795092
         ],
-        "presence_dev_ids": [
-          273722637
-        ]
+        "presence_dev_id": 273722637
       },
       "minimum_luminance_settings": {
         "minimum_luminance": null,
