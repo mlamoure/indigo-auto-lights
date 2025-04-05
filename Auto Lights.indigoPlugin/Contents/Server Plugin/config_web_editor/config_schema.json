@@ -213,7 +213,7 @@
           "name",
           "enabled_var_id",
           "on_lights_dev_ids",
-          "lumaninance_dev_ids",
+          "luminance_dev_ids",
           "presence_dev_ids"
         ]
       }
