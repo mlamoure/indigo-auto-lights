@@ -20,7 +20,6 @@
                     {% if field.name in ['from_time_hour', 'to_time_hour'] %}
                         <label class="tooltip-label"
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
-                        <div class="tooltip-info" style="display:none;"></div>
                         <select name="{{ field.name }}">
                             {% for i in range(0, 24) %}
                                 <option value="{{ i }}"
@@ -30,7 +29,6 @@
                     {% elif field.name in ['from_time_minute', 'to_time_minute'] %}
                         <label class="tooltip-label"
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
-                        <div class="tooltip-info" style="display:none;"></div>
                         <select name="{{ field.name }}">
                             {% for m in [0, 15, 30, 45, 59] %}
                                 <option value="{{ m }}"
@@ -40,7 +38,6 @@
                     {% elif field.name == 'mode' %}
                         <label class="tooltip-label"
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
-                        <div class="tooltip-info" style="display:none;"></div>
                         <select name="{{ field.name }}">
                             {% for option in field.choices %}
                                 <option value="{{ option[0] }}"
@@ -50,7 +47,6 @@
                     {% else %}
                         <label class="tooltip-label"
                                data-tooltip="{{ field.description }}">{{ field.label.text }}</label>
-                        <div class="tooltip-info" style="display:none;"></div>
                         {{ field() }}
                     {% endif %}
                 </div>
