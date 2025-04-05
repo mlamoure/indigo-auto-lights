@@ -20,7 +20,7 @@
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-var_id">
                   {% for var in get_cached_indigo_variables() %}
-                    <option value="{{ var.id }}" {% if var.id == entry.var_id %}selected="selected"{% endif %}>{{ var.name }}</option>
+                    <option value="{{ var.id }}" {% if entry.get("var_id") is not none and var.id == entry.get("var_id") %}selected="selected"{% endif %}>{{ var.name }}</option>
                   {% endfor %}
                 </select>
               </td>
