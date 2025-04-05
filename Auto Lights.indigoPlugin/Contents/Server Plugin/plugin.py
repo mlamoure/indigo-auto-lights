@@ -47,9 +47,12 @@ class Plugin(indigo.PluginBase):
         :return:
         """
         self.logger.debug("startup called")
-        self.start_configuration_web_server()
 
-        conf_path = os.path.abspath("config_web_editor/config/auto_lights_conf.json")
+        confg_file_str = "config_web_editor/config/auto_lights_conf.json"
+        confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
+
+        self.start_configuration_web_server()
+        conf_path = os.path.abspath(confg_file_str)
 
         config = AutoLightsConfig(conf_path)
         self._agent = AutoLightsAgent(config)

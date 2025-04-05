@@ -61,3 +61,4 @@ venv.bak/
 .aider*
 
 Auto Lights.indigoPlugin/Contents/Packages*
+/Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/config/auto_lights_conf.json
