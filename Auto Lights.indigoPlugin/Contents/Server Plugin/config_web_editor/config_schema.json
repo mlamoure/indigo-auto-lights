@@ -27,6 +27,35 @@
           "type": "integer",
           "title": "Default Lock Extension Duration",
           "tooltip": "Set the duration by which the lock is extended in seconds."
+        },
+        "global_behavior_variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "var_id": {
+                "type": "integer",
+                "x-drop-down": true,
+                "title": "Variable ID",
+                "tooltip": "Identifier for the global behavior variable."
+              },
+              "compare_value": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "string"
+                ],
+                "title": "Compare Value",
+                "tooltip": "The value to compare for triggering off lights."
+              }
+            },
+            "required": [
+              "var_id",
+              "compare_value"
+            ]
+          },
+          "title": "Global behavior variables",
+          "tooltip": "A list of global variables, where when the condition is True, all lights will be off. Use this if you have a variable for whether someone is home in the house, or if the house is sleeping."
         }
       },
       "required": [
