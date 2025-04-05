@@ -437,9 +437,7 @@
       "luminance_dev_id": [
         1264488761
       ],
-      "presence_dev_id": [
-        1508773282
-      ],
+      "presence_dev_id": 1508773282,
       "minimum_luminance_var_id": 597796883,
       "use_timed_brightness": false,
       "use_timed_brightness_adjustments": false,
@@ -548,10 +546,7 @@
       "luminance_dev_id": [
         705055874
       ],
-      "presence_dev_id": [
-        148982550,
-        93028250
-      ],
+      "presence_dev_id": 148982550,
       "minimum_luminance_var_id": 160093094,
       "use_timed_brightness": true,
       "unlock_when_no_presence": false,
