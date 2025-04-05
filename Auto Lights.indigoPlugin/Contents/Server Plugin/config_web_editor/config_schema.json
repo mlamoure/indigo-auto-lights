@@ -207,6 +207,21 @@
               }
             }
           },
+          "advanced": {
+            "type": "object",
+            "title": "Advanced",
+            "properties": {
+              "exclude_from_lock_dev_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "x-drop-down": true,
+                "title": "Exclude these devices from Lock detection",
+                "tooltip": "These devices will not be used to trigger a lock for the zone."
+              }
+            }
+          },
           "behavior_settings": {
             "type": "object",
             "title": "Lighting Behavior Settings",
