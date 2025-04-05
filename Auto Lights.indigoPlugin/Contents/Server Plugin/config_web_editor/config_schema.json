@@ -31,7 +31,7 @@
         "global_behavior_variables": {
           "type": "array",
           "title": "Global Behavior Variables",
-          "tooltip": "A list of tuples each containing a variable ID\nand a corresponding value.",
+          "tooltip": "A list of variables where if the value of the variable matches the defined value, all lights will be off.  Use this for if you have a variable defined for someone being home, or if the house is asleep.",
           "items": {
             "type": "object",
             "properties": {
@@ -46,7 +46,10 @@
                 "tooltip": "Value for the variable."
               }
             },
-            "required": ["var_id", "var_value"]
+            "required": [
+              "var_id",
+              "var_value"
+            ]
           }
         }
       },
