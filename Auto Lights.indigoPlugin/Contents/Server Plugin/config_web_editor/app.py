@@ -85,11 +85,25 @@ def get_lighting_period_choices():
 
 def get_cached_indigo_variables():
     with _cache_lock:
+        if _indigo_variables_cache["data"] is None:
+            try:
+                new_variables = indigo_get_all_house_variables()
+                _indigo_variables_cache["data"] = new_variables
+                app.logger.info(f"[{datetime.now()}] Indigo variables cache manually refreshed")
+            except Exception as e:
+                app.logger.error(f"Error manually refreshing variables cache: {e}")
         return _indigo_variables_cache["data"]
 
 
 def get_cached_indigo_devices():
     with _cache_lock:
+        if _indigo_devices_cache["data"] is None:
+            try:
+                new_devices = indigo_get_all_house_devices()
+                _indigo_devices_cache["data"] = new_devices
+                app.logger.info(f"[{datetime.now()}] Indigo devices cache manually refreshed")
+            except Exception as e:
+                app.logger.error(f"Error manually refreshing devices cache: {e}")
         return _indigo_devices_cache["data"]
 
 
