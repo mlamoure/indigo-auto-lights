@@ -5,6 +5,7 @@ try:
     import indigo
 except ImportError:
     pass
+from flask import current_app as app
 
 
 def send_to_indigo(device_id: int, desired_brightness: int | bool,
@@ -60,7 +61,7 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
         if not is_confirmed:
             if iteration_counter % 8 == 0:
                 if command_attempts > 0:
-                    indigo.server.log(
+                    app.logger.info(
                         f"... not yet confirmed changes to '{device.name}'. Retrying."
                     )
 
@@ -80,9 +81,9 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                         action_description = "decreasing"
 
                     if action_description in ("turning on", "turning off"):
-                        indigo.server.log(f"{action_description} '{device.name}'")
+                        app.logger.info(f"{action_description} '{device.name}'")
                     else:
-                        indigo.server.log(
+                        app.logger.info(
                             f"{action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {desired_brightness}%"
                         )
@@ -117,7 +118,7 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                 command_attempts += 1
 
             elif iteration_counter % 4 == 0:
-                indigo.server.log(
+                app.logger.info(
                     f"... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
                     f"Max additional wait time: {remaining_wait} more seconds."
                 )
@@ -128,7 +129,7 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                 indigo.device.statusRequest(device_id, suppressLogging=True)
             else:
                 if iteration_counter > 1:
-                    indigo.server.log(
+                    app.logger.info(
                         f"... not yet confirmed changes to '{device.name}'. Waiting up to "
                         f"{remaining_wait} more seconds."
                     )
@@ -141,13 +142,12 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
 
     total_time = round(time.time() - start_timestamp, 2)
     if action_description and not is_confirmed:
-        indigo.server.log(
+        app.logger.info(
             f"... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
-            f"attempts: {command_attempts})",
-            isError=True
+            f"attempts: {command_attempts})"
         )
     elif action_description and (debug or command_attempts > 1 or total_time > 2):
-        indigo.server.log(
+        app.logger.info(
             f"... confirmed change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
