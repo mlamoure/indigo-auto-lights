@@ -95,6 +95,7 @@ def get_cached_indigo_variables():
                 app.logger.error(f"Error manually refreshing variables cache: {e}")
         return _indigo_variables_cache["data"]
 
+app.jinja_env.globals.update(get_cached_indigo_variables=get_cached_indigo_variables)
 
 def get_cached_indigo_devices():
     with _cache_lock:
