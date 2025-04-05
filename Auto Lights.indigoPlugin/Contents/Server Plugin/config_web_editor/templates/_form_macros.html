@@ -157,13 +157,17 @@
 document.addEventListener("DOMContentLoaded", function() {
   const luminosityEl = document.getElementById("current-luminance-value");
   if (luminosityEl) {
-    // Replace the empty array with actual device IDs if available
+    const selectedEl = document.getElementById("lumaninance_dev_ids_selected");
+    let deviceIds = [];
+    if (selectedEl) {
+      for (let i = 0; i < selectedEl.options.length; i++) {
+        deviceIds.push(parseInt(selectedEl.options[i].value));
+      }
+    }
     fetch("/get_luminance_value", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ device_ids: [] })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ device_ids: deviceIds })
     })
       .then(response => response.json())
       .then(data => {
