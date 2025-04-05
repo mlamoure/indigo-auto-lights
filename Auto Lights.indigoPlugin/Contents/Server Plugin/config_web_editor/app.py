@@ -83,6 +83,9 @@ def create_field(field_name, field_schema):
             label=label_text, description=tooltip_text, choices=choices, coerce=int
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
+        validators = []
+        if field_schema.get("required"):
+            validators.append(DataRequired())
         options = get_cached_indigo_devices()
         if allowed_types:
             options = [
@@ -92,7 +95,7 @@ def create_field(field_name, field_schema):
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectMultipleField(
-            label=label_text, description=tooltip_text, choices=choices, coerce=int
+            label=label_text, description=tooltip_text, choices=choices, coerce=int, validators=validators
         )
     elif field_name.endswith("_dev_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_devices()
