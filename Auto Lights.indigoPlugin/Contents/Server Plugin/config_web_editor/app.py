@@ -321,6 +321,15 @@ def zone_config(zone_id):
         config_schema["properties"]["zones"]["items"]
     )
     zone_form = ZonesFormClass(data=zone)
+    try:
+        on_lights = zone.get("device_settings", {}).get("on_lights_dev_ids", [])
+        off_lights = zone.get("device_settings", {}).get("off_lights_dev_ids", [])
+        union_ids = set(on_lights) | set(off_lights)
+        devices = {dev["id"]: dev["name"] for dev in get_cached_indigo_devices()}
+        choices = [(i, devices.get(i, str(i))) for i in union_ids]
+        zone_form.advanced_settings.exclude_from_lock_dev_ids.choices = choices
+    except Exception:
+        pass
     if request.method == "POST":
         zone_data = {
             field_name: field.data
