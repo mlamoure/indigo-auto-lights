@@ -109,18 +109,26 @@ def create_field(field_name, field_schema):
     # If field name contains _id or _ids and schema has the custom x-drop-down marker,
     # use a SelectField or SelectMultipleField.
     elif field_name == "lighting_period_ids":
+        validators = []
+        if field_schema.get("required"):
+            validators.append(DataRequired())
         f = SelectMultipleField(
             label=label_text,
             description=tooltip_text,
             choices=get_lighting_period_choices(),
             coerce=int,
+            validators=validators
         )
     elif "_ids" in field_name and field_schema.get("x-drop-down"):
+        validators = []
+        if field_schema.get("required"):
+            validators.append(DataRequired())
         f = SelectMultipleField(
             label=label_text,
             description=tooltip_text,
             choices=get_dropdown_options(),
             coerce=int,
+            validators=validators
         )
     elif "_id" in field_name and field_schema.get("x-drop-down"):
         f = SelectField(
