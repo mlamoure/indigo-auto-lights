@@ -118,14 +118,12 @@
                 "tooltip": "List of device IDs for luminance sensors."
               },
               "presence_dev_id": {
-                "type": "array",
-                "items": {
-                  "type": "integer"
-                },
+                "type": "integer",
+                "x-drop-down": true,
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice,thresholdTimer,persistenceTimer,activityTimer",
                 "title": "Presence Device",
-                "tooltip": "List of device IDs for presence sensors."
+                "tooltip": "Identifier for the presence sensor."
               }
             }
           },
