@@ -138,7 +138,7 @@ def create_field(field_name, field_schema):
         if field_schema.get("required") or field_name in [
             "on_lights_dev_ids",
             "lumaninance_dev_ids",
-            "presence_dev_ids",
+            "presence_dev_id",
         ]:
             validators.append(DataRequired())
         options = get_cached_indigo_devices()
