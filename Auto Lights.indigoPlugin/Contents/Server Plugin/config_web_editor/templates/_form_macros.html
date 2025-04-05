@@ -157,7 +157,7 @@
 document.addEventListener("DOMContentLoaded", function() {
   const luminosityEl = document.getElementById("current-luminance-value");
   if (luminosityEl) {
-    const selectedEl = document.getElementById("lumaninance_dev_ids_selected");
+    const selectedEl = document.querySelector("[id$='lumaninance_dev_ids_selected']");
     let deviceIds = [];
     if (selectedEl) {
       for (let i = 0; i < selectedEl.options.length; i++) {

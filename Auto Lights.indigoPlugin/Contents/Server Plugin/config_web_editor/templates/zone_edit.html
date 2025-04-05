@@ -160,7 +160,7 @@ function moveLeft(fieldName) {
 </script>
 <script>
 function updateLuminanceValue() {
-    var selected = document.getElementById("lumaninance_dev_ids_selected");
+    var selected = document.querySelector("[id$='lumaninance_dev_ids_selected']");
     if (!selected) return;
     var deviceIds = [];
     for (var i = 0; i < selected.options.length; i++) {
