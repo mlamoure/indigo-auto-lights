@@ -30,17 +30,6 @@
           "title": "Enabled Variable",
           "tooltip": "Set the identifier for the enabled variable."
         },
-        "debug_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Debug Variable",
-          "tooltip": "Set the identifier for the debug variable."
-        },
-        "debug_maximum_run_time": {
-          "type": "number",
-          "title": "Debug Maximum Run Time",
-          "tooltip": "Specify the maximum run time for debugging."
-        },
         "default_lock_duration": {
           "type": "integer",
           "title": "Default Lock Duration",
@@ -51,67 +40,12 @@
           "title": "Default Lock Extension Duration",
           "tooltip": "Set the duration by which the lock is extended in seconds."
         },
-        "threading_enabled": {
-          "type": "boolean",
-          "title": "Threading Enabled",
-          "tooltip": "Enable or disable threading."
-        },
-        "rapid_execution_lock": {
-          "type": "boolean",
-          "title": "Rapid Execution Lock",
-          "tooltip": "Enable or disable rapid execution lock."
-        },
-        "early_hours_starts": {
-          "type": "integer",
-          "title": "Early Hours Starts",
-          "tooltip": "Specify the starting hour for early hours."
-        },
-        "early_hours_ends": {
-          "type": "integer",
-          "title": "Early Hours Ends",
-          "tooltip": "Specify the ending hour for early hours."
-        },
-        "night_hours_starts": {
-          "type": "integer",
-          "title": "Night Hours Starts",
-          "tooltip": "Specify the starting hour for night hours."
-        },
-        "night_hours_ends": {
-          "type": "integer",
-          "title": "Night Hours Ends",
-          "tooltip": "Specify the ending hour for night hours."
-        },
-        "early_hours_brightness_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Early Hours Brightness Variable",
-          "tooltip": "Set the identifier for the early hours brightness variable."
-        },
-        "day_hours_brightness_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Day Hours Brightness Variable",
-          "tooltip": "Set the identifier for the day hours brightness variable."
-        },
-        "night_hours_brightness_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Night Hours Brightness Variable",
-          "tooltip": "Set the identifier for the night hours brightness variable."
-        },
-        "sleeping_hours_brightness_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Sleeping Hours Brightness Variable",
-          "tooltip": "Set the identifier for the sleeping hours brightness variable."
-        }
       },
       "required": [
         "guest_mode_var_id",
         "someone_home_var_id",
         "gone_to_bed_var_id",
-        "enabled_var_id",
-        "debug_var_id"
+        "enabled_var_id"
       ]
     },
     "zones": {
