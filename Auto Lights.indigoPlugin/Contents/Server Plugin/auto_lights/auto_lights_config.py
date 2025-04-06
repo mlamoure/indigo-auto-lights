@@ -1,7 +1,9 @@
 import json
+import logging
 from typing import List
-from .zone import Zone
+
 from .lighting_period import LightingPeriod
+from .zone import Zone
 
 try:
     import indigo
@@ -21,6 +23,7 @@ class AutoLightsConfig:
 
         The properties can be adjusted as needed to fine-tune lighting behavior.
         """
+        self.logger = logging.getLogger("Plugin")
         self._enabled = False
 
         self._guest_mode = False
@@ -68,7 +71,6 @@ class AutoLightsConfig:
         self._guest_mode_var_id = value
         self._guest_mode = indigo.variables[self._guest_mode_var_id].getValue(bool)
 
-
     @property
     def default_lock_duration(self) -> int:
         return self._default_lock_duration
@@ -90,7 +92,7 @@ class AutoLightsConfig:
         """
         A list of dictionaries each containing a variable ID (var_id) and a variable value (var_value)
         available for global behavior adjustments.
-        
+
         Each dictionary has the format:
         {
             "var_id": int,  # Indigo variable ID
@@ -106,7 +108,6 @@ class AutoLightsConfig:
         Each item should be a dictionary with 'var_id' (int) and 'var_value' (str).
         """
         self._global_behavior_variables = value
-
 
     def load_config(self) -> None:
         with open(self._config_file, "r") as f:
@@ -143,4 +144,3 @@ class AutoLightsConfig:
                         break
             z.lighting_periods = zone_lps
             self._zones.append(z)
-

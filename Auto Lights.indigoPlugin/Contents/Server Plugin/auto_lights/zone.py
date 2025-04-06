@@ -31,7 +31,7 @@ class Zone:
             name (str): The name of the zone.
             config (AutoLightsConfig): The global auto lights configuration.
         """
-        self.logger = logging.getLogger("com.vtmikel.autolights.Zone")
+        self.logger = logging.getLogger("Plugin")
         self._name = name
         self._enabled = False
         self._enabled_var_id = None

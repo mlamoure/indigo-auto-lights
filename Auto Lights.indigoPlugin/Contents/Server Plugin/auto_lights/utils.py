@@ -7,7 +7,7 @@ try:
 except ImportError:
     pass
 
-logger = logging.getLogger("com.vtmikel.autolights.utils")
+logger = logging.getLogger("Plugin")
 
 
 def send_to_indigo(

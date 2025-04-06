@@ -13,7 +13,7 @@ except ImportError:
 class AutoLightsAgent:
     def __init__(self, config: AutoLightsConfig) -> None:
         self._config = config
-        self.logger = logging.getLogger("com.vtmikel.autolights.AutoLightsAgent")
+        self.logger = logging.getLogger("Plugin")
 
     def process_zone(self, zone: Zone) -> bool:
         """
@@ -83,6 +83,7 @@ class AutoLightsAgent:
                 except (KeyError, ValueError):
                     self.logger.debug(f"Invalid global behavior variable ID: {var_id}")
 
+        # Next, look to the target_brightness
         if not action_reason and zone.current_lighting_period is not None:
             if (
                 zone.current_lighting_period.mode == "On and Off"

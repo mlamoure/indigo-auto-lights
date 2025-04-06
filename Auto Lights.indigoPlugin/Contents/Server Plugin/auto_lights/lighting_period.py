@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 try:
     import indigo
@@ -33,6 +34,7 @@ class LightingPeriod:
         self._mode = mode
         self._lock_duration = None
         self._id = None
+        self.logger = logging.getLogger("Plugin")
 
     @property
     def id(self) -> int:
