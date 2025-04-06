@@ -28,10 +28,15 @@ class AutoLightsAgent:
         if not self._config.enabled:
             return False
 
+        self.logger.debug("Zone '" + zone.name + "':   processing.")
         self.logger.debug(
-            "Zone '" + zone.name + "':   processing."
+            "process_zone: zone details: enabled="
+            + str(zone.enabled)
+            + ", current_lights_status="
+            + str(zone.current_lights_status)
+            + ", target_brightness="
+            + str(zone.target_brightness)
         )
-        self.logger.debug("process_zone: zone details: enabled=" + str(zone.enabled) + ", current_lights_status=" + str(zone.current_lights_status) + ", target_brightness=" + str(zone.target_brightness))
 
         if not zone.enabled:
             self.logger.debug(
@@ -150,6 +155,7 @@ class AutoLightsAgent:
         for zone in self._config._zones:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
+                self.logger.debug(f"has_device: device id result: {device_prop}")
                 if zone.current_lights_status != zone.target_brightness:
                     zone.locked = True
                     processed.append(zone)
@@ -180,10 +186,11 @@ class AutoLightsAgent:
         Returns:
             List[Zone]: List of Zone's processed
         """
-    
+
         processed = []
         for zone in self._config._zones:
             if zone.has_variable(orig_var.id):
+                self.logger.debug(f"has_variable: var_id")
                 if self.process_zone(zone):
                     processed.append(zone)
 

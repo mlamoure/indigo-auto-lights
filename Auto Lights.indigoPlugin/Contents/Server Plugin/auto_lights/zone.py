@@ -280,7 +280,10 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
-        self.logger.debug("target_brightness: computed target brightness = " + str(self._target_brightness))
+        self.logger.debug(
+            "target_brightness: computed target brightness = "
+            + str(self._target_brightness)
+        )
         return self._target_brightness
 
     @target_brightness.setter
@@ -517,9 +520,20 @@ class Zone:
             return True
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
-            self.logger.debug("is_dark: device " + str(dev_id) + " sensorValue=" + str(sensor_value) + ", minimum_luminance=" + str(self.minimum_luminance))
+            self.logger.debug(
+                "is_dark: device "
+                + str(dev_id)
+                + " sensorValue="
+                + str(sensor_value)
+                + ", minimum_luminance="
+                + str(self.minimum_luminance)
+            )
             if sensor_value < self.minimum_luminance:
-                self.logger.debug("is_dark: device " + str(dev_id) + " is below threshold, returning True")
+                self.logger.debug(
+                    "is_dark: device "
+                    + str(dev_id)
+                    + " is below threshold, returning True"
+                )
                 return True
         self.logger.debug("is_dark: All devices above threshold, returning False")
         return False
@@ -651,7 +665,7 @@ class Zone:
             result = "luminance_dev_ids"
         else:
             result = ""
-        self.logger.debug("has_device: device id " + str(dev_id) + " result: " + result)
+
         return result
 
     def has_variable(self, var_id: int) -> bool:
@@ -676,7 +690,7 @@ class Zone:
             result = True
         else:
             result = False
-        self.logger.debug("has_variable: var_id " + str(var_id) + " result: " + str(result))
+
         return result
 
     # (6) Private methods
