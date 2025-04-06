@@ -233,7 +233,7 @@
               "Off Only"
             ],
             "title": "Mode",
-            "tooltip": "Select the mode for the lighting period."
+            "tooltip": "When the lighting period is set to On and Off, the Auto Lights plugin will actively manage the the on/off state for the zone.  When set to Off Only, the plugin will only turn lights off for the zone."
           },
           "from_time_hour": {
             "type": "integer",
