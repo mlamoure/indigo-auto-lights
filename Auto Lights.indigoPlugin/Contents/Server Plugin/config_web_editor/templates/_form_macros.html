@@ -180,3 +180,21 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 </script>
+{% macro save_overlay() %}
+<div id="save-feedback-overlay" style="display:none; position: fixed; top:20px; left:50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; z-index:9999; color: white; font-size: 1.5em; border-radius: 5px;">
+    Saved successfully.
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll("form.edit-form").forEach(function(form) {
+        form.addEventListener("submit", function(){
+            var overlay = document.getElementById("save-feedback-overlay");
+            overlay.style.display = "block";
+            setTimeout(function(){
+                overlay.style.display = "none";
+            }, 6000);
+        });
+    });
+});
+</script>
+{% endmacro %}
