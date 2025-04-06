@@ -155,7 +155,9 @@ class AutoLightsAgent:
         for zone in self._config._zones:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
-                self.logger.debug(f"has_device: device id result: {device_prop}")
+                self.logger.debug(
+                    f"has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
+                )
                 if zone.current_lights_status != zone.target_brightness:
                     zone.locked = True
                     processed.append(zone)
