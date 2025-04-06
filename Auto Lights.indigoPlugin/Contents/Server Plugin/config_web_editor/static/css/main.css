@@ -58,6 +58,13 @@ body {
 .btn:hover {
     background-color: #0056b3;
 }
+a.btn {
+    display: inline-block;
+    font-size: inherit;
+    line-height: inherit;
+    text-decoration: none;
+    padding: 8px 12px;
+}
 
 /* Multiple select container styling */
 .multiple-select-container {
