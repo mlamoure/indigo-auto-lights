@@ -11,7 +11,7 @@ logger = logging.getLogger("com.vtmikel.autolights.utils")
 
 
 def send_to_indigo(
-    device_id: int, desired_brightness: int | bool, perform_confirm: bool, debug: bool
+    device_id: int, desired_brightness: int | bool, perform_confirm: bool
 ) -> None:
     """
     Send a command to update an Indigo device (brightness or switch state)
@@ -150,13 +150,14 @@ def send_to_indigo(
         remaining_wait = int(round(max_wait_seconds - elapsed_time, 1))
 
     total_time = round(time.time() - start_timestamp, 2)
+
     if action_description and not is_confirmed:
         logger.info(
             f"... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
-    elif action_description and (debug or command_attempts > 1 or total_time > 2):
-        logger.info(
+    else:
+        logger.debug(
             f"... confirmed change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )

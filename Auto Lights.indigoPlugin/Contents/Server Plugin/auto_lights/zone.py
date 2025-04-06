@@ -719,6 +719,4 @@ class Zone:
         """
         Send a command to update an Indigo device and ensure it is confirmed if self.perform_confirm is True.
         """
-        utils.send_to_indigo(
-            device_id, desired_brightness, self._perform_confirm, self._config.debug
-        )
+        utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)

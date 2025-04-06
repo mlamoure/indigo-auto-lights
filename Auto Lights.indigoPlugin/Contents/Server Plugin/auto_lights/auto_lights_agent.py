@@ -25,24 +25,19 @@ class AutoLightsAgent:
         Returns:
             bool: Whether the zone was processed.
         """
-        debug_str = ""
-        debug = True
-
         if not self._config.enabled:
             return False
 
-        if debug:
-            self.logger.debug(
-                "auto_lights script DEBUG for Zone '" + zone.name + "':   processing."
-            )
+        self.logger.debug(
+            "auto_lights script DEBUG for Zone '" + zone.name + "':   processing."
+        )
 
         if not zone.enabled:
-            if debug:
-                self.logger.debug(
-                    "auto_lights script DEBUG for Zone '"
-                    + zone.name
-                    + "': auto lights is disabled for this zone."
-                )
+            self.logger.debug(
+                "auto_lights script DEBUG for Zone '"
+                + zone.name
+                + "': auto lights is disabled for this zone."
+            )
             return False
 
         ################################################################
@@ -53,13 +48,12 @@ class AutoLightsAgent:
             if not zone.has_presence_detected() and zone.unlock_when_no_presence:
                 zone.reset_lock("no longer presence in zone")
             else:
-                if debug:
-                    self.logger.debug(
-                        "auto_lights script for Zone '"
-                        + zone.name
-                        + "': zone is locked until "
-                        + str(zone.lock_expiration)
-                    )
+                self.logger.debug(
+                    "auto_lights script for Zone '"
+                    + zone.name
+                    + "': zone is locked until "
+                    + str(zone.lock_expiration)
+                )
                 return False
 
         ################################################################
@@ -126,12 +120,11 @@ class AutoLightsAgent:
             zone.save_brightness_changes()
 
         else:
-            if debug:
-                self.logger.debug(
-                    "auto_lights script for Zone '"
-                    + zone.name
-                    + "': no changes to make, checked in"
-                )
+            self.logger.debug(
+                "auto_lights script for Zone '"
+                + zone.name
+                + "': no changes to make, checked in"
+            )
 
             zone.check_in()
 
@@ -140,9 +133,6 @@ class AutoLightsAgent:
         ################################################################
         # Debug
         ################################################################
-
-        if debug:
-            self.logger.debug(debug_str)
 
         return True
 
