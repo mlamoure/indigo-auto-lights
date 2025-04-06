@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional, Union, List
 
 try:
     import indigo
@@ -64,8 +63,9 @@ class LightingPeriod:
 
     @classmethod
     def from_config_dict(cls, cfg: dict):
-        import datetime
-        from_time = datetime.time(cfg.get("from_time_hour"), cfg.get("from_time_minute"))
+        from_time = datetime.time(
+            cfg.get("from_time_hour"), cfg.get("from_time_minute")
+        )
         to_time = datetime.time(cfg.get("to_time_hour"), cfg.get("to_time_minute"))
         instance = cls(cfg.get("name"), cfg.get("mode"), from_time, to_time)
         if "lock_duration" in cfg:
