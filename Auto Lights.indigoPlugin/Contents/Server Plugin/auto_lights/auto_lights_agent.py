@@ -26,7 +26,7 @@ class AutoLightsAgent:
             bool: Whether the zone was processed.
         """
         debug_str = ""
-        debug = False
+        debug = True
 
         if not self._config.enabled:
             return False
@@ -91,7 +91,7 @@ class AutoLightsAgent:
 
         if not action_reason and zone.current_lighting_period is not None:
             if (
-                zone.current_lighting_period.mode == "OnOffZone"
+                zone.current_lighting_period.mode == "On and Off"
                 and zone.has_presence_detected()
                 and zone.is_dark()
             ):
@@ -99,7 +99,7 @@ class AutoLightsAgent:
                 zone.calculate_target_brightness()
                 action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are using Timed Brightness Mode"
             elif (
-                zone.current_lighting_period.mode == "OnOffZone"
+                zone.current_lighting_period.mode == "Off Only"
                 and zone.has_presence_detected()
                 and zone.is_dark()
             ):
@@ -114,7 +114,7 @@ class AutoLightsAgent:
         ################################################################
         if zone.has_brightness_changes():
             self.logger.info(
-                "auto_lights script for Zone '"
+                "Zone '"
                 + zone.name
                 + "': processing change to "
                 + zone.last_changed_by

@@ -1,7 +1,7 @@
 import ast
 import datetime
-from typing import List, Union, Any, Optional, TYPE_CHECKING
 import logging
+from typing import List, Union, Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
@@ -23,10 +23,10 @@ class Zone:
     # (2) Class variables or constants would go here if we had any.
 
     # (3) Constructor
-    def __init__(self, name: str, config: 'AutoLightsConfig'):
+    def __init__(self, name: str, config: "AutoLightsConfig"):
         """
         Initialize a Zone instance.
-        
+
         Args:
             name (str): The name of the zone.
             config (AutoLightsConfig): The global auto lights configuration.
@@ -68,10 +68,11 @@ class Zone:
 
         self._last_changed_by = "none"
         self._previous_execution_lights_target = None
-        self._locked = None
-        self._special_rules_adjustment = ""
+        self._locked = False
         self._lock_enabled = False
         self._lock_extension_duration = None
+
+        self._checked_out = False
 
     def from_config_dict(self, cfg: dict) -> None:
         if "enabled_var_id" in cfg:
@@ -149,7 +150,6 @@ class Zone:
     @adjust_brightness_when_active.setter
     def adjust_brightness_when_active(self, value: bool) -> None:
         self._adjust_brightness_when_active = value
-
 
     @property
     def unlock_when_no_presence(self) -> bool:
@@ -261,13 +261,17 @@ class Zone:
         for dev_id in self.on_lights_dev_ids:
             if dev_id in self.exclude_from_lock_dev_ids:
                 continue
-            self._current_lights_status.append(get_device_status(indigo.devices[dev_id]))
+            self._current_lights_status.append(
+                get_device_status(indigo.devices[dev_id])
+            )
 
         # Gather off_lights
         for dev_id in self.off_lights_dev_ids:
             if dev_id in self.exclude_from_lock_dev_ids:
                 continue
-            self._current_lights_status.append(get_device_status(indigo.devices[dev_id]))
+            self._current_lights_status.append(
+                get_device_status(indigo.devices[dev_id])
+            )
         return self._current_lights_status
 
     @property
@@ -292,26 +296,42 @@ class Zone:
             self._target_brightness = []
             # Handle on-lights
             for dev_id in self.on_lights_dev_ids:
-                if indigo.devices[dev_id].pluginId == "com.pennypacker.indigoplugin.senseme":
+                if (
+                    indigo.devices[dev_id].pluginId
+                    == "com.pennypacker.indigoplugin.senseme"
+                ):
                     self._target_brightness.append(int((value / 100) * 16))
-                elif isinstance(value, bool) or isinstance(indigo.devices[dev_id], indigo.DimmerDevice):
-                    self._target_brightness.append(min(value, 100) if isinstance(value, int) else value)
+                elif isinstance(value, bool) or isinstance(
+                    indigo.devices[dev_id], indigo.DimmerDevice
+                ):
+                    self._target_brightness.append(
+                        min(value, 100) if isinstance(value, int) else value
+                    )
                 elif value > 0:
                     self._target_brightness.append(True)
                 else:
                     self._target_brightness.append(False)
             # Handle off-lights
-            off_device_target = 0 if (isinstance(value, bool) and not value) or value == 0 else -1
+            off_device_target = (
+                0 if (isinstance(value, bool) and not value) or value == 0 else -1
+            )
             for dev_id in self.off_lights_dev_ids:
                 if off_device_target == -1:
                     if isinstance(indigo.devices[dev_id], indigo.DimmerDevice):
-                        self._target_brightness.append(indigo.devices[dev_id].brightness)
+                        self._target_brightness.append(
+                            indigo.devices[dev_id].brightness
+                        )
                     elif isinstance(indigo.devices[dev_id], indigo.RelayDevice):
                         self._target_brightness.append(indigo.devices[dev_id].onState)
                     elif "brightness" in indigo.devices[dev_id].states:
-                        self._target_brightness.append(indigo.devices[dev_id].states["brightness"])
+                        self._target_brightness.append(
+                            indigo.devices[dev_id].states["brightness"]
+                        )
                 else:
-                    if isinstance(indigo.devices[dev_id], indigo.DimmerDevice) or "brightness" in indigo.devices[dev_id].states:
+                    if (
+                        isinstance(indigo.devices[dev_id], indigo.DimmerDevice)
+                        or "brightness" in indigo.devices[dev_id].states
+                    ):
                         self._target_brightness.append(0)
                     else:
                         self._target_brightness.append(False)
@@ -339,7 +359,10 @@ class Zone:
     @property
     def last_changed(self) -> datetime.datetime:
         device_last_changed = datetime.datetime(1900, 1, 1)
-        if self.presence_dev_id is not None and indigo.devices[self.presence_dev_id].lastChanged > device_last_changed:
+        if (
+            self.presence_dev_id is not None
+            and indigo.devices[self.presence_dev_id].lastChanged > device_last_changed
+        ):
             device_last_changed = indigo.devices[self.presence_dev_id].lastChanged
         for dev_id in self.luminance_dev_ids:
             if indigo.devices[dev_id].lastChanged > device_last_changed:
@@ -360,7 +383,9 @@ class Zone:
         try:
             prev_var = indigo.variables[self.previous_target_var_name]
         except KeyError:
-            prev_var = indigo.variable.create(self.previous_target_var_name, "false", folder=var_folder)
+            prev_var = indigo.variable.create(
+                self.previous_target_var_name, "false", folder=var_folder
+            )
         self._previous_execution_lights_target = prev_var.value
         try:
             self._previous_execution_lights_target = ast.literal_eval(prev_var.value)
@@ -404,7 +429,10 @@ class Zone:
 
     @property
     def lock_duration(self) -> int:
-        if self.current_lighting_period and self.current_lighting_period.has_lock_duration_override:
+        if (
+            self.current_lighting_period
+            and self.current_lighting_period.has_lock_duration_override
+        ):
             return self.current_lighting_period.lock_duration
         if self._lock_duration is None:
             self._lock_duration = self._config.default_lock_duration
@@ -460,7 +488,9 @@ class Zone:
     @lock_expiration.setter
     def lock_expiration(self, value: Union[str, datetime.datetime]) -> None:
         if isinstance(value, str):
-            self._lock_expiration = datetime.datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            self._lock_expiration = datetime.datetime.strptime(
+                value, "%Y-%m-%d %H:%M:%S"
+            )
         else:
             self._lock_expiration = value
 
@@ -475,7 +505,6 @@ class Zone:
                 return False
         return True
 
-
     @property
     def special_rules_adjustment(self) -> str:
         return self._special_rules_adjustment
@@ -489,7 +518,10 @@ class Zone:
         """
         Check if presence is detected in this zone or, if defined, in the current period.
         """
-        if self.current_lighting_period and self.current_lighting_period.uses_presence_override:
+        if (
+            self.current_lighting_period
+            and self.current_lighting_period.uses_presence_override
+        ):
             return self.current_lighting_period.has_presence_detected()
         if self.presence_dev_id is not None:
             if "onOffState" in indigo.devices[self.presence_dev_id].states:
@@ -503,7 +535,10 @@ class Zone:
         """
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
-        if self.current_lighting_period and self.current_lighting_period.uses_luminance_override:
+        if (
+            self.current_lighting_period
+            and self.current_lighting_period.uses_luminance_override
+        ):
             return self.luminance >= self.current_lighting_period.minimum_luminance
         if not self.luminance_dev_ids:
             return True
@@ -522,21 +557,10 @@ class Zone:
         return False
 
     def check_in(self):
-        """Check in the zone by setting the checkout variable to False."""
-        indigo.variable.updateValue(self.check_out_var, str(False))
-
-    def force_check_in(self):
-        """Force check in the zone, logging a message if it was previously checked out."""
-        if self.checked_out:
-            self.logger.info("       ... zone " + self._name + ": forced check in")
-        indigo.variable.updateValue(self.check_out_var, str(False))
+        self._checked_out = False
 
     def check_out(self):
-        """
-        Check out the zone by setting the checkout variable to True if it is not already checked out.
-        """
-        if not self.checked_out:
-            indigo.variable.updateValue(self.check_out_var, str(True))
+        self._checked_out = True
 
     def reset_lock(self, reason: str):
         """Reset the lock for the zone."""
@@ -544,8 +568,12 @@ class Zone:
         indigo.variable.updateValue(self.lock_var, str(self.lock_expiration_str))
         self._locked = False
         self._previous_execution_lights_target = self.current_lights_status
-        indigo.variable.updateValue(self.previous_target_var_name, str(self._current_lights_status))
-        self.logger.info(f"auto_lights script for Zone '{self._name}', zone lock reset because {reason}")
+        indigo.variable.updateValue(
+            self.previous_target_var_name, str(self._current_lights_status)
+        )
+        self.logger.info(
+            f"auto_lights script for Zone '{self._name}', zone lock reset because {reason}"
+        )
 
     def has_brightness_changes(self) -> bool:
         """
@@ -589,12 +617,16 @@ class Zone:
             try:
                 dev_target = self.target_brightness[idx]
             except IndexError:
-                indigo.server.log(f"Warning: Missing target brightness for device with ID {dev_id}")
+                indigo.server.log(
+                    f"Warning: Missing target brightness for device with ID {dev_id}"
+                )
                 continue
             self._send_to_indigo(dev_id, dev_target)
 
         # Save final state to an Indigo variable for lock detection
-        indigo.variable.updateValue(self.previous_target_var_name, str(self.target_save_state))
+        indigo.variable.updateValue(
+            self.previous_target_var_name, str(self.target_save_state)
+        )
 
     def write_debug_output(self, config) -> str:
         """
@@ -638,7 +670,9 @@ class Zone:
         if self._adjust_brightness:
             diff = self.luminance - self.minimum_luminance
             diff = diff if diff > 0 else 0
-            new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(self._off_lights_dev_ids)
+            new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(
+                self._off_lights_dev_ids
+            )
             self.target_brightness = new_tb
 
     def has_device(self, dev_id: int) -> str:
@@ -661,7 +695,7 @@ class Zone:
         """
         Check if the provided variable id is associated with this zone.
 
-        This method determines if the given variable id matches the zone's minimum luminance variable id 
+        This method determines if the given variable id matches the zone's minimum luminance variable id
         or the enabled variable id.
 
         Args:
@@ -670,7 +704,10 @@ class Zone:
         Returns:
             bool: True if the variable is used by this zone, False otherwise.
         """
-        if self._minimum_luminance_var_id is not None and var_id == self._minimum_luminance_var_id:
+        if (
+            self._minimum_luminance_var_id is not None
+            and var_id == self._minimum_luminance_var_id
+        ):
             return True
         elif var_id == self._enabled_var_id:
             return True
@@ -682,5 +719,6 @@ class Zone:
         """
         Send a command to update an Indigo device and ensure it is confirmed if self.perform_confirm is True.
         """
-        utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm, self._config.debug)
-
+        utils.send_to_indigo(
+            device_id, desired_brightness, self._perform_confirm, self._config.debug
+        )
