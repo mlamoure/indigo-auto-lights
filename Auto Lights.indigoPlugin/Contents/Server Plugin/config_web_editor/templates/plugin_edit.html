@@ -6,11 +6,9 @@
     <link rel="stylesheet" href="/static/css/main.css">
   </head>
   <body>
-    <div id="header">
-      <div>Indigo Auto Lights - Plugin Configuration</div>
-    </div>
-    <div id="container">
-      {% include "header_nav.html" %}
+{% set page_title = "Indigo Auto Lights - Plugin Configuration" %}
+{% include "header_common.html" %}
+<div id="container">
       <div id="content">
         {% from "_form_macros.html" import render_field %}
         <form method="POST" id="plugin-config-form" class="edit-form">

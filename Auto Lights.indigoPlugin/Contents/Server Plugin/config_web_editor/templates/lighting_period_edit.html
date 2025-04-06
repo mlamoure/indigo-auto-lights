@@ -6,11 +6,9 @@
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-<div id="header">
-    <div>Indigo Auto Lights - Lighting Period Configuration</div>
-</div>
+{% set page_title = "Indigo Auto Lights - Lighting Period Configuration" %}
+{% include "header_common.html" %}
 <div id="container">
-    {% include "header_nav.html" %}
     <div id="content">
         <form method="POST" id="lighting-period-config-form" class="edit-form">
             {{ lighting_period_form.hidden_tag() }}

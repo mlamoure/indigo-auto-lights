@@ -206,3 +206,28 @@ table.zones-table th {
 }
 
 .required-marker { color: red; margin-left: 4px; font-weight: bold; }
+
+/* Additional Header Tabs Styling */
+.tabs {
+    background-color: #ddd;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    border-radius: 5px;
+}
+.tab {
+    padding: 5px 10px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    background-color: #f5f5f5;
+    text-decoration: none;
+    color: #333;
+}
+.tab:hover {
+    background-color: #e0e0e0;
+}
+.page-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
