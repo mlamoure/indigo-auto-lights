@@ -2,6 +2,7 @@
 # search only, but reside here as they rely on common functions with the LLM tools.
 import json
 import os
+import time
 from typing import List
 
 import requests
@@ -188,6 +189,5 @@ def indigo_create_new_variable(var_name):
     For demo purposes, this function simply returns a dummy variable ID.
     In production, you would call the actual Indigo API here.
     """
-    import time
 
     return int(time.time())
