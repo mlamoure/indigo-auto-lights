@@ -39,8 +39,9 @@ KEYS_TO_KEEP_MINIMAL = KEYS_TO_KEEP
 
 
 def get_indigo_api_url() -> str:
-    print(f"get_indigo_api_url: {get_indigo_api_url()}")
-    return os.getenv("INDIGO_API_URL") + "/v2/api"
+    to_return = os.getenv("INDIGO_API_URL") + "/v2/api"
+    print(f"get_indigo_api_url: {to_return}")
+    return to_return
 
 
 def indigo_get_all_house_devices() -> dict:

@@ -79,11 +79,9 @@ def get_cached_indigo_variables():
             try:
                 new_variables = indigo_get_all_house_variables()
                 _indigo_variables_cache["data"] = new_variables
-                app.logger.info(
-                    f"[{datetime.now()}] Indigo variables cache manually refreshed"
-                )
+                app.logger.info(f"[{datetime.now()}] Indigo variables cache refreshed")
             except Exception as e:
-                app.logger.error(f"Error manually refreshing variables cache: {e}")
+                app.logger.error(f"Error refreshing variables cache: {e}")
         return _indigo_variables_cache["data"]
 
 
