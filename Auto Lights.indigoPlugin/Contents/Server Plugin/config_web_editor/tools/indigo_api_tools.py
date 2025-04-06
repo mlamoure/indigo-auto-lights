@@ -6,7 +6,7 @@ from typing import List
 
 import requests
 
-INDIGO_API_URL = "https://vtmikel.indigodomo.net/v2/api"
+INDIGO_API_URL = os.getenv("INDIGO_API_URL", "https://vtmikel.indigodomo.net/v2/api")
 KEYS_TO_KEEP = [
     "name",
     "class",
