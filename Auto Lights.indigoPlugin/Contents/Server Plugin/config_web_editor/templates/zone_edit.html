@@ -12,7 +12,7 @@
     <div id="container">
       {% include "navigation.html" %}
       <div id="content">
-{% from "_form_macros.html" import render_field %}
+{% from "_form_macros.html" import render_field, save_overlay %}
 <form method="POST" id="zone-config-form" class="edit-form">
   {{ zone_form.hidden_tag() }}
   {% for field in zone_form if field.name not in ['submit', 'csrf_token'] %}
