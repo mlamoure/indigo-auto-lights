@@ -40,7 +40,6 @@ KEYS_TO_KEEP_MINIMAL = KEYS_TO_KEEP
 
 def get_indigo_api_url() -> str:
     to_return = os.getenv("INDIGO_API_URL") + "/v2/api"
-    print(f"get_indigo_api_url: {to_return}")
     return to_return
 
 

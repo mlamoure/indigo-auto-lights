@@ -1,6 +1,5 @@
-import threading
-from typing import List
 import logging
+from typing import List
 
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone
@@ -14,7 +13,6 @@ except ImportError:
 class AutoLightsAgent:
     def __init__(self, config: AutoLightsConfig) -> None:
         self._config = config
-        self._zones = []
         self.logger = logging.getLogger("com.vtmikel.autolights.AutoLightsAgent")
 
     def process_zone(self, zone: Zone) -> bool:
@@ -68,25 +66,7 @@ class AutoLightsAgent:
         # Period logic
         ################################################################
         if zone.lighting_periods is None:
-
-            # Even though there are no active periods, we want to pass if there is no one home or the house is asleep so that the lights will be turned off.
-            if not self._config.someone_home or self._config.gone_to_bed:
-                if debug:
-                    self.logger.debug(
-                        "auto_lights script DEBUG for Zone '"
-                        + zone.name
-                        + "': outside of applicable time periods for this zone, but continuing because there is no one home / gone to bed."
-                    )
-                # pass
-            else:
-                if debug:
-                    self.logger.debug(
-                        "auto_lights script DEBUG for Zone '"
-                        + zone.name
-                        + "': outside of applicable time periods for this zone."
-                    )
-                zone.check_in()
-                return False
+            return False
 
         ################################################################
         # Zone execution logic (Where we decide what changes, if any, need to be made)
@@ -150,7 +130,6 @@ class AutoLightsAgent:
 
         ###### END ZONE LOOP #######
 
-
         ################################################################
         # Debug
         ################################################################
@@ -176,19 +155,21 @@ class AutoLightsAgent:
             List[Zone]: List of Zone's processed
         """
         processed = []
-        for zone in self._zones:
+        for zone in self._config._zones:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 if zone.current_lights_status != zone.target_brightness:
                     zone.locked = True
                     processed.append(zone)
-            elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
+            elif device_prop in ["presence_dev_id", "luminance_dev_ids"]:
                 if self.process_zone(zone):
                     processed.append(zone)
 
         return processed
 
-    def process_variable_change(self, orig_var: indigo.Variable, new_var: indigo.Variable) -> List[Zone]:
+    def process_variable_change(
+        self, orig_var: indigo.Variable, new_var: indigo.Variable
+    ) -> List[Zone]:
         """
         Process a variable change event.
 
@@ -202,7 +183,7 @@ class AutoLightsAgent:
         """
 
         processed = []
-        for zone in self._zones:
+        for zone in self._config._zones:
             if zone.has_variable(orig_var.id):
                 if self.process_zone(zone):
                     processed.append(zone)
