@@ -511,11 +511,7 @@ class Zone:
         """
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
-        if (
-            self.current_lighting_period
-            and self.current_lighting_period.uses_luminance_override
-        ):
-            return self.luminance >= self.current_lighting_period.minimum_luminance
+
         if not self.luminance_dev_ids:
             return True
         for dev_id in self.luminance_dev_ids:
