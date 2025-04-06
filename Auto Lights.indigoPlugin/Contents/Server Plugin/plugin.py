@@ -109,7 +109,7 @@ class Plugin(indigo.PluginBase):
 
     def start_configuration_web_server(self: indigo.PluginBase):
         self.logger.info(
-            f"Starting the configuration web server... listening on address {address} and port {port}.  Visit http://{address}:{port}"
+            f"Starting the configuration web server... Visit http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
         )
         thread = threading.Thread(
             target=run_flask_app,
