@@ -105,6 +105,10 @@ def get_cached_indigo_devices():
 def create_field(field_name, field_schema):
     label_text = field_schema.get("title", field_name)
     tooltip_text = field_schema.get("tooltip", "")
+    required = field_schema.get("required", False)
+    validators = []
+    if required:
+        validators.append(DataRequired())
     allowed_types = None
     if field_schema.get("x-include-device-classes"):
         allowed_types = {
@@ -194,22 +198,22 @@ def create_field(field_name, field_schema):
         )
     elif field_type == "integer":
         f = IntegerField(
-            label=label_text, description=tooltip_text, validators=[DataRequired()]
+            label=label_text, description=tooltip_text, validators=validators
         )
     elif field_type == "number":
         f = DecimalField(
-            label=label_text, description=tooltip_text, validators=[DataRequired()]
+            label=label_text, description=tooltip_text, validators=validators
         )
     elif field_type == "boolean":
         f = BooleanField(label=label_text, description=tooltip_text)
     elif field_type == "string" and field_schema.get("enum"):
         enum_values = field_schema.get("enum", [])
         choices = [(val, val) for val in enum_values]
-        f = SelectField(label=label_text, description=tooltip_text, choices=choices)
+        f = SelectField(label=label_text, description=tooltip_text, choices=choices, validators=validators)
     else:
         # Default to string field for any other types.
         f = StringField(
-            label=label_text, description=tooltip_text, validators=[DataRequired()]
+            label=label_text, description=tooltip_text, validators=validators
         )
 
     f.description = tooltip_text
