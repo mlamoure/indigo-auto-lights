@@ -125,7 +125,12 @@
                 "title": "Presence Device",
                 "tooltip": "Identifier for the presence sensor."
               }
-            }
+            },
+            "required": [
+              "on_lights_dev_ids",
+              "luminance_dev_ids",
+              "presence_dev_id"
+            ]
           },
           "minimum_luminance_settings": {
             "type": "object",
