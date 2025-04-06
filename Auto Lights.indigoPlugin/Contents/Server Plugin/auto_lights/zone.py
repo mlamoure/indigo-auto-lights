@@ -72,7 +72,6 @@ class Zone:
         self._special_rules_adjustment = ""
         self._lock_enabled = False
         self._lock_extension_duration = None
-        self._global_behavior_variables = []
 
     def from_config_dict(self, cfg: dict) -> None:
         if "enabled_var_id" in cfg:
@@ -105,8 +104,6 @@ class Zone:
                 self.perform_confirm = bs["perform_confirm"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
-        if "global_behavior_variables" in cfg:
-            self.global_behavior_variables = cfg["global_behavior_variables"]
 
     # (4) Properties
     @property
@@ -478,27 +475,6 @@ class Zone:
                 return False
         return True
 
-    @property
-    def global_behavior_variables(self) -> List[dict]:
-        """
-        A list of dictionaries each containing a variable ID (var_id) and a variable value (var_value)
-        available for global behavior adjustments.
-        
-        Each dictionary has the format:
-        {
-            "var_id": int,  # Indigo variable ID
-            "var_value": str  # Value to check against
-        }
-        """
-        return self._global_behavior_variables
-
-    @global_behavior_variables.setter
-    def global_behavior_variables(self, value: List[dict]) -> None:
-        """
-        Set the list of global behavior variables.
-        Each item should be a dictionary with 'var_id' (int) and 'var_value' (str).
-        """
-        self._global_behavior_variables = value
 
     @property
     def special_rules_adjustment(self) -> str:
