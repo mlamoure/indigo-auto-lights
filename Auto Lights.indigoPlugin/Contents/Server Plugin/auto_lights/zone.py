@@ -243,7 +243,7 @@ class Zone:
         for devId in self.luminance_dev_ids:
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
-        self.logger.debug("Zone '" + self._name + "': computed luminance = " + str(self._luminance))
+        self.logger.debug(f"Zone '{self._name}': computed luminance = {self._luminance}")
         return self._luminance
 
     @property
@@ -345,7 +345,7 @@ class Zone:
     def current_lighting_period(self) -> Optional[LightingPeriod]:
         if self._current_lighting_period is None:
             if not self.lighting_periods:
-                self.logger.info("Zone '" + self._name + "': no active lighting periods.")
+                self.logger.info(f"Zone '{self._name}': no active lighting periods.")
                 return None
             for period in self.lighting_periods:
                 if period.is_active_period():
@@ -395,7 +395,7 @@ class Zone:
         try:
             self._previous_execution_lights_target = ast.literal_eval(prev_var.value)
         except Exception as e:
-            indigo.server.log(f"Error converting previous_execution_lights_target: {e}")
+            indigo.server.log(f"Zone '{self._name}': Error converting previous_execution_lights_target: {e}")
             self._previous_execution_lights_target = []
         return self._previous_execution_lights_target
 
@@ -517,26 +517,15 @@ class Zone:
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
         if not self.luminance_dev_ids:
-            self.logger.debug("Zone '" + self._name + "': is_dark: No luminance devices, returning True")
+            self.logger.debug(f"Zone '{self._name}': is_dark: No luminance devices, returning True")
             return True
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
-            self.logger.debug(
-                "Zone '" + self._name + "': is_dark: device "
-                + str(dev_id)
-                + " sensorValue="
-                + str(sensor_value)
-                + ", minimum_luminance="
-                + str(self.minimum_luminance)
-            )
+            self.logger.debug(f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}")
             if sensor_value < self.minimum_luminance:
-                self.logger.debug(
-                    "Zone '" + self._name + "': is_dark: device "
-                    + str(dev_id)
-                    + " is below threshold, returning True"
-                )
+                self.logger.debug(f"Zone '{self._name}': is_dark: device {dev_id} is below threshold, returning True")
                 return True
-        self.logger.debug("Zone '" + self._name + "': is_dark: All devices above threshold, returning False")
+        self.logger.debug(f"Zone '{self._name}': is_dark: All devices above threshold, returning False")
         return False
 
     def current_state_any_light_is_on(self) -> bool:
