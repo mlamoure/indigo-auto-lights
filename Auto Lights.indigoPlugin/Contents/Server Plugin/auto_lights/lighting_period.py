@@ -32,6 +32,15 @@ class LightingPeriod:
         self._to_time = to_time
         self._mode = mode
         self._lock_duration = None
+        self._id = None
+
+    @property
+    def id(self) -> int:
+        return self._id
+
+    @id.setter
+    def id(self, value: int) -> None:
+        self._id = value
 
     @property
     def name(self) -> str:
