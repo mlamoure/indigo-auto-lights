@@ -40,6 +40,10 @@ class Plugin(indigo.PluginBase):
 
         self.debug: bool = True
         self._agent = None
+        os.environ["INDIGO_API_URL"] = plugin_prefs.get("indigo_api_url", "xxx")
+        os.environ["API_KEY"] = plugin_prefs.get("api_key", "xxx")
+        os.environ["WEB_CONFIG_BIND_IP"] = plugin_prefs.get("web_config_bind_ip", "xxx")
+        os.environ["WEB_CONFIG_BIND_PORT"] = plugin_prefs.get("web_config_bind_port", "xxx")
 
     def startup(self: indigo.PluginBase) -> None:
         """
