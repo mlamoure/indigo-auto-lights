@@ -129,6 +129,22 @@ class Plugin(indigo.PluginBase):
                 "Skipping start of configuration web server due to default config values."
             )
 
+    def stop_configuration_web_server(self: indigo.PluginBase):
+        """
+        Stops the configuration web server by calling its shutdown endpoint.
+        """
+        if self._web_server_thread is not None:
+            try:
+                import requests
+                shutdown_url = f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}/shutdown"
+                requests.get(shutdown_url)
+                self.logger.info("Configuration web server shutdown initiated.")
+            except Exception as e:
+                self.logger.error(f"Error stopping configuration web server: {e}")
+            self._web_server_thread = None
+        else:
+            self.logger.info("Configuration web server is not running.")
+
     def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
         if not user_cancelled:
             os.environ["INDIGO_API_URL"] = values_dict.get(
