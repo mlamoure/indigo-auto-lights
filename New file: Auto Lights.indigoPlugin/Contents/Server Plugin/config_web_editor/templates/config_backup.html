@@ -17,6 +17,7 @@
           <thead>
             <tr>
               <th>Backup File</th>
+              <th>Date</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -24,6 +25,7 @@
             {% for backup in manual_backups %}
             <tr>
               <td>{{ backup }}</td>
+              <td>{{ backup.split('_')[-1].split('.')[0] }}</td>
               <td>
                 <form method="post" style="display:inline;">
                   <input type="hidden" name="backup_type" value="manual">
@@ -41,6 +43,7 @@
           <thead>
             <tr>
               <th>Backup File</th>
+              <th>Date</th>
               <th>Description</th>
               <th>Actions</th>
             </tr>
@@ -49,6 +52,7 @@
             {% for backup in auto_backups %}
             <tr>
               <td>{{ backup.filename }}</td>
+              <td>{{ backup.filename.split('_')[-1].split('.')[0] }}</td>
               <td>{{ backup.description }}</td>
               <td>
                 <form method="post" style="display:inline;">
