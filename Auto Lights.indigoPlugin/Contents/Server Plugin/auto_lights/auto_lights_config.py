@@ -25,7 +25,6 @@ class AutoLightsConfig:
         self._guest_mode = False
         self._enabled_var_id = -1
         self._guest_mode_var_id = -1
-        self._rapid_execution_lock = False
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0
 
