@@ -159,7 +159,12 @@ def create_field(field_name, field_schema):
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectField(
-            label=label_text, description=tooltip_text, choices=choices, coerce=int, validators=validators
+            label=label_text,
+            description=tooltip_text,
+            choices=choices,
+            coerce=int,
+            validators=validators,
+            render_kw=( {'required': True} if required else {} )
         )
     # If field name contains _id or _ids and schema has the custom x-drop-down marker,
     # use a SelectField or SelectMultipleField.
