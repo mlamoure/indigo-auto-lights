@@ -115,7 +115,7 @@
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice",
                 "title": "Luminance Device(s)",
-                "tooltip": "List of device IDs for luminance sensors."
+                "tooltip": "Devices that will determine the luminance for the zone.  If multiple are given, the average is taken."
               },
               "presence_dev_id": {
                 "type": "integer",
