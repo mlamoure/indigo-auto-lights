@@ -595,11 +595,6 @@ class Zone:
                 continue
             self._send_to_indigo(dev_id, dev_target)
 
-        # Save final state to an Indigo variable for lock detection
-        indigo.variable.updateValue(
-            self.previous_target_var_name, str(self.target_save_state)
-        )
-
     def write_debug_output(self, config) -> str:
         """
         Dynamically construct debug output by iterating over the zone's attributes.

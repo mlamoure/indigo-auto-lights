@@ -49,6 +49,7 @@ class Plugin(indigo.PluginBase):
         )
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
+        self._disable_web_server = plugin_prefs.get("disable_web_server", False)
 
     def startup(self: indigo.PluginBase) -> None:
         """
@@ -66,7 +67,9 @@ class Plugin(indigo.PluginBase):
         if not os.path.exists(confg_file_str):
             shutil.copyfile(confg_file_empty_str, confg_file_str)
 
-        self.start_configuration_web_server()
+        if not self._disable_web_server:
+            self.start_configuration_web_server()
+
         conf_path = os.path.abspath(confg_file_str)
 
         config = AutoLightsConfig(conf_path)
@@ -163,4 +166,10 @@ class Plugin(indigo.PluginBase):
                 "web_config_bind_ip", "127.0.0.1"
             )
             self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
-            self.start_configuration_web_server()
+
+            self._disable_web_server = values_dict.get("disable_web_server")
+
+            if self._disable_web_server:
+                self.stop_configuration_web_server()
+            else:
+                self.start_configuration_web_server()

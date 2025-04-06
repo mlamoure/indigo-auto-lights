@@ -89,19 +89,14 @@ class AutoLightsAgent:
                 and zone.has_presence_detected()
                 and zone.is_dark()
             ):
-
                 zone.calculate_target_brightness()
-                action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are using Timed Brightness Mode"
-            elif (
-                zone.current_lighting_period.mode == "Off Only"
-                and zone.has_presence_detected()
-                and zone.is_dark()
-            ):
-                zone.target_brightness = 100
-                action_reason = "the requisite conditions have been met: presence is detected for a OnOffZone, the zone is dark, and we are NOT using Timed Brightness Mode"
+                action_reason = (
+                    "Presence is detected for a On and Off Zone, the zone is dark"
+                )
+
             elif not zone.has_presence_detected():
                 zone.target_brightness = 0
-                action_reason = "presence is not detected for a OnOffZone or OffZone"
+                action_reason = "presence is not detected"
 
         ################################################################
         # Save and write log
