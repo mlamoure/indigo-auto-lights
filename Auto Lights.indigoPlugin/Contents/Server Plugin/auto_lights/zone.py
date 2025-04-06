@@ -635,16 +635,19 @@ class Zone:
         Check if the given device ID exists in this zone's device lists.
         """
         if dev_id in self.exclude_from_lock_dev_ids:
-            return "exclude_from_lock_dev_ids"
-        if dev_id in self._on_lights_dev_ids:
-            return "on_lights_dev_ids"
-        if dev_id in self._off_lights_dev_ids:
-            return "off_lights_dev_ids"
-        if self._presence_dev_id == dev_id:
-            return "presence_dev_id"
-        if dev_id in self._luminance_dev_ids:
-            return "luminance_dev_ids"
-        return ""
+            result = "exclude_from_lock_dev_ids"
+        elif dev_id in self._on_lights_dev_ids:
+            result = "on_lights_dev_ids"
+        elif dev_id in self._off_lights_dev_ids:
+            result = "off_lights_dev_ids"
+        elif self._presence_dev_id == dev_id:
+            result = "presence_dev_id"
+        elif dev_id in self._luminance_dev_ids:
+            result = "luminance_dev_ids"
+        else:
+            result = ""
+        self.logger.debug("has_device: device id " + str(dev_id) + " result: " + result)
+        return result
 
     def has_variable(self, var_id: int) -> bool:
         """
@@ -663,11 +666,13 @@ class Zone:
             self._minimum_luminance_var_id is not None
             and var_id == self._minimum_luminance_var_id
         ):
-            return True
+            result = True
         elif var_id == self._enabled_var_id:
-            return True
-
-        return False
+            result = True
+        else:
+            result = False
+        self.logger.debug("has_variable: var_id " + str(var_id) + " result: " + str(result))
+        return result
 
     # (6) Private methods
     def _send_to_indigo(self, device_id: int, desired_brightness: int | bool) -> None:

@@ -145,7 +145,6 @@ class AutoLightsAgent:
         Returns:
             List[Zone]: List of Zone's processed
         """
-        self.logger.debug("process_device_change called for device id: " + str(orig_dev.id) + ", diff: " + str(diff))
         processed = []
         for zone in self._config._zones:
             device_prop = zone.has_device(orig_dev.id)
@@ -180,7 +179,6 @@ class AutoLightsAgent:
         Returns:
             List[Zone]: List of Zone's processed
         """
-        self.logger.debug("process_variable_change called for orig_var id: " + str(orig_var.id) + ", new_var id: " + str(new_var.id))
     
         processed = []
         for zone in self._config._zones:
