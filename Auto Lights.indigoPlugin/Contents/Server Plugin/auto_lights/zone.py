@@ -345,7 +345,7 @@ class Zone:
     def current_lighting_period(self) -> Optional[LightingPeriod]:
         if self._current_lighting_period is None:
             if not self.lighting_periods:
-                self.logger.info("no periods for zone " + self._name)
+                self.logger.info("Zone '" + self._name + "': no active lighting periods.")
                 return None
             for period in self.lighting_periods:
                 if period.is_active_period():
@@ -517,12 +517,12 @@ class Zone:
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
         if not self.luminance_dev_ids:
-            self.logger.debug("is_dark: No luminance devices, returning True")
+            self.logger.debug("Zone '" + self._name + "': is_dark: No luminance devices, returning True")
             return True
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
             self.logger.debug(
-                "is_dark: device "
+                "Zone '" + self._name + "': is_dark: device "
                 + str(dev_id)
                 + " sensorValue="
                 + str(sensor_value)
@@ -531,12 +531,12 @@ class Zone:
             )
             if sensor_value < self.minimum_luminance:
                 self.logger.debug(
-                    "is_dark: device "
+                    "Zone '" + self._name + "': is_dark: device "
                     + str(dev_id)
                     + " is below threshold, returning True"
                 )
                 return True
-        self.logger.debug("is_dark: All devices above threshold, returning False")
+        self.logger.debug("Zone '" + self._name + "': is_dark: All devices above threshold, returning False")
         return False
 
     def current_state_any_light_is_on(self) -> bool:
@@ -564,7 +564,7 @@ class Zone:
             self.previous_target_var_name, str(self._current_lights_status)
         )
         self.logger.info(
-            f"auto_lights script for Zone '{self._name}', zone lock reset because {reason}"
+            f"Zone '{self._name}': zone lock reset because {reason}"
         )
 
     def has_brightness_changes(self) -> bool:
