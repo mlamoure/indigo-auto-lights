@@ -82,7 +82,7 @@ class AutoLightsAgent:
             if var_id and var_value:
                 try:
                     current_value = str(indigo.variables[var_id].value)
-                    if current_value == var_value:
+                    if current_value.lower() == var_value.lower():
                         zone.target_brightness = 0
                         action_reason = f"global behavior variable {indigo.variables[var_id].name} matches value '{var_value}'"
                         break
