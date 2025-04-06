@@ -73,13 +73,24 @@ class AutoLightsAgent:
         ################################################################
 
         action_reason = ""
-        if not self._config.someone_home:
-            zone.target_brightness = 0
-            action_reason = "no one is home"
-        elif zone.turn_off_while_sleeping and self._config.gone_to_bed:
-            zone.target_brightness = 0
-            action_reason = "house is asleep"
-        elif zone.current_lighting_period is not None:
+        
+        # Check global behavior variables
+        for behavior_var in zone.global_behavior_variables:
+            var_id = behavior_var.get("var_id")
+            var_value = behavior_var.get("var_value")
+            
+            if var_id and var_value:
+                try:
+                    current_value = str(indigo.variables[var_id].value)
+                    if current_value == var_value:
+                        zone.target_brightness = 0
+                        action_reason = f"global behavior variable {indigo.variables[var_id].name} matches value '{var_value}'"
+                        break
+                except (KeyError, ValueError):
+                    self.logger.debug(f"Invalid global behavior variable ID: {var_id}")
+        
+        # If no global behavior variables matched, continue with normal processing
+        if not action_reason and zone.current_lighting_period is not None:
             if (
                 zone.current_lighting_period.mode == "OnOffZone"
                 and zone.has_presence_detected()

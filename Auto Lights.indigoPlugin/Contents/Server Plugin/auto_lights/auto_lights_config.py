@@ -1,4 +1,5 @@
 import json
+from typing import List
 from .zone import Zone
 from .lighting_period import LightingPeriod
 
@@ -85,11 +86,25 @@ class AutoLightsConfig:
         self._default_lock_extension_duration = value
 
     @property
-    def global_behavior_variables(self) -> list:
+    def global_behavior_variables(self) -> List[dict]:
+        """
+        A list of dictionaries each containing a variable ID (var_id) and a variable value (var_value)
+        available for global behavior adjustments.
+        
+        Each dictionary has the format:
+        {
+            "var_id": int,  # Indigo variable ID
+            "var_value": str  # Value to check against
+        }
+        """
         return self._global_behavior_variables
 
     @global_behavior_variables.setter
-    def global_behavior_variables(self, value: list) -> None:
+    def global_behavior_variables(self, value: List[dict]) -> None:
+        """
+        Set the list of global behavior variables.
+        Each item should be a dictionary with 'var_id' (int) and 'var_value' (str).
+        """
         self._global_behavior_variables = value
 
 
