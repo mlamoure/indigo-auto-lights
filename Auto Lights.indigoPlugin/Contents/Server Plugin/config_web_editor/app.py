@@ -122,7 +122,11 @@ def create_field(field_name, field_schema):
         if not required:
             choices.insert(0, (-1, "None Selected"))
         f = SelectField(
-            label=label_text, description=tooltip_text, choices=choices, coerce=int, validators=validators
+            label=label_text,
+            description=tooltip_text,
+            choices=choices,
+            coerce=int,
+            validators=validators,
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
         local_validators = list(validators)
@@ -146,7 +150,7 @@ def create_field(field_name, field_schema):
             description=tooltip_text,
             choices=choices,
             coerce=int,
-            validators=local_validators
+            validators=local_validators,
         )
     elif field_name.endswith("_dev_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_devices()
@@ -157,6 +161,7 @@ def create_field(field_name, field_schema):
                 if str(dev.get("class", "")).strip() in allowed_types
                 or str(dev.get("deviceTypeId", "")).strip() in allowed_types
             ]
+
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectField(
             label=label_text,
@@ -164,7 +169,7 @@ def create_field(field_name, field_schema):
             choices=choices,
             coerce=int,
             validators=validators,
-            render_kw=( {'required': True} if required else {} )
+            render_kw=({"required": True} if required else {}),
         )
     # If field name contains _id or _ids and schema has the custom x-drop-down marker,
     # use a SelectField or SelectMultipleField.
@@ -174,7 +179,7 @@ def create_field(field_name, field_schema):
             description=tooltip_text,
             choices=get_lighting_period_choices(),
             coerce=int,
-            validators=validators
+            validators=validators,
         )
     elif field_name in [
         "lock_duration",
@@ -207,11 +212,18 @@ def create_field(field_name, field_schema):
             label=label_text, description=tooltip_text, validators=validators
         )
     elif field_type == "boolean":
-        f = BooleanField(label=label_text, description=tooltip_text, validators=validators)
+        f = BooleanField(
+            label=label_text, description=tooltip_text, validators=validators
+        )
     elif field_type == "string" and field_schema.get("enum"):
         enum_values = field_schema.get("enum", [])
         choices = [(val, val) for val in enum_values]
-        f = SelectField(label=label_text, description=tooltip_text, choices=choices, validators=validators)
+        f = SelectField(
+            label=label_text,
+            description=tooltip_text,
+            choices=choices,
+            validators=validators,
+        )
     else:
         # Default to string field for any other types.
         f = StringField(
