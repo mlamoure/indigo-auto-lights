@@ -89,7 +89,6 @@ class AutoLightsAgent:
                 except (KeyError, ValueError):
                     self.logger.debug(f"Invalid global behavior variable ID: {var_id}")
 
-        # If no global behavior variables matched, continue with normal processing
         if not action_reason and zone.current_lighting_period is not None:
             if (
                 zone.current_lighting_period.mode == "OnOffZone"
