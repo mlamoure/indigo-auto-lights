@@ -130,12 +130,6 @@ def create_field(field_name, field_schema):
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
         local_validators = list(validators)
-        if field_name in [
-            "on_lights_dev_ids",
-            "lumaninance_dev_ids",
-            "presence_dev_id",
-        ] and not any(isinstance(v, DataRequired) for v in local_validators):
-            local_validators.append(DataRequired())
         options = get_cached_indigo_devices()
         if allowed_types:
             options = [
@@ -241,13 +235,22 @@ def generate_form_class_from_schema(schema):
         required_fields = schema.get("required", [])
         if not isinstance(required_fields, list):
             required_fields = []
-        subschema["required"] = prop in required_fields
+        subschema_is_required = prop in required_fields
+
         if subschema.get("type") == "object":
             from wtforms import FormField
+            # Ensure nested properties are marked required
+            nested_required = subschema.get("required", [])
+            if not isinstance(nested_required, list):
+                nested_required = []
+            for nested_prop, nested_sub in subschema.get("properties", {}).items():
+                nested_sub["required"] = nested_prop in nested_required
 
             subform_class = generate_form_class_from_schema(subschema)
             attrs[prop] = FormField(subform_class, label=subschema.get("title", prop))
         else:
+            # Mark this property as required based on top-level "required"
+            subschema["required"] = subschema_is_required
             attrs[prop] = create_field(prop, subschema)
 
     class DynamicFormNoCSRF(FlaskForm):
