@@ -45,6 +45,9 @@
                 <button type="button" class="btn" onclick="window.location.href='/lighting_periods'">Cancel</button>
             </div>
         </form>
+        <div id="save-feedback-overlay" style="display:none; position: fixed; top:0; left:0; background: rgba(0,0,0,0.5); width:100%; height:100%; z-index:9999; color: white; font-size: 2em; text-align: center; line-height: 100vh;">
+            Lighting period saved successfully.
+        </div>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -74,6 +77,11 @@
                     }
                 });
             });
+        });
+    </script>
+    <script>
+        document.getElementById("lighting-period-config-form").addEventListener("submit", function(){
+            document.getElementById("save-feedback-overlay").style.display = "block";
         });
     </script>
 </div>
