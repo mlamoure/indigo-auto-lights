@@ -125,13 +125,13 @@ def create_field(field_name, field_schema):
             label=label_text, description=tooltip_text, choices=choices, coerce=int
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
-        validators = []
-        if field_schema.get("required") or field_name in [
+        local_validators = list(validators)
+        if field_name in [
             "on_lights_dev_ids",
             "lumaninance_dev_ids",
             "presence_dev_id",
-        ]:
-            validators.append(DataRequired())
+        ] and not any(isinstance(v, DataRequired) for v in local_validators):
+            local_validators.append(DataRequired())
         options = get_cached_indigo_devices()
         if allowed_types:
             options = [
@@ -146,7 +146,7 @@ def create_field(field_name, field_schema):
             description=tooltip_text,
             choices=choices,
             coerce=int,
-            validators=validators,
+            validators=local_validators
         )
     elif field_name.endswith("_dev_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_devices()
@@ -164,15 +164,12 @@ def create_field(field_name, field_schema):
     # If field name contains _id or _ids and schema has the custom x-drop-down marker,
     # use a SelectField or SelectMultipleField.
     elif field_name == "lighting_period_ids":
-        validators = []
-        if field_schema.get("required"):
-            validators.append(DataRequired())
         f = SelectMultipleField(
             label=label_text,
             description=tooltip_text,
             choices=get_lighting_period_choices(),
             coerce=int,
-            validators=validators,
+            validators=validators
         )
     elif field_name in [
         "lock_duration",
