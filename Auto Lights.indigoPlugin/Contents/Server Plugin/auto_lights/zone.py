@@ -280,6 +280,7 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
+        self.logger.debug("target_brightness: computed target brightness = " + str(self._target_brightness))
         return self._target_brightness
 
     @target_brightness.setter
@@ -511,12 +512,16 @@ class Zone:
         """
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
-
         if not self.luminance_dev_ids:
+            self.logger.debug("is_dark: No luminance devices, returning True")
             return True
         for dev_id in self.luminance_dev_ids:
-            if indigo.devices[dev_id].sensorValue < self.minimum_luminance:
+            sensor_value = indigo.devices[dev_id].sensorValue
+            self.logger.debug("is_dark: device " + str(dev_id) + " sensorValue=" + str(sensor_value) + ", minimum_luminance=" + str(self.minimum_luminance))
+            if sensor_value < self.minimum_luminance:
+                self.logger.debug("is_dark: device " + str(dev_id) + " is below threshold, returning True")
                 return True
+        self.logger.debug("is_dark: All devices above threshold, returning False")
         return False
 
     def current_state_any_light_is_on(self) -> bool:

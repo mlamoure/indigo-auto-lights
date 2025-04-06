@@ -31,6 +31,7 @@ class AutoLightsAgent:
         self.logger.debug(
             "Zone '" + zone.name + "':   processing."
         )
+        self.logger.debug("process_zone: zone details: enabled=" + str(zone.enabled) + ", current_lights_status=" + str(zone.current_lights_status) + ", target_brightness=" + str(zone.target_brightness))
 
         if not zone.enabled:
             self.logger.debug(
