@@ -27,6 +27,7 @@ class AutoLightsConfig:
         self._guest_mode_var_id = -1
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0
+        self._global_behavior_variables = []
 
         self._zones = []
         self._lighting_periods = []
@@ -82,6 +83,14 @@ class AutoLightsConfig:
     @default_lock_extension_duration.setter
     def default_lock_extension_duration(self, value: int) -> None:
         self._default_lock_extension_duration = value
+
+    @property
+    def global_behavior_variables(self) -> list:
+        return self._global_behavior_variables
+
+    @global_behavior_variables.setter
+    def global_behavior_variables(self, value: list) -> None:
+        self._global_behavior_variables = value
 
 
     def load_config(self) -> None:
