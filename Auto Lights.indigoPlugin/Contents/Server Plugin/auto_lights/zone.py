@@ -281,10 +281,7 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
-        self.logger.debug(
-            "target_brightness: computed target brightness = "
-            + str(self._target_brightness)
-        )
+        self.logger.debug(f"Zone '{self._name}': computed target brightness = {self._target_brightness}")
         return self._target_brightness
 
     @target_brightness.setter
