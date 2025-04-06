@@ -565,6 +565,15 @@ def get_luminance_value():
     return {"average": avg}
 
 
+@app.route("/shutdown", methods=["POST"])
+def shutdown():
+    shutdown_func = request.environ.get("werkzeug.server.shutdown")
+    if shutdown_func is None:
+        raise RuntimeError("Not running with the Werkzeug Server")
+    shutdown_func()
+    return "Server shutting down..."
+
+
 def run_flask_app(
     host: str = "127.0.0.1", port: int = 9500, debug: bool = False
 ) -> None:

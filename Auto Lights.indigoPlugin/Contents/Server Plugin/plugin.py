@@ -2,6 +2,8 @@ import os
 import shutil
 import threading
 
+import requests
+
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
 from config_web_editor.app import run_flask_app
@@ -111,6 +113,9 @@ class Plugin(indigo.PluginBase):
         self._agent.process_variable_change(orig_var, new_var)
 
     def start_configuration_web_server(self: indigo.PluginBase):
+        if self._web_server_thread is not None:
+            self.stop_web_server_thread()
+
         if (
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
             and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
@@ -135,7 +140,6 @@ class Plugin(indigo.PluginBase):
         """
         if self._web_server_thread is not None:
             try:
-                import requests
                 shutdown_url = f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}/shutdown"
                 requests.get(shutdown_url)
                 self.logger.info("Configuration web server shutdown initiated.")
