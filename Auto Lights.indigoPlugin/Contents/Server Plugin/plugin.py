@@ -75,6 +75,8 @@ class Plugin(indigo.PluginBase):
         config = AutoLightsConfig(conf_path)
         self._agent = AutoLightsAgent(config)
 
+        self._agent.process_all_zones()
+
     def shutdown(self: indigo.PluginBase) -> None:
         """
         Any cleanup logic needed before the plugin is completely shut down.
