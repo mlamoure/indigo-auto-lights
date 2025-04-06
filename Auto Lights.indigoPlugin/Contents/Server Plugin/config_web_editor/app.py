@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import threading
 import time
 from collections import OrderedDict
@@ -50,14 +51,11 @@ from .tools.indigo_api_tools import (
     indigo_create_new_variable,
 )
 
-app = Flask(__name__)
-app.jinja_env.globals.update(enumerate=enumerate)
-
 load_dotenv()
-import secrets
+app = Flask(__name__)
 SECRET_KEY = secrets.token_hex(16)
-
 app.config["SECRET_KEY"] = SECRET_KEY
+app.jinja_env.globals.update(enumerate=enumerate)
 
 
 def start_cache_refresher():
