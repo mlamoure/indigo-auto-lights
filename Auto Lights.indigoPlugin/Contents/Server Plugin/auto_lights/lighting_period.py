@@ -79,6 +79,8 @@ class LightingPeriod:
         instance = cls(cfg.get("name"), cfg.get("mode"), from_time, to_time)
         if "lock_duration" in cfg:
             instance._lock_duration = cfg["lock_duration"]
+        if "id" in cfg:
+            instance.id = cfg["id"]
         return instance
 
     def is_active_period(self) -> bool:
