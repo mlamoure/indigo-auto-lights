@@ -159,6 +159,13 @@ class AutoLightsAgent:
 
         return processed
 
+    def process_all_zones(self) -> None:
+        """
+        Loop through each zone in the agent's configuration and process each zone.
+        """
+        for zone in self._config._zones:
+            self.process_zone(zone)
+
     def process_variable_change(
         self, orig_var: indigo.Variable, new_var: indigo.Variable
     ) -> List[Zone]:
