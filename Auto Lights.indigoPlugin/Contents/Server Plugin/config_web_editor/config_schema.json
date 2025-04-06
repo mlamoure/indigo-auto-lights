@@ -273,6 +273,7 @@
           },
           "lock_duration": {
             "type": "integer",
+            "default": -1,
             "title": "Override Lock Duration",
             "tooltip": "If desired different from the default, specify the lock duration in seconds for the lighting period."
           }
