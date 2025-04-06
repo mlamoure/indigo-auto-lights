@@ -120,18 +120,27 @@ class AutoLightsConfig:
             if hasattr(self, key):
                 setattr(self, key, value)
 
-        # Process zones into Zone objects
-        self._zones = []
-        zones_data = data.get("zones", [])
-        for zone_d in zones_data:
-            z = Zone(zone_d.get("name"), self)
-            z.from_config_dict(zone_d)
-            self._zones.append(z)
-
         # Process lighting periods into LightingPeriod objects
         self._lighting_periods = []
         lp_data = data.get("lighting_periods", [])
         for lp in lp_data:
             lp_instance = LightingPeriod.from_config_dict(lp)
             self._lighting_periods.append(lp_instance)
+
+        # Process zones into Zone objects
+        self._zones = []
+        zones_data = data.get("zones", [])
+        for zone_d in zones_data:
+            z = Zone(zone_d.get("name"), self)
+            z.from_config_dict(zone_d)
+            # set lighting_periods based on reference ids
+            ref_ids = zone_d.get("lighting_period_ids", [])
+            zone_lps = []
+            for ref in ref_ids:
+                for lp in self._lighting_periods:
+                    if lp.id == ref:
+                        zone_lps.append(lp)
+                        break
+            z.lighting_periods = zone_lps
+            self._zones.append(z)
 
