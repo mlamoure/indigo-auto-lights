@@ -72,6 +72,18 @@ class LightingPeriod:
     def mode(self, value: str) -> None:
         self._mode = value
 
+    @property
+    def lock_duration(self) -> int:
+        return self._lock_duration if self._lock_duration is not None else -1
+
+    @lock_duration.setter
+    def lock_duration(self, value: int) -> None:
+        self._lock_duration = value
+
+    @property
+    def has_lock_duration_override(self) -> bool:
+        return self.lock_duration != -1
+
     @classmethod
     def from_config_dict(cls, cfg: dict):
         from_time = datetime.time(
