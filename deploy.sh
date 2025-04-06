@@ -5,13 +5,13 @@ set -euo pipefail
 SRC="/Users/mike/Mike's Sync Documents/Programming/indigo-auto-lights-plugin/Auto Lights.indigoPlugin"
 NAME=$(basename "$SRC")
 TMPDIR=$(mktemp -d)
-TARGET_DIR="/Volumes/Perceptive Automation"
+TARGET_DIR="/Volumes/Perceptive Automation/Indigo 2024.2/Plugins"
 
 echo "Copying '$SRC' to a temporary directory: $TMPDIR"
 cp -R "$SRC" "$TMPDIR"
 
 echo "Cleaning the package: removing the 'Packages' subdirectory if it exists..."
-rm -rf "$TMPDIR/$NAME/Packages"
+rm -rf "$TMPDIR/$NAME/Contents/Packages"
 
 echo "Removing any existing package named '$NAME' in the network location: $TARGET_DIR"
 rm -rf "$TARGET_DIR/$NAME"
