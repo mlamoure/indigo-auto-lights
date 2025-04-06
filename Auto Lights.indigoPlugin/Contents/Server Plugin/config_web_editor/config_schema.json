@@ -177,12 +177,6 @@
                 "tooltip": "Plugin will confirm that the change will be applied to the device, and continue to retry if failed.",
                 "default": true
               },
-              "turn_off_while_sleeping": {
-                "type": "boolean",
-                "title": "Turn Off While Sleeping",
-                "tooltip": "Enable to automatically turn off lights when sleeping.",
-                "default": true
-              },
               "unlock_when_no_presence": {
                 "type": "boolean",
                 "title": "Unlock When No Presence",

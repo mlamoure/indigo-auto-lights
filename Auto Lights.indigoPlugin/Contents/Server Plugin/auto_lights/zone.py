@@ -61,7 +61,6 @@ class Zone:
         self._perform_confirm = True
         self._lock_duration = None
         self._extend_lock_when_active = True
-        self._turn_off_while_sleeping = False
         self._unlock_when_no_presence = True
 
         self._lock_expiration = None
@@ -104,8 +103,6 @@ class Zone:
                 self.extend_lock_when_active = bs["extend_lock_when_active"]
             if "perform_confirm" in bs:
                 self.perform_confirm = bs["perform_confirm"]
-            if "turn_off_while_sleeping" in bs:
-                self.turn_off_while_sleeping = bs["turn_off_while_sleeping"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
         if "global_behavior_variables" in cfg:
@@ -156,13 +153,6 @@ class Zone:
     def adjust_brightness_when_active(self, value: bool) -> None:
         self._adjust_brightness_when_active = value
 
-    @property
-    def turn_off_while_sleeping(self) -> bool:
-        return self._turn_off_while_sleeping
-
-    @turn_off_while_sleeping.setter
-    def turn_off_while_sleeping(self, value: bool) -> None:
-        self._turn_off_while_sleeping = value
 
     @property
     def unlock_when_no_presence(self) -> bool:
