@@ -290,6 +290,7 @@ def auto_backup_config():
     os.makedirs(auto_backup_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     backup_file = os.path.join(auto_backup_dir, f"auto_backup_{timestamp}.json")
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json")
     shutil.copy2(config_path, backup_file)
     backups = sorted(glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")))
     if len(backups) > 25:
