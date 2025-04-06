@@ -29,14 +29,7 @@ class AutoLightsAgent:
             return False
 
         self.logger.debug("Zone '" + zone.name + "':   processing.")
-        self.logger.debug(
-            "process_zone: zone details: enabled="
-            + str(zone.enabled)
-            + ", current_lights_status="
-            + str(zone.current_lights_status)
-            + ", target_brightness="
-            + str(zone.target_brightness)
-        )
+        self.logger.debug("Zone '" + zone.name + "': details: enabled=" + str(zone.enabled) + ", current_lights_status=" + str(zone.current_lights_status) + ", target_brightness=" + str(zone.target_brightness))
 
         if not zone.enabled:
             self.logger.debug(
@@ -52,12 +45,7 @@ class AutoLightsAgent:
             if not zone.has_presence_detected() and zone.unlock_when_no_presence:
                 zone.reset_lock("no longer presence in zone")
             else:
-                self.logger.debug(
-                    "auto_lights script for Zone '"
-                    + zone.name
-                    + "': zone is locked until "
-                    + str(zone.lock_expiration)
-                )
+                self.logger.debug("Zone '" + zone.name + "': zone is locked until " + str(zone.lock_expiration))
                 return False
 
         ################################################################
@@ -120,11 +108,7 @@ class AutoLightsAgent:
             zone.save_brightness_changes()
 
         else:
-            self.logger.debug(
-                "auto_lights script for Zone '"
-                + zone.name
-                + "': no changes to make, checked in"
-            )
+            self.logger.debug("Zone '" + zone.name + "': no changes to make, checked in")
 
             zone.check_in()
 
