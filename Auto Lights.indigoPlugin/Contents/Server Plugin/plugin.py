@@ -161,3 +161,4 @@ class Plugin(indigo.PluginBase):
                 "web_config_bind_ip", "127.0.0.1"
             )
             self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
+            self.start_configuration_web_server()
