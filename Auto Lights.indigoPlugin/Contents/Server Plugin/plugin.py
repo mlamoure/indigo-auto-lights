@@ -35,15 +35,13 @@ class Plugin(indigo.PluginBase):
             plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs
         )
 
-        indigo.devices.subscribeToChanges()
-        indigo.variables.subscribeToChanges()
-
         self.debug: bool = True
         self._agent = None
+
         os.environ["INDIGO_API_URL"] = plugin_prefs.get("indigo_api_url", "xxx")
         os.environ["API_KEY"] = plugin_prefs.get("api_key", "xxx")
-        os.environ["WEB_CONFIG_BIND_IP"] = plugin_prefs.get("web_config_bind_ip", "xxx")
-        os.environ["WEB_CONFIG_BIND_PORT"] = plugin_prefs.get("web_config_bind_port", "xxx")
+        self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
+        self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
 
     def startup(self: indigo.PluginBase) -> None:
         """
@@ -52,6 +50,9 @@ class Plugin(indigo.PluginBase):
         :return:
         """
         self.logger.debug("startup called")
+
+        indigo.devices.subscribeToChanges()
+        indigo.variables.subscribeToChanges()
 
         confg_file_str = "config_web_editor/config/auto_lights_conf.json"
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
@@ -107,13 +108,13 @@ class Plugin(indigo.PluginBase):
         self._agent.process_variable_change(orig_var, new_var)
 
     def start_configuration_web_server(self: indigo.PluginBase):
-        address = "127.0.0.1"
-        port = 9000
         self.logger.info(
             f"Starting the configuration web server... listening on address {address} and port {port}.  Visit http://{address}:{port}"
         )
         thread = threading.Thread(
-            target=run_flask_app, args=(address, port), daemon=True
+            target=run_flask_app,
+            args=(self._web_config_bind_ip, self._web_config_bind_port),
+            daemon=True,
         )
         thread.start()
 

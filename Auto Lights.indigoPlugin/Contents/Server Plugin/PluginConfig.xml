@@ -7,17 +7,17 @@
     </SupportURL>
 
 
-    <Field id="indigo_api_url" type="textfield" defaultValue="xxx" tooltip="">
+    <Field id="indigo_api_url" type="textfield" defaultValue="https://myreflector.indigodomo.net" tooltip="">
         <Label>Reflector URL:</Label>
     </Field>
-    <Field id="api_key" type="textfield" defaultValue="xxx" tooltip="">
+    <Field id="api_key" type="textfield" defaultValue="xxxxx-xxxxx-xxxxx-xxxxx" tooltip="">
         <Label>API Key:</Label>
     </Field>
 
-    <Field id="web_config_bind_ip" type="textfield" defaultValue="xxx" tooltip="">
+    <Field id="web_config_bind_ip" type="textfield" defaultValue="127.0.0.1" tooltip="">
         <Label>Bind IP for web server:</Label>
     </Field>
-    <Field id="web_config_bind_port" type="textfield" defaultValue="xxx" tooltip="">
+    <Field id="web_config_bind_port" type="textfield" defaultValue="9000" tooltip="">
         <Label>Web server port:</Label>
     </Field>
 
