@@ -6,7 +6,6 @@ from typing import List
 
 import requests
 
-INDIGO_API_URL = os.getenv("INDIGO_API_URL") + "/v2/api"
 KEYS_TO_KEEP = [
     "name",
     "class",
@@ -38,6 +37,10 @@ KEYS_TO_KEEP = [
 KEYS_TO_KEEP_MINIMAL = KEYS_TO_KEEP
 
 
+def get_indigo_api_url() -> str:
+    return os.getenv("INDIGO_API_URL") + "/v2/api"
+
+
 def indigo_get_all_house_devices() -> dict:
     """
     Fetches data from the indigo reflector endpoint to retrieve a list of all devices in the house, including
@@ -47,7 +50,7 @@ def indigo_get_all_house_devices() -> dict:
         dict: The JSON response from the API.
     """
 
-    api_endpoint = f"{INDIGO_API_URL}/indigo.devices"
+    api_endpoint = f"{get_indigo_api_url()}/indigo.devices"
     return indigo_api_call(api_endpoint, "GET", KEYS_TO_KEEP_MINIMAL)
 
 
@@ -68,7 +71,7 @@ def indigo_get_house_devices(device_ids: str) -> dict:
     device_info_list = []
 
     for device_id in ids:
-        api_endpoint = f"{INDIGO_API_URL}/indigo.devices/{device_id}"
+        api_endpoint = f"{get_indigo_api_url()}/indigo.devices/{device_id}"
         device_info_list.append(indigo_api_call(api_endpoint, "GET", KEYS_TO_KEEP))
 
     return {"devices": device_info_list}
@@ -83,7 +86,7 @@ def indigo_get_all_house_action_groups() -> dict:
         dict: The JSON response from the API.
     """
 
-    api_endpoint = f"{INDIGO_API_URL}/indigo.actionGroups"
+    api_endpoint = f"{get_indigo_api_url()}/indigo.actionGroups"
     return indigo_api_call(api_endpoint, "GET", KEYS_TO_KEEP_MINIMAL)
 
 
@@ -95,7 +98,7 @@ def indigo_get_all_house_variables() -> dict:
     Returns:
         dict: The JSON response from the API.
     """
-    api_endpoint = f"{INDIGO_API_URL}/indigo.variables"
+    api_endpoint = f"{get_indigo_api_url()}/indigo.variables"
     return indigo_api_call(api_endpoint, "GET", KEYS_TO_KEEP_MINIMAL)
 
 
