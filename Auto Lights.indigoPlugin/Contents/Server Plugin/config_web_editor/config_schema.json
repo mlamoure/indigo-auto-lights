@@ -120,7 +120,6 @@
               "presence_dev_id": {
                 "type": "integer",
                 "x-drop-down": true,
-                "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice,thresholdTimer,persistenceTimer,activityTimer",
                 "title": "Presence Device",
                 "tooltip": "Identifier for the presence sensor."
