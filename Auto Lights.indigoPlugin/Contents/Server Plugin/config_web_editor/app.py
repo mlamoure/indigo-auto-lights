@@ -159,7 +159,7 @@ def create_field(field_name, field_schema):
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
         f = SelectField(
-            label=label_text, description=tooltip_text, choices=choices, coerce=int
+            label=label_text, description=tooltip_text, choices=choices, coerce=int, validators=validators
         )
     # If field name contains _id or _ids and schema has the custom x-drop-down marker,
     # use a SelectField or SelectMultipleField.
@@ -202,7 +202,7 @@ def create_field(field_name, field_schema):
             label=label_text, description=tooltip_text, validators=validators
         )
     elif field_type == "boolean":
-        f = BooleanField(label=label_text, description=tooltip_text)
+        f = BooleanField(label=label_text, description=tooltip_text, validators=validators)
     elif field_type == "string" and field_schema.get("enum"):
         enum_values = field_schema.get("enum", [])
         choices = [(val, val) for val in enum_values]
