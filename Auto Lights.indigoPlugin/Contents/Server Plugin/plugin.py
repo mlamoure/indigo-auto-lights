@@ -44,7 +44,9 @@ class Plugin(indigo.PluginBase):
         os.environ["INDIGO_API_URL"] = plugin_prefs.get(
             "indigo_api_url", "https://myreflector.indigodomo.net"
         )
-        os.environ["API_KEY"] = plugin_prefs.get("api_key", "xxxxx-xxxxx-xxxxx-xxxxx")
+        os.environ["INDIGO_API_KEY"] = plugin_prefs.get(
+            "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
+        )
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
 
