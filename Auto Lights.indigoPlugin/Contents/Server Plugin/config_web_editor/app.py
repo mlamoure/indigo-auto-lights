@@ -54,7 +54,8 @@ app = Flask(__name__)
 app.jinja_env.globals.update(enumerate=enumerate)
 
 load_dotenv()
-SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev_secret")
+import secrets
+SECRET_KEY = secrets.token_hex(16)
 
 app.config["SECRET_KEY"] = SECRET_KEY
 
