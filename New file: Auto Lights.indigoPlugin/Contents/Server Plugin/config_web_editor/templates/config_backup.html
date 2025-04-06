@@ -13,59 +13,67 @@
         <h2>Configuration Backup</h2>
         <button id="create-manual-backup" class="btn">Create Manual Backup</button>
         <h3>Manual Backups</h3>
-        <table class="zones-table">
-          <thead>
-            <tr>
-              <th>Backup File</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for backup in manual_backups %}
-            <tr>
-              <td>{{ backup }}</td>
-              <td>{{ backup.split('_')[-1].split('.')[0] }}</td>
-              <td>
-                <form method="post" style="display:inline;">
-                  <input type="hidden" name="backup_type" value="manual">
-                  <input type="hidden" name="backup_file" value="{{ backup }}">
-                  <button type="submit" name="action" value="restore" class="btn">Restore</button>
-                  <button type="submit" name="action" value="delete" class="btn">Delete</button>
-                </form>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div id="manual-backups-list">
+          <table class="zones-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Backup File</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for backup in manual_backups %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ backup }}</td>
+                <td>{{ backup.split('_')[-1].split('.')[0] }}</td>
+                <td>
+                  <form method="post" style="display:inline;">
+                    <input type="hidden" name="backup_type" value="manual">
+                    <input type="hidden" name="backup_file" value="{{ backup }}">
+                    <button type="submit" name="action" value="restore" class="btn">Restore</button>
+                    <button type="submit" name="action" value="delete" class="btn">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
         <h3>Automatic Backups</h3>
-        <table class="zones-table">
-          <thead>
-            <tr>
-              <th>Backup File</th>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for backup in auto_backups %}
-            <tr>
-              <td>{{ backup.filename }}</td>
-              <td>{{ backup.filename.split('_')[-1].split('.')[0] }}</td>
-              <td>{{ backup.description }}</td>
-              <td>
-                <form method="post" style="display:inline;">
-                  <input type="hidden" name="backup_type" value="auto">
-                  <input type="hidden" name="backup_file" value="{{ backup.filename }}">
-                  <button type="submit" name="action" value="restore" class="btn">Restore</button>
-                  <button type="submit" name="action" value="delete" class="btn">Delete</button>
-                </form>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <div id="auto-backups-list">
+          <table class="zones-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Backup File</th>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for backup in auto_backups %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ backup.filename }}</td>
+                <td>{{ backup.filename.split('_')[-1].split('.')[0] }}</td>
+                <td>{{ backup.description }}</td>
+                <td>
+                  <form method="post" style="display:inline;">
+                    <input type="hidden" name="backup_type" value="auto">
+                    <input type="hidden" name="backup_file" value="{{ backup.filename }}">
+                    <button type="submit" name="action" value="restore" class="btn">Restore</button>
+                    <button type="submit" name="action" value="delete" class="btn">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <script>
