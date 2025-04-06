@@ -54,7 +54,7 @@ class AutoLightsAgent:
                 zone.reset_lock("no longer presence in zone")
             else:
                 if debug:
-                    indigo.server.log(
+                    self.logger.debug(
                         "auto_lights script for Zone '"
                         + zone.name
                         + "': zone is locked until "
@@ -122,9 +122,6 @@ class AutoLightsAgent:
                     + zone.name
                     + "': no changes to make, checked in"
                 )
-
-                if hasattr(zone, "special_rules_adjustment"):
-                    indigo.server.log("       " + zone.special_rules_adjustment)
 
             zone.check_in()
 
