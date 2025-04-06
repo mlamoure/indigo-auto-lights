@@ -229,8 +229,8 @@
           "mode": {
             "type": "string",
             "enum": [
-              "OnOffZone",
-              "OffZone"
+              "On and Off",
+              "Off Only"
             ],
             "title": "Mode",
             "tooltip": "Select the mode for the lighting period."
