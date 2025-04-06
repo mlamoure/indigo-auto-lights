@@ -1,7 +1,7 @@
 import ast
 import datetime
 import logging
-from typing import List, Union, Any, Optional, TYPE_CHECKING
+from typing import List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
@@ -453,18 +453,6 @@ class Zone:
         self._lock_extension_duration = value
 
     @property
-    def lock_var(self) -> Any:
-        var_name = self._name.replace(" ", "_") + "_autoLights__locked"
-        try:
-            locked_var = indigo.variables[var_name]
-        except KeyError:
-            if "auto_lights_script" not in indigo.variables.folders:
-                pass
-            var_folder = indigo.variables.folders["auto_lights_script"]
-            locked_var = indigo.variable.create(var_name, "false", folder=var_folder)
-        return locked_var
-
-    @property
     def locked(self) -> bool:
         """Determines if the zone is currently locked."""
         if not self.lock_enabled:
@@ -504,14 +492,6 @@ class Zone:
             if (isinstance(tb, int) and tb != 0) or (isinstance(tb, bool) and tb):
                 return False
         return True
-
-    @property
-    def special_rules_adjustment(self) -> str:
-        return self._special_rules_adjustment
-
-    @special_rules_adjustment.setter
-    def special_rules_adjustment(self, value: str) -> None:
-        self._special_rules_adjustment = value
 
     # (5) Public methods
     def has_presence_detected(self) -> bool:
@@ -649,18 +629,6 @@ class Zone:
             else:
                 lines.append(f"{key}: {repr(value)}")
         return "\n".join(lines)
-
-    @property
-    def special_rules_adjustment(self) -> str:
-        return self._special_rules_adjustment
-
-    @special_rules_adjustment.setter
-    def special_rules_adjustment(self, value: str) -> None:
-        self._special_rules_adjustment = value
-
-    def run_special_rules(self) -> None:
-        """Placeholder for zone-specific rules."""
-        pass
 
     def calculate_target_brightness(self) -> None:
         """
