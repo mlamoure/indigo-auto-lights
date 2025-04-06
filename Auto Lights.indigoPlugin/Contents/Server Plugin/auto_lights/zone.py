@@ -498,17 +498,13 @@ class Zone:
         """
         Check if presence is detected in this zone or, if defined, in the current period.
         """
-        if (
-            self.current_lighting_period
-            and self.current_lighting_period.uses_presence_override
-        ):
-            return self.current_lighting_period.has_presence_detected()
-        if self.presence_dev_id is not None:
-            if "onOffState" in indigo.devices[self.presence_dev_id].states:
-                if indigo.devices[self.presence_dev_id].states["onOffState"]:
-                    return True
-            elif indigo.devices[self.presence_dev_id].onState:
+
+        if "onOffState" in indigo.devices[self.presence_dev_id].states:
+            if indigo.devices[self.presence_dev_id].states["onOffState"]:
                 return True
+        elif indigo.devices[self.presence_dev_id].onState:
+            return True
+
         return False
 
     def is_dark(self) -> bool:
