@@ -5,8 +5,11 @@ import os
 from typing import List
 
 import requests
+from dotenv import load_dotenv
 
-INDIGO_API_URL = os.getenv("INDIGO_API_URL", "https://vtmikel.indigodomo.net/v2/api")
+load_dotenv()
+
+INDIGO_API_URL = os.getenv("INDIGO_API_URL") + "/v2/api"
 KEYS_TO_KEEP = [
     "name",
     "class",

@@ -1,4 +1,5 @@
 import os
+import shutil
 import threading
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
@@ -51,7 +52,6 @@ class Plugin(indigo.PluginBase):
         confg_file_str = "config_web_editor/config/auto_lights_conf.json"
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
         if not os.path.exists(confg_file_str):
-            import shutil
             shutil.copyfile(confg_file_empty_str, confg_file_str)
 
         self.start_configuration_web_server()

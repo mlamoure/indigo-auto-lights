@@ -1,13 +1,25 @@
 <?xml version="1.0"?>
 <PluginConfig>
-		<!-- You can add a SupportURL element inside here if you want a context
-				 sensitive help link on the config UI - otherwise it will just link
-				 to the URL specified in the AboutInformation element. -->
-		<SupportURL>https://github.com/mlamoure/indigo-grafana-dashboard/wiki/Indigo-Grafana-Dashboard-Documentation</SupportURL>
+    <!-- You can add a SupportURL element inside here if you want a context
+             sensitive help link on the config UI - otherwise it will just link
+             to the URL specified in the AboutInformation element. -->
+    <SupportURL>https://github.com/mlamoure/indigo-grafana-dashboard/wiki/Indigo-Grafana-Dashboard-Documentation
+    </SupportURL>
 
-		<Field id="api_key" type="textfield" defaultValue="xxx" tooltip="">
-				<Label>API Key:</Label>
-		</Field>
+
+    <Field id="indigo_api_url" type="textfield" defaultValue="xxx" tooltip="">
+        <Label>Reflector URL:</Label>
+    </Field>
+    <Field id="api_key" type="textfield" defaultValue="xxx" tooltip="">
+        <Label>API Key:</Label>
+    </Field>
+
+    <Field id="web_config_bind_ip" type="textfield" defaultValue="xxx" tooltip="">
+        <Label>Bind IP for web server:</Label>
+    </Field>
+    <Field id="web_config_bind_port" type="textfield" defaultValue="xxx" tooltip="">
+        <Label>Web server port:</Label>
+    </Field>
 
 
 </PluginConfig>

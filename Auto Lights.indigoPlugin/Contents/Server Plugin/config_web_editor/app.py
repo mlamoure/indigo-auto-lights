@@ -43,11 +43,6 @@ def refresh_indigo_caches():
         time.sleep(REFRESH_INTERVAL_SECONDS)
 
 
-def start_cache_refresher():
-    thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
-    thread.start()
-
-
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
     indigo_get_all_house_devices,
@@ -63,6 +58,11 @@ SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev_secret")
 INDIGO_API_KEY = os.getenv("INDIGO_API_KEY", "")
 
 app.config["SECRET_KEY"] = SECRET_KEY
+
+
+def start_cache_refresher():
+    thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
+    thread.start()
 
 
 # Helper to query external API for dropdown options.

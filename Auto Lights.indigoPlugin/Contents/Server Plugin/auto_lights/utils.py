@@ -1,15 +1,18 @@
 import datetime
+import logging
 import time
 
 try:
     import indigo
 except ImportError:
     pass
-from flask import current_app as app
+
+logger = logging.getLogger("com.vtmikel.autolights.utils")
 
 
-def send_to_indigo(device_id: int, desired_brightness: int | bool,
-                   perform_confirm: bool, debug: bool) -> None:
+def send_to_indigo(
+    device_id: int, desired_brightness: int | bool, perform_confirm: bool, debug: bool
+) -> None:
     """
     Send a command to update an Indigo device (brightness or switch state)
     and ensure it's confirmed within a limit.
@@ -50,8 +53,11 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
             is_confirmed = device.onState == desired_brightness
         elif device.pluginId == senseme_plugin_id:
             current_brightness = int(device.states.get("brightness", 0))
-            target = int(desired_brightness) if isinstance(desired_brightness, bool) \
+            target = (
+                int(desired_brightness)
+                if isinstance(desired_brightness, bool)
                 else desired_brightness
+            )
             is_confirmed = current_brightness == target
 
         # Skip confirmation if already attempted and not required.
@@ -61,13 +67,16 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
         if not is_confirmed:
             if iteration_counter % 8 == 0:
                 if command_attempts > 0:
-                    app.logger.info(
+                    logger.info(
                         f"... not yet confirmed changes to '{device.name}'. Retrying."
                     )
 
                 if is_fan_light or isinstance(device, indigo.DimmerDevice):
-                    current_brightness = int(device.states.get("brightness", 0)) \
-                        if is_fan_light else device.brightness
+                    current_brightness = (
+                        int(device.states.get("brightness", 0))
+                        if is_fan_light
+                        else device.brightness
+                    )
                     if isinstance(desired_brightness, bool):
                         desired_brightness = 100 if desired_brightness else 0
 
@@ -81,9 +90,9 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                         action_description = "decreasing"
 
                     if action_description in ("turning on", "turning off"):
-                        app.logger.info(f"{action_description} '{device.name}'")
+                        logger.info(f"{action_description} '{device.name}'")
                     else:
-                        app.logger.info(
+                        logger.info(
                             f"{action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {desired_brightness}%"
                         )
@@ -92,7 +101,7 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                         sense_plugin.executeAction(
                             "fanLightBrightness",
                             deviceId=device_id,
-                            props={"lightLevel": str(desired_brightness)}
+                            props={"lightLevel": str(desired_brightness)},
                         )
                     else:
                         indigo.dimmer.setBrightness(
@@ -118,7 +127,7 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                 command_attempts += 1
 
             elif iteration_counter % 4 == 0:
-                app.logger.info(
+                logger.info(
                     f"... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
                     f"Max additional wait time: {remaining_wait} more seconds."
                 )
@@ -129,7 +138,7 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
                 indigo.device.statusRequest(device_id, suppressLogging=True)
             else:
                 if iteration_counter > 1:
-                    app.logger.info(
+                    logger.info(
                         f"... not yet confirmed changes to '{device.name}'. Waiting up to "
                         f"{remaining_wait} more seconds."
                     )
@@ -142,12 +151,12 @@ def send_to_indigo(device_id: int, desired_brightness: int | bool,
 
     total_time = round(time.time() - start_timestamp, 2)
     if action_description and not is_confirmed:
-        app.logger.info(
+        logger.info(
             f"... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
     elif action_description and (debug or command_attempts > 1 or total_time > 2):
-        app.logger.info(
+        logger.info(
             f"... confirmed change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
