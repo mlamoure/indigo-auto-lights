@@ -15,42 +15,79 @@
             Backup
         </button>
         <h3>Manual Backups</h3>
-        <ul id="manual-backups-list">
+        <table class="zones-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Filename</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="manual-backups-list">
             {% for backup in manual_backups %}
-            <li>
-                {{ backup }}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ backup }}</td>
+              <td>
+                {% set backup_timestamp = backup|replace('manual_backup_', '')|replace('.json', '') %}
+                {% if backup_timestamp|length == 14 %}
+                {% set formatted_date = backup_timestamp[0:4] ~ '-' ~ backup_timestamp[4:6] ~ '-' ~ backup_timestamp[6:8] ~ ' ' ~ backup_timestamp[8:10] ~ ':' ~ backup_timestamp[10:12] ~ ':' ~ backup_timestamp[12:14] %}
+                {{ formatted_date }}
+                {% else %}
+                N/A
+                {% endif %}
+              </td>
+              <td>
                 <form method="post" style="display:inline;">
                     <input type="hidden" name="backup_type" value="manual">
                     <input type="hidden" name="backup_file" value="{{ backup }}">
-                    <button type="submit" name="action" value="restore"
-                            class="btn">Restore
-                    </button>
-                    <button type="submit" name="action" value="delete"
-                            class="btn">Delete
-                    </button>
+                    <button type="submit" name="action" value="restore" class="btn">Restore</button>
+                    <button type="submit" name="action" value="delete" class="btn">Delete</button>
                 </form>
-            </li>
+              </td>
+            </tr>
             {% endfor %}
-        </ul>
+          </tbody>
+        </table>
         <h3>Automatic Backups</h3>
-        <ul id="auto-backups-list">
+        <table class="zones-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Filename</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="auto-backups-list">
             {% for backup in auto_backups %}
-            <li>
-                {{ backup.filename }} - {{ backup.description }}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ backup.filename }}</td>
+              <td>
+                {% set backup_timestamp = backup.filename|replace('auto_backup_', '')|replace('.json', '') %}
+                {% if backup_timestamp|length == 14 %}
+                {% set formatted_date = backup_timestamp[0:4] ~ '-' ~ backup_timestamp[4:6] ~ '-' ~ backup_timestamp[6:8] ~ ' ' ~ backup_timestamp[8:10] ~ ':' ~ backup_timestamp[10:12] ~ ':' ~ backup_timestamp[12:14] %}
+                {{ formatted_date }}
+                {% else %}
+                N/A
+                {% endif %}
+              </td>
+              <td>{{ backup.description }}</td>
+              <td>
                 <form method="post" style="display:inline;">
                     <input type="hidden" name="backup_type" value="auto">
-                    <input type="hidden" name="backup_file" value="{{
-backup.filename }}">
-                    <button type="submit" name="action" value="restore"
-                            class="btn">Restore
-                    </button>
-                    <button type="submit" name="action" value="delete"
-                            class="btn">Delete
-                    </button>
+                    <input type="hidden" name="backup_file" value="{{ backup.filename }}">
+                    <button type="submit" name="action" value="restore" class="btn">Restore</button>
+                    <button type="submit" name="action" value="delete" class="btn">Delete</button>
                 </form>
-            </li>
+              </td>
+            </tr>
             {% endfor %}
-        </ul>
+          </tbody>
+        </table>
     </div>
 </div>
 <script>
