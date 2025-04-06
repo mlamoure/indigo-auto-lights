@@ -29,14 +29,12 @@ class AutoLightsAgent:
             return False
 
         self.logger.debug(
-            "auto_lights script DEBUG for Zone '" + zone.name + "':   processing."
+            "Zone '" + zone.name + "':   processing."
         )
 
         if not zone.enabled:
             self.logger.debug(
-                "auto_lights script DEBUG for Zone '"
-                + zone.name
-                + "': auto lights is disabled for this zone."
+                "Zone '" + zone.name + "': auto lights is disabled for this zone."
             )
             return False
 
