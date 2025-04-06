@@ -14,8 +14,12 @@
         <Label>API Key:</Label>
     </Field>
 
-    <Field id="web_config_bind_ip" type="textfield" defaultValue="127.0.0.1" tooltip="">
+    <Field type="menu" id="web_config_bind_ip" defaultValue="127.0.0.1">
         <Label>Bind IP for web server:</Label>
+        <List>
+            <Option value="127.0.0.1">Localhost only</Option>
+            <Option value="0.0.0.0">All interfaces</Option>
+        </List>
     </Field>
     <Field id="web_config_bind_port" type="textfield" defaultValue="9000" tooltip="">
         <Label>Web server port:</Label>
