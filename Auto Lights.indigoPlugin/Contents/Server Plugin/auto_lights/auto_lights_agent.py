@@ -33,7 +33,7 @@ class AutoLightsAgent:
 
         if not zone.enabled:
             self.logger.debug(
-                "Zone '" + zone.name + "': auto lights is disabled for this zone."
+                f"Zone '{zone.name}': auto lights is disabled for this zone."
             )
             return False
 

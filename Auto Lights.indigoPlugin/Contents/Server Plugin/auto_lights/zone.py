@@ -409,7 +409,7 @@ class Zone:
                 pass
             var_folder = indigo.variables.folders["auto_lights_script"]
             debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
-            indigo.server.log("check_out_var: created variable " + var_name)
+            indigo.server.log(f"Zone '{self._name}': check_out_var: created variable {var_name}")
         return debug_var
 
     @property
