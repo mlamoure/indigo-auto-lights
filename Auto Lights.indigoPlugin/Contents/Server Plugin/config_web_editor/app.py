@@ -55,7 +55,6 @@ app.jinja_env.globals.update(enumerate=enumerate)
 
 load_dotenv()
 SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev_secret")
-INDIGO_API_KEY = os.getenv("INDIGO_API_KEY", "")
 
 app.config["SECRET_KEY"] = SECRET_KEY
 
@@ -63,15 +62,6 @@ app.config["SECRET_KEY"] = SECRET_KEY
 def start_cache_refresher():
     thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
     thread.start()
-
-
-# Helper to query external API for dropdown options.
-def get_dropdown_options():
-    # In a real application, you might perform a request like:
-    # response = requests.get(f"{EXTERNAL_API_ENDPOINT}/devices", headers={"API-Key": INDIGO_API_KEY})
-    # return [(item['id'], item['name']) for item in response.json()]
-    # For demo purposes, we return a dummy list.
-    return [(1, "Option 1"), (2, "Option 2"), (3, "Option 3")]
 
 
 def get_lighting_period_choices():
@@ -182,24 +172,6 @@ def create_field(field_name, field_schema):
             choices=get_lighting_period_choices(),
             coerce=int,
             validators=validators,
-        )
-    elif "_ids" in field_name and field_schema.get("x-drop-down"):
-        validators = []
-        if field_schema.get("required"):
-            validators.append(DataRequired())
-        f = SelectMultipleField(
-            label=label_text,
-            description=tooltip_text,
-            choices=get_dropdown_options(),
-            coerce=int,
-            validators=validators,
-        )
-    elif "_id" in field_name and field_schema.get("x-drop-down"):
-        f = SelectField(
-            label=label_text,
-            description=tooltip_text,
-            choices=get_dropdown_options(),
-            coerce=int,
         )
     elif field_name in [
         "lock_duration",
