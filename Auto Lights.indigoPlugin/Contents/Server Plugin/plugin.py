@@ -37,6 +37,7 @@ class Plugin(indigo.PluginBase):
 
         self.debug: bool = True
         self._agent = None
+        self._web_server_thread = None
 
         os.environ["INDIGO_API_URL"] = plugin_prefs.get(
             "indigo_api_url", "https://myreflector.indigodomo.net"
@@ -110,19 +111,33 @@ class Plugin(indigo.PluginBase):
         self._agent.process_variable_change(orig_var, new_var)
 
     def start_configuration_web_server(self: indigo.PluginBase):
-        if os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net" and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx":
+        if (
+            os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
+            and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
+        ):
             self.logger.info(
                 f"Starting the configuration web server... Visit http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
             )
-            thread = threading.Thread(
+            self._web_server_thread = threading.Thread(
                 target=run_flask_app,
                 args=(self._web_config_bind_ip, self._web_config_bind_port),
                 daemon=True,
             )
-            thread.start()
+            self._web_server_thread.start()
         else:
-            self.logger.info("Skipping start of configuration web server due to default config values.")
+            self.logger.info(
+                "Skipping start of configuration web server due to default config values."
+            )
 
     def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
         if not user_cancelled:
-            pass
+            os.environ["INDIGO_API_URL"] = values_dict.get(
+                "indigo_api_url", "https://myreflector.indigodomo.net"
+            )
+            os.environ["API_KEY"] = values_dict.get(
+                "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
+            )
+            self._web_config_bind_ip = values_dict.get(
+                "web_config_bind_ip", "127.0.0.1"
+            )
+            self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
