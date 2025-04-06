@@ -190,7 +190,9 @@ class AutoLightsAgent:
         processed = []
         for zone in self._config._zones:
             if zone.has_variable(orig_var.id):
-                self.logger.debug(f"has_variable: var_id")
+                self.logger.debug(
+                    f"has_variable: var_id {indigo.variables[orig_var.id].name}"
+                )
                 if self.process_zone(zone):
                     processed.append(zone)
 
