@@ -284,6 +284,17 @@ def save_config(config_data):
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=2)
 
+def auto_backup_config():
+    import shutil, glob
+    auto_backup_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups")
+    os.makedirs(auto_backup_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    backup_file = os.path.join(auto_backup_dir, f"auto_backup_{timestamp}.json")
+    shutil.copy2(config_path, backup_file)
+    backups = sorted(glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")))
+    if len(backups) > 25:
+        os.remove(backups[0])
+
 
 @app.route("/plugin_config", methods=["GET", "POST"])
 def plugin_config():
@@ -292,6 +303,7 @@ def plugin_config():
     PluginFormClass = generate_form_class_from_schema(plugin_schema)
     plugin_form = PluginFormClass(data=config_data.get("plugin_config", {}))
     if request.method == "POST":
+        auto_backup_config()
         updated_config = {
             field_name: field.data
             for field_name, field in plugin_form._fields.items()
@@ -336,6 +348,7 @@ def zones():
     zones = config_data.get("zones", [])
     zones_forms = [ZonesFormClass(data=zone) for zone in zones]
     if request.method == "POST":
+        auto_backup_config()
         updated_zones = []
         for zone_form in zones_forms:
             zone_data = {
@@ -411,6 +424,7 @@ def zone_config(zone_id):
     except Exception:
         pass
     if request.method == "POST":
+        auto_backup_config()
         zone_data = {
             field_name: field.data
             for field_name, field in zone_form._fields.items()
@@ -457,6 +471,7 @@ def lighting_period_config(period_id):
         delattr(LightingPeriodFormClass, "id")
     lighting_period_form = LightingPeriodFormClass(data=period)
     if request.method == "POST":
+        auto_backup_config()
         period_data = {
             field_name: field.data
             for field_name, field in lighting_period_form._fields.items()
@@ -554,6 +569,45 @@ def get_luminance_value():
         avg = 0
     return {"average": avg}
 
+
+@app.route("/config_backup", methods=["GET", "POST"])
+def config_backup():
+    import shutil, glob
+    config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+    manual_backup_dir = os.path.join(config_dir, "backups")
+    auto_backup_dir = os.path.join(config_dir, "auto_backups")
+    os.makedirs(manual_backup_dir, exist_ok=True)
+    os.makedirs(auto_backup_dir, exist_ok=True)
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        backup_type = request.form.get("backup_type")
+        backup_file = request.form.get("backup_file")
+        config_path = os.path.join(config_dir, "auto_lights_conf.json")
+        if action == "create_manual":
+            dest = os.path.join(manual_backup_dir, f"manual_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.json")
+            shutil.copy2(config_path, dest)
+            flash("Manual backup created.")
+        elif action == "restore":
+            if backup_file:
+                src = os.path.join(manual_backup_dir if backup_type == "manual" else auto_backup_dir, backup_file)
+                shutil.copy2(src, config_path)
+                flash("Backup restored.")
+        elif action == "delete":
+            if backup_file:
+                path_to_delete = os.path.join(manual_backup_dir if backup_type == "manual" else auto_backup_dir, backup_file)
+                if os.path.exists(path_to_delete):
+                    os.remove(path_to_delete)
+                    flash("Backup deleted.")
+        return redirect(url_for("config_backup"))
+    
+    manual_backups = [os.path.basename(p) for p in glob.glob(os.path.join(manual_backup_dir, "*.json"))]
+    auto_backups_files = sorted(glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")), reverse=True)
+    auto_backups = []
+    for ab in auto_backups_files:
+        desc = "Automatic backup"
+        auto_backups.append({"filename": os.path.basename(ab), "description": desc})
+    return render_template("config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups)
 
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
