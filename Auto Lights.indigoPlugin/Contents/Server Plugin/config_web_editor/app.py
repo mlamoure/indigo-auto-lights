@@ -119,10 +119,10 @@ def create_field(field_name, field_schema):
     if field_name.endswith("_var_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_variables()
         choices = [(opt["id"], opt["name"]) for opt in options]
-        if not field_schema.get("required"):
+        if not required:
             choices.insert(0, (-1, "None Selected"))
         f = SelectField(
-            label=label_text, description=tooltip_text, choices=choices, coerce=int
+            label=label_text, description=tooltip_text, choices=choices, coerce=int, validators=validators
         )
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
         local_validators = list(validators)
