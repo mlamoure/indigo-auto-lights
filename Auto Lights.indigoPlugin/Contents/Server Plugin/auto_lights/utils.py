@@ -90,7 +90,7 @@ def send_to_indigo(
                         action_description = "decreasing"
 
                     if action_description in ("turning on", "turning off"):
-                        logger.info(f"{action_description} '{device.name}'")
+                        logger.info(f"[utils.send_to_indigo] {action_description} '{device.name}'")
                     else:
                         logger.info(
                             f"[utils.send_to_indigo] {action_description} brightness for '{device.name}' "

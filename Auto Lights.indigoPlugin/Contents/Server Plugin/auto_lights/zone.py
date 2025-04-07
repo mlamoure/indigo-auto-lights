@@ -292,7 +292,7 @@ class Zone:
     ) -> None:
         """Set target brightness for on/off lights."""
         self.logger.debug(
-            f"Zone '{self._name}' target_brightness setter called with value={value}, type={type(value)}"
+            f"[Zone.target_brightness.setter] Zone '{self._name}' target_brightness setter called with value={value}, type={type(value)}"
         )
         if isinstance(value, list):
             for i, val in enumerate(value):
@@ -300,7 +300,7 @@ class Zone:
                     value[i] = 100
             self._target_brightness = value
             self.logger.debug(
-                f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
+                f"[Zone.target_brightness.setter] Zone '{self._name}' target_brightness now: {self._target_brightness}"
             )
         else:
             self.logger.debug(
@@ -404,7 +404,7 @@ class Zone:
             self._previous_execution_lights_target = ast.literal_eval(prev_var.value)
         except Exception as e:
             indigo.server.log(
-                f"Zone '{self._name}': Error converting previous_execution_lights_target: {e}"
+                f"[Zone.previous_execution_lights_target] Zone '{self._name}': Error converting previous_execution_lights_target: {e}"
             )
             self._previous_execution_lights_target = []
         return self._previous_execution_lights_target
@@ -420,7 +420,7 @@ class Zone:
             var_folder = indigo.variables.folders["auto_lights_script"]
             debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
             indigo.server.log(
-                f"Zone '{self._name}': check_out_var: created variable {var_name}"
+                f"[Zone.check_out_var] Zone '{self._name}': check_out_var: created variable {var_name}"
             )
         return debug_var
 
@@ -537,11 +537,11 @@ class Zone:
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
             self.logger.debug(
-                f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}"
+                f"[Zone.is_dark] Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}"
             )
             if sensor_value < self.minimum_luminance:
                 self.logger.debug(
-                    f"Zone '{self._name}': is_dark: device {dev_id} is below threshold, returning True"
+                    f"[Zone.is_dark] Zone '{self._name}': device {dev_id} is below threshold, returning True"
                 )
                 return True
         self.logger.debug(
