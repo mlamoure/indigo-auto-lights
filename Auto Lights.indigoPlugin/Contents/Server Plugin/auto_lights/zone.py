@@ -515,11 +515,12 @@ class Zone:
         """
         Check if presence is detected in this zone or, if defined, in the current period.
         """
-
-        if "onOffState" in indigo.devices[self.presence_dev_id].states:
-            if indigo.devices[self.presence_dev_id].states["onOffState"]:
+        presence_device = indigo.devices[self.presence_dev_id]
+        self.logger.debug(f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}")
+        if "onOffState" in presence_device.states:
+            if presence_device.states["onOffState"]:
                 return True
-        elif indigo.devices[self.presence_dev_id].onState:
+        elif presence_device.onState:
             return True
 
         return False
