@@ -244,7 +244,7 @@ class Zone:
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
         self.logger.debug(
-            f"Zone '{self._name}': computed luminance = {self._luminance}"
+            f"Zone '{self._name}': computed luminance: {self._luminance}"
         )
         return self._luminance
 
