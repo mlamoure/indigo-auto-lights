@@ -243,7 +243,9 @@ class Zone:
         for devId in self.luminance_dev_ids:
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
-        self.logger.debug(f"Zone '{self._name}': computed luminance = {self._luminance}")
+        self.logger.debug(
+            f"Zone '{self._name}': computed luminance = {self._luminance}"
+        )
         return self._luminance
 
     @property
@@ -281,7 +283,9 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
-        self.logger.debug(f"Zone '{self._name}': replied target brightness = {self._target_brightness}")
+        self.logger.debug(
+            f"Zone '{self._name}': replied target brightness = {self._target_brightness}"
+        )
         return self._target_brightness
 
     @target_brightness.setter
@@ -392,7 +396,9 @@ class Zone:
         try:
             self._previous_execution_lights_target = ast.literal_eval(prev_var.value)
         except Exception as e:
-            indigo.server.log(f"Zone '{self._name}': Error converting previous_execution_lights_target: {e}")
+            indigo.server.log(
+                f"Zone '{self._name}': Error converting previous_execution_lights_target: {e}"
+            )
             self._previous_execution_lights_target = []
         return self._previous_execution_lights_target
 
@@ -406,7 +412,9 @@ class Zone:
                 pass
             var_folder = indigo.variables.folders["auto_lights_script"]
             debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
-            indigo.server.log(f"Zone '{self._name}': check_out_var: created variable {var_name}")
+            indigo.server.log(
+                f"Zone '{self._name}': check_out_var: created variable {var_name}"
+            )
         return debug_var
 
     @property
@@ -514,15 +522,23 @@ class Zone:
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
         if not self.luminance_dev_ids:
-            self.logger.debug(f"Zone '{self._name}': is_dark: No luminance devices, returning True")
+            self.logger.debug(
+                f"Zone '{self._name}': is_dark: No luminance devices, returning True"
+            )
             return True
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
-            self.logger.debug(f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}")
+            self.logger.debug(
+                f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}"
+            )
             if sensor_value < self.minimum_luminance:
-                self.logger.debug(f"Zone '{self._name}': is_dark: device {dev_id} is below threshold, returning True")
+                self.logger.debug(
+                    f"Zone '{self._name}': is_dark: device {dev_id} is below threshold, returning True"
+                )
                 return True
-        self.logger.debug(f"Zone '{self._name}': is_dark: All devices above threshold, returning False")
+        self.logger.debug(
+            f"Zone '{self._name}': is_dark: All devices above threshold, returning False"
+        )
         return False
 
     def current_state_any_light_is_on(self) -> bool:
@@ -549,9 +565,7 @@ class Zone:
         indigo.variable.updateValue(
             self.previous_target_var_name, str(self._current_lights_status)
         )
-        self.logger.info(
-            f"Zone '{self._name}': zone lock reset because {reason}"
-        )
+        self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
 
     def has_brightness_changes(self) -> bool:
         """
