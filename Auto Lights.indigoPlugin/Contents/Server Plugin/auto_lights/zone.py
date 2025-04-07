@@ -243,7 +243,7 @@ class Zone:
         for devId in self.luminance_dev_ids:
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
-        self.logger.debug(f"Zone '{self._name}': computed luminance: {self._luminance}")
+        self.logger.debug(f"[Zone.luminance] Zone '{self._name}': computed luminance: {self._luminance}")
         return self._luminance
 
     @property
@@ -516,7 +516,7 @@ class Zone:
         Check if presence is detected in this zone or, if defined, in the current period.
         """
         presence_device = indigo.devices[self.presence_dev_id]
-        self.logger.debug(f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}")
+        self.logger.debug(f"[Zone.has_presence_detected] Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}")
         if "onOffState" in presence_device.states:
             if presence_device.states["onOffState"]:
                 return True
@@ -531,7 +531,7 @@ class Zone:
         """
         if not self.luminance_dev_ids:
             self.logger.debug(
-                f"Zone '{self._name}': is_dark: No luminance devices, returning True"
+                f"[Zone.is_dark] Zone '{self._name}': is_dark: No luminance devices, returning True"
             )
             return True
         for dev_id in self.luminance_dev_ids:
@@ -545,7 +545,7 @@ class Zone:
                 )
                 return True
         self.logger.debug(
-            f"Zone '{self._name}': is_dark: All devices above threshold, returning False"
+            f"[Zone.is_dark] Zone '{self._name}': All devices above threshold, returning False"
         )
         return False
 
@@ -573,7 +573,7 @@ class Zone:
         indigo.variable.updateValue(
             self.previous_target_var_name, str(self._current_lights_status)
         )
-        self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
+        self.logger.info(f"[Zone.reset_lock] Zone '{self._name}': zone lock reset because {reason}")
 
     def has_brightness_changes(self) -> bool:
         """

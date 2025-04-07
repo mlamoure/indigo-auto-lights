@@ -68,7 +68,7 @@ def send_to_indigo(
             if iteration_counter % 8 == 0:
                 if command_attempts > 0:
                     logger.info(
-                        f"... not yet confirmed changes to '{device.name}'. Retrying."
+                        f"[utils.send_to_indigo] ... not yet confirmed changes to '{device.name}'. Retrying."
                     )
 
                 if is_fan_light or isinstance(device, indigo.DimmerDevice):
@@ -93,7 +93,7 @@ def send_to_indigo(
                         logger.info(f"{action_description} '{device.name}'")
                     else:
                         logger.info(
-                            f"{action_description} brightness for '{device.name}' "
+                            f"[utils.send_to_indigo] {action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {desired_brightness}%"
                         )
 
@@ -128,7 +128,7 @@ def send_to_indigo(
 
             elif iteration_counter % 4 == 0:
                 logger.info(
-                    f"... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
+                    f"[utils.send_to_indigo] ... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
                     f"Max additional wait time: {remaining_wait} more seconds."
                 )
                 check_interval = 2.0
@@ -139,7 +139,7 @@ def send_to_indigo(
             else:
                 if iteration_counter > 1:
                     logger.info(
-                        f"... not yet confirmed changes to '{device.name}'. Waiting up to "
+                        f"[utils.send_to_indigo] ... not yet confirmed changes to '{device.name}'. Waiting up to "
                         f"{remaining_wait} more seconds."
                     )
                 time.sleep(check_interval)
@@ -153,12 +153,12 @@ def send_to_indigo(
 
     if action_description and not is_confirmed:
         logger.info(
-            f"... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
+            f"[utils.send_to_indigo] ... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
     else:
         logger.debug(
-            f"... confirmed change to '{device.name}' (time: {total_time} seconds, "
+            f"[utils.send_to_indigo] ... confirmed change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
 
@@ -207,7 +207,7 @@ def print_debug_output(config, zones, zones_ran, total_time):
                 disabled_zones_str = disabled_zones_str + ", "
     # Log summary of script execution time and threading status.
     indigo.server.log(
-        "auto_lights script DEBUG: completed running "
+        "[utils.print_debug_output] auto_lights script DEBUG: completed running "
         + str(zones_ran)
         + " zone(s) in "
         + str(total_time)
@@ -216,10 +216,10 @@ def print_debug_output(config, zones, zones_ran, total_time):
         + ")"
     )
     # Log the number of zones configured.
-    indigo.server.log("      ... " + str(len(zones)) + " zone(s) are configured")
+    indigo.server.log("[utils.print_debug_output]       ... " + str(len(zones)) + " zone(s) are configured")
     if len(locked_zones_str) > 0:
         indigo.server.log(
-            "      ... "
+            "[utils.print_debug_output]       ... "
             + str(len(locked_zones))
             + " zone(s) are locked ["
             + locked_zones_str
@@ -227,7 +227,7 @@ def print_debug_output(config, zones, zones_ran, total_time):
         )
     if len(no_active_periods_str) > 0:
         indigo.server.log(
-            "      ... "
+            "[utils.print_debug_output]       ... "
             + str(len(no_active_periods))
             + " zone(s) have no active periods ["
             + no_active_periods_str
@@ -235,7 +235,7 @@ def print_debug_output(config, zones, zones_ran, total_time):
         )
     if len(disabled_zones_str) > 0:
         indigo.server.log(
-            "      ... "
+            "[utils.print_debug_output]       ... "
             + str(len(disabled_zones))
             + " zone(s) are disabled ["
             + disabled_zones_str

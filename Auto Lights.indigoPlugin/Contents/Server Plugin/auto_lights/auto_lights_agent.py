@@ -28,7 +28,7 @@ class AutoLightsAgent:
         if not self._config.enabled:
             return False
 
-        self.logger.debug(f"Zone '{zone.name}': processing.")
+        self.logger.debug(f"[AutoLightsAgent.process_zone] Zone '{zone.name}': processing.")
         self.logger.debug(f"Zone '{zone.name}': details: enabled={zone.enabled}, current_lights_status={zone.current_lights_status}, target_brightness={zone.target_brightness}")
 
         if not zone.enabled:
@@ -96,7 +96,7 @@ class AutoLightsAgent:
         ################################################################
         if zone.has_brightness_changes():
             self.logger.info(
-                "Zone '"
+                "[AutoLightsAgent.process_zone] Zone '"
                 + zone.name
                 + "': processing change to "
                 + zone.last_changed_by
@@ -108,7 +108,7 @@ class AutoLightsAgent:
             zone.save_brightness_changes()
 
         else:
-            self.logger.debug(f"Zone '{zone.name}': no changes to make, checked in")
+            self.logger.debug(f"[AutoLightsAgent.process_zone] Zone '{zone.name}': no changes to make, checked in")
 
             zone.check_in()
 
@@ -140,11 +140,11 @@ class AutoLightsAgent:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 self.logger.debug(
-                    f"has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
+                    f"[AutoLightsAgent.process_device_change] has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
                 )
                 if zone.current_lights_status != zone.target_brightness:
                     zone.locked = True
-                    self.logger.info(f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}' (id: {orig_dev.id}); lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}")
+                    self.logger.info(f"[AutoLightsAgent.process_device_change] New lock created for zone '{zone.name}'; device change from '{orig_dev.name}' (id: {orig_dev.id}); lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}")
                     processed.append(zone)
             elif device_prop in ["presence_dev_id", "luminance_dev_ids"]:
                 if self.process_zone(zone):
