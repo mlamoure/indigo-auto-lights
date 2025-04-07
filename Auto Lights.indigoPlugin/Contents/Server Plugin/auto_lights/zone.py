@@ -293,12 +293,15 @@ class Zone:
         self, value: Union[List[Union[bool, int]], int, bool]
     ) -> None:
         """Set target brightness for on/off lights."""
+        self.logger.debug(f"Zone '{self._name}' target_brightness setter called with value={value}, type={type(value)}")
         if isinstance(value, list):
             for i, val in enumerate(value):
                 if isinstance(val, int) and val > 100:
                     value[i] = 100
             self._target_brightness = value
+            self.logger.debug(f"Zone '{self._name}' target_brightness now: {self._target_brightness}")
         else:
+            self.logger.debug(f"Zone '{self._name}' target_brightness single-value path, value={value}")
             self._target_brightness = []
             # Handle on-lights
             for dev_id in self.on_lights_dev_ids:
