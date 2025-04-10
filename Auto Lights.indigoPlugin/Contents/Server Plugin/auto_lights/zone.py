@@ -57,7 +57,7 @@ class Zone:
         self._target_brightness_all_off = None
 
         # Behavior flags and settings
-        self._adjust_brightness_when_active = True
+        self._adjust_brightness = True
         self._perform_confirm = True
         self._lock_duration = None
         self._extend_lock_when_active = True
@@ -153,14 +153,6 @@ class Zone:
     @perform_confirm.setter
     def perform_confirm(self, value: bool) -> None:
         self._perform_confirm = value
-
-    @property
-    def adjust_brightness_when_active(self) -> bool:
-        return self._adjust_brightness_when_active
-
-    @adjust_brightness_when_active.setter
-    def adjust_brightness_when_active(self, value: bool) -> None:
-        self._adjust_brightness_when_active = value
 
     @property
     def unlock_when_no_presence(self) -> bool:
@@ -663,13 +655,11 @@ class Zone:
         return "\n".join(lines)
 
     def calculate_target_brightness(self) -> None:
-        """
-        If adjust_brightness is True, set the on lights to (luminance - minimum_luminance) if >0, else 0.
-        Set off lights to 0.
-        """
         diff = self.luminance - self.minimum_luminance
         diff = diff if diff > 0 else 0
-        self.logger.debug(f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, diff={diff}")
+        self.logger.debug(
+            f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, diff={diff}"
+        )
         new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(
             self._off_lights_dev_ids
         )
