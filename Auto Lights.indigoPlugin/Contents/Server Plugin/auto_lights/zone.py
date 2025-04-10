@@ -1,7 +1,7 @@
 import ast
 import datetime
-import logging
 import inspect
+import logging
 from typing import List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -76,11 +76,10 @@ class Zone:
         self._checked_out = False
 
     def _debug(self, message: str) -> None:
-        import inspect
         stack = inspect.stack()
-        current_fn = stack[1].function if len(stack) > 1 else ''
-        caller_fn = stack[2].function if len(stack) > 2 else ''
-        self.logger.debug(f"[{current_fn}][{caller_fn}] {message}")
+        current_fn = stack[1].function if len(stack) > 1 else ""
+        caller_fn = stack[2].function if len(stack) > 2 else ""
+        self.logger.debug(f"[call: {caller_fn}][current: {current_fn}] {message}")
 
     def from_config_dict(self, cfg: dict) -> None:
         if "enabled_var_id" in cfg:
@@ -289,7 +288,9 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
-        self._debug(f"Zone '{self._name}': replied target brightness = {self._target_brightness}")
+        self._debug(
+            f"Zone '{self._name}': replied target brightness = {self._target_brightness}"
+        )
         return self._target_brightness
 
     @target_brightness.setter
@@ -297,15 +298,21 @@ class Zone:
         self, value: Union[List[Union[bool, int]], int, bool]
     ) -> None:
         """Set target brightness for on/off lights."""
-        self._debug(f"Zone '{self._name}' target_brightness setter called with value={value}, type={type(value)}")
+        self._debug(
+            f"Zone '{self._name}' target_brightness setter called with value={value}, type={type(value)}"
+        )
         if isinstance(value, list):
             for i, val in enumerate(value):
                 if isinstance(val, int) and val > 100:
                     value[i] = 100
             self._target_brightness = value
-            self._debug(f"Zone '{self._name}' target_brightness now: {self._target_brightness}")
+            self._debug(
+                f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
+            )
         else:
-            self._debug(f"Zone '{self._name}' target_brightness single-value path, value={value}")
+            self._debug(
+                f"Zone '{self._name}' target_brightness single-value path, value={value}"
+            )
             self._target_brightness = []
             # Handle on-lights
             for dev_id in self.on_lights_dev_ids:
@@ -516,7 +523,9 @@ class Zone:
         Check if presence is detected in this zone or, if defined, in the current period.
         """
         presence_device = indigo.devices[self.presence_dev_id]
-        self._debug(f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}")
+        self._debug(
+            f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}"
+        )
         if "onOffState" in presence_device.states:
             if presence_device.states["onOffState"]:
                 return True
@@ -530,15 +539,23 @@ class Zone:
         Decide if the zone is considered dark based on sensor readings or the current lighting period.
         """
         if not self.luminance_dev_ids:
-            self._debug(f"Zone '{self._name}': is_dark: No luminance devices, returning True")
+            self._debug(
+                f"Zone '{self._name}': is_dark: No luminance devices, returning True"
+            )
             return True
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
-            self._debug(f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}")
+            self._debug(
+                f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}"
+            )
             if sensor_value < self.minimum_luminance:
-                self._debug(f"Zone '{self._name}': device {dev_id} is below threshold, returning True")
+                self._debug(
+                    f"Zone '{self._name}': device {dev_id} is below threshold, returning True"
+                )
                 return True
-        self._debug(f"Zone '{self._name}': All devices above threshold, returning False")
+        self._debug(
+            f"Zone '{self._name}': All devices above threshold, returning False"
+        )
         return False
 
     def current_state_any_light_is_on(self) -> bool:
@@ -565,7 +582,9 @@ class Zone:
         indigo.variable.updateValue(
             self.previous_target_var_name, str(self._current_lights_status)
         )
-        self.logger.info(f"[Zone.reset_lock] Zone '{self._name}': zone lock reset because {reason}")
+        self.logger.info(
+            f"[Zone.reset_lock] Zone '{self._name}': zone lock reset because {reason}"
+        )
 
     def has_brightness_changes(self) -> bool:
         """
