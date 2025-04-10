@@ -669,10 +669,12 @@ class Zone:
         """
         diff = self.luminance - self.minimum_luminance
         diff = diff if diff > 0 else 0
+        self.logger.debug(f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, diff={diff}")
         new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(
             self._off_lights_dev_ids
         )
         self.target_brightness = new_tb
+        self.logger.debug(f"Calculated target brightness: {self.target_brightness}")
 
     def has_device(self, dev_id: int) -> str:
         """
