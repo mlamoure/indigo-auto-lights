@@ -78,10 +78,11 @@ class Plugin(indigo.PluginBase):
     def runConcurrentThread(self: indigo.PluginBase):
         try:
             while True:
-                current_mtime = os.path.getmtime(self._config_file_str)
-                if current_mtime != self._config_mtime:
-                    self.logger.debug("Config file modified, reloading configuration.")
-                    self._init_config_and_agent()
+                if os.path.exists(self._config_file_str):
+                    current_mtime = os.path.getmtime(self._config_file_str)
+                    if current_mtime != self._config_mtime:
+                        self.logger.debug("Config file modified, reloading configuration.")
+                        self._init_config_and_agent()
                 self.sleep(5)
         except self.StopThread:
             pass  # Optionally catch the StopThread exception and do any needed cleanup.
