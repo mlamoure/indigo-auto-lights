@@ -321,10 +321,10 @@ class Zone:
                     continue
 
                 # For relay devices, force boolean state from numeric value
-                if isinstance(device, indigo.RelayDevice):
-                    new_brightness.append(val > 0)
-                else:
+                if isinstance(device, indigo.DimmerDevice):
                     new_brightness.append(val)
+                else:
+                    new_brightness.append(val > 0)
             self._target_brightness = new_brightness
             self._debug(
                 f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
