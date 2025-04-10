@@ -163,7 +163,7 @@ class AutoLightsAgent:
         """
         Loop through each zone in the agent's configuration and process each zone.
         """
-        for zone in self._config._zones:
+        for zone in self._config.zones:
             self.process_zone(zone)
 
     def process_variable_change(
