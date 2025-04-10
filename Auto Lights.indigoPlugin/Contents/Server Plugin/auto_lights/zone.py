@@ -81,7 +81,7 @@ class Zone:
         caller_fn = stack[2].function if len(stack) > 2 else ""
         caller_line = stack[2].lineno if len(stack) > 2 else 0
         self.logger.debug(
-            f"[call: {caller_fn} : {caller_line}][current: {current_fn}] {message}"
+            f"[caller: {caller_fn} : {caller_line}][func: {current_fn}] {message}"
         )
 
     def from_config_dict(self, cfg: dict) -> None:
