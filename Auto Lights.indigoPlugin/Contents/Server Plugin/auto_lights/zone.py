@@ -95,8 +95,10 @@ class Zone:
                 self.off_lights_dev_ids = ds["off_lights_dev_ids"]
             if "luminance_dev_ids" in ds:
                 self.luminance_dev_ids = ds["luminance_dev_ids"]
-            if "presence_dev_id" in ds:
-                self.presence_dev_id = ds["presence_dev_id"]
+            if "presence_dev_ids" in ds:
+                self.presence_dev_ids = ds["presence_dev_ids"]
+            elif "presence_dev_id" in ds:
+                self.presence_dev_ids = [ds["presence_dev_id"]]
         if "minimum_luminance_settings" in cfg:
             mls = cfg["minimum_luminance_settings"]
             if "minimum_luminance" in mls:
@@ -211,13 +213,13 @@ class Zone:
         self.target_brightness = self.current_lights_status
 
     @property
-    def presence_dev_id(self) -> int:
-        """Identifier for device reporting presence."""
-        return self._presence_dev_id
+    def presence_dev_ids(self) -> List[int]:
+        """Identifiers for devices reporting presence."""
+        return self._presence_dev_ids
 
-    @presence_dev_id.setter
-    def presence_dev_id(self, value: int) -> None:
-        self._presence_dev_id = value
+    @presence_dev_ids.setter
+    def presence_dev_ids(self, value: List[int]) -> None:
+        self._presence_dev_ids = value
 
     @property
     def luminance_dev_ids(self) -> List[int]:
@@ -523,19 +525,21 @@ class Zone:
     # (5) Public methods
     def has_presence_detected(self) -> bool:
         """
-        Check if presence is detected in this zone or, if defined, in the current period.
+        Check if presence is detected in this zone across all presence devices.
         """
-        presence_device = indigo.devices[self.presence_dev_id]
-        self._debug(
-            f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}"
-        )
-        # If "onOffState" exists in the device's states, use that; otherwise, fallback to onState.
-        detected = (
-            presence_device.states["onOffState"]
-            if "onOffState" in presence_device.states
-            else presence_device.onState
-        )
-        return bool(detected)
+        for dev_id in self.presence_dev_ids:
+            presence_device = indigo.devices[dev_id]
+            self._debug(
+                f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}"
+            )
+            detected = (
+                presence_device.states["onOffState"]
+                if "onOffState" in presence_device.states
+                else presence_device.onState
+            )
+            if detected:
+                return True
+        return False
 
     def is_dark(self) -> bool:
         """
