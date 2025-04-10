@@ -673,12 +673,11 @@ class Zone:
                 f"Calculated target brightness (no adjustment): {self.target_brightness}"
             )
             return
-        diff = self.luminance - self.minimum_luminance
-        diff = diff if diff > 0 else 0
+        pct_delta = 1 - (self.luminance / self.minimum_luminance)
         self.logger.debug(
-            f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, diff={diff}"
+            f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
         )
-        new_tb = [diff] * len(self._on_lights_dev_ids)
+        new_tb = [pct_delta] * len(self._on_lights_dev_ids)
         self.target_brightness = new_tb
         self.logger.debug(f"Calculated target brightness: {self.target_brightness}")
 
