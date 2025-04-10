@@ -70,6 +70,7 @@ class Zone:
         self._last_changed_by = "none"
         self._previous_execution_lights_target = None
         self._locked = False
+        self._target_brightness_lock_comparison = None
         self._lock_enabled = False
         self._lock_extension_duration = None
 
@@ -326,7 +327,8 @@ class Zone:
                     on_brightness.append(val > 0)
             self._target_brightness = on_brightness
             self._target_brightness_lock_comparison = [
-                b for dev_id, b in zip(self.on_lights_dev_ids, on_brightness)
+                b
+                for dev_id, b in zip(self.on_lights_dev_ids, on_brightness)
                 if dev_id not in self._exclude_from_lock_dev_ids
             ]
             self._debug(
