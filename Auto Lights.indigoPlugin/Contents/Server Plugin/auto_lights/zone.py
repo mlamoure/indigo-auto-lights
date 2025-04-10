@@ -93,8 +93,8 @@ class Zone:
                 self.on_lights_dev_ids = ds["on_lights_dev_ids"]
             if "off_lights_dev_ids" in ds:
                 self.off_lights_dev_ids = ds["off_lights_dev_ids"]
-            if "lumaninance_dev_ids" in ds:
-                self.luminance_dev_ids = ds["lumaninance_dev_ids"]
+            if "luminance_dev_ids" in ds:
+                self.luminance_dev_ids = ds["luminance_dev_ids"]
             if "presence_dev_id" in ds:
                 self.presence_dev_id = ds["presence_dev_id"]
         if "minimum_luminance_settings" in cfg:
