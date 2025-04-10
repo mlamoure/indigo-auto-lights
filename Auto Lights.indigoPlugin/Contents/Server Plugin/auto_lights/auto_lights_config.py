@@ -144,3 +144,7 @@ class AutoLightsConfig:
                         break
             z.lighting_periods = zone_lps
             self._zones.append(z)
+
+    @property
+    def zones(self) -> List[Zone]:
+        return self._zones
