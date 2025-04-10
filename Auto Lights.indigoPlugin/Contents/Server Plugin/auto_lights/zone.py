@@ -703,7 +703,7 @@ class Zone:
                 f"Calculated target brightness (no adjustment): {self.target_brightness}"
             )
             return
-        pct_delta = math.ceil(1 - (self.luminance / self.minimum_luminance))
+        pct_delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
         self.logger.debug(
             f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
         )
