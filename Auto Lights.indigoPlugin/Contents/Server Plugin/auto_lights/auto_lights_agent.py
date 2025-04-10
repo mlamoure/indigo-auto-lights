@@ -141,7 +141,7 @@ class AutoLightsAgent:
             List[Zone]: List of Zone's processed
         """
         processed = []
-        for zone in self._config._zones:
+        for zone in self._config.zones:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 self.logger.debug(
