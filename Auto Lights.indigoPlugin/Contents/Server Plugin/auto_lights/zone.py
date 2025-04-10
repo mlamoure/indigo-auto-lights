@@ -535,14 +535,12 @@ class Zone:
         """
         for dev_id in self.presence_dev_ids:
             presence_device = indigo.devices[dev_id]
+            state_on = presence_device.states.get("onState", False)
+            state_onoff = presence_device.states.get("onOffState", False)
             self._debug(
-                f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}"
+                f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {state_onoff}, onState: {state_on}"
             )
-            detected = (
-                presence_device.states["onOffState"]
-                if "onOffState" in presence_device.states
-                else presence_device.onState
-            )
+            detected = state_onoff or state_on
             if detected:
                 return True
         return False
