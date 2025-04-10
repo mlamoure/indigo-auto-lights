@@ -79,8 +79,14 @@ class Zone:
         stack = inspect.stack()
         current_fn = stack[1].function if len(stack) > 1 else ""
         caller_fn = stack[2].function if len(stack) > 2 else ""
-        caller_line = stack[2].code_context[0].strip() if len(stack) > 2 and stack[2].code_context else ""
-        self.logger.debug(f"[call: {caller_fn} | line: {caller_line}][current: {current_fn}] {message}")
+        caller_line = (
+            stack[2].code_context[0].strip()
+            if len(stack) > 2 and stack[2].code_context
+            else ""
+        )
+        self.logger.debug(
+            f"[call: {caller_fn} : {caller_line}][current: {current_fn}] {message}"
+        )
 
     def from_config_dict(self, cfg: dict) -> None:
         if "enabled_var_id" in cfg:
@@ -527,13 +533,13 @@ class Zone:
         self._debug(
             f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {presence_device.states.get('onOffState')}, onState: {presence_device.onState}"
         )
-        if "onOffState" in presence_device.states:
-            if presence_device.states["onOffState"]:
-                return True
-        elif presence_device.onState:
-            return True
-
-        return False
+        # If "onOffState" exists in the device's states, use that; otherwise, fallback to onState.
+        detected = (
+            presence_device.states["onOffState"]
+            if "onOffState" in presence_device.states
+            else presence_device.onState
+        )
+        return bool(detected)
 
     def is_dark(self) -> bool:
         """
