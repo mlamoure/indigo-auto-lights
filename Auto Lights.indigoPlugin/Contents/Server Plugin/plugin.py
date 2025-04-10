@@ -6,7 +6,7 @@ import requests
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
-from config_web_editor.app import run_flask_app
+from config_web_editor.web_config_app import run_flask_app
 
 try:
     import indigo
