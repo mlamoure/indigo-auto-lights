@@ -48,7 +48,7 @@ class Zone:
         self._luminance_dev_ids = []
         self._luminance = 0
 
-        self._presence_dev_id = None
+        self._presence_dev_ids = []
         self._minimum_luminance = 10000
         self._minimum_luminance_var_id = None
 
