@@ -68,7 +68,7 @@ def send_to_indigo(
             if iteration_counter % 8 == 0:
                 if command_attempts > 0:
                     logger.info(
-                        f"[utils.send_to_indigo] ... not yet confirmed changes to '{device.name}'. Retrying."
+                        f"... not yet confirmed changes to '{device.name}'. Retrying."
                     )
 
                 if is_fan_light or isinstance(device, indigo.DimmerDevice):
@@ -90,7 +90,9 @@ def send_to_indigo(
                         action_description = "decreasing"
 
                     if action_description in ("turning on", "turning off"):
-                        logger.info(f"[utils.send_to_indigo] {action_description} '{device.name}'")
+                        logger.info(
+                            f"[utils.send_to_indigo] {action_description} '{device.name}'"
+                        )
                     else:
                         logger.info(
                             f"[utils.send_to_indigo] {action_description} brightness for '{device.name}' "
@@ -128,7 +130,7 @@ def send_to_indigo(
 
             elif iteration_counter % 4 == 0:
                 logger.info(
-                    f"[utils.send_to_indigo] ... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
+                    f"... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
                     f"Max additional wait time: {remaining_wait} more seconds."
                 )
                 check_interval = 2.0
@@ -139,7 +141,7 @@ def send_to_indigo(
             else:
                 if iteration_counter > 1:
                     logger.info(
-                        f"[utils.send_to_indigo] ... not yet confirmed changes to '{device.name}'. Waiting up to "
+                        f"... not yet confirmed changes to '{device.name}'. Waiting up to "
                         f"{remaining_wait} more seconds."
                     )
                 time.sleep(check_interval)
@@ -153,12 +155,12 @@ def send_to_indigo(
 
     if action_description and not is_confirmed:
         logger.info(
-            f"[utils.send_to_indigo] ... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
+            f"... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
     else:
         logger.debug(
-            f"[utils.send_to_indigo] ... confirmed change to '{device.name}' (time: {total_time} seconds, "
+            f"... confirmed change to '{device.name}' (time: {total_time} seconds, "
             f"attempts: {command_attempts})"
         )
 
@@ -216,7 +218,11 @@ def print_debug_output(config, zones, zones_ran, total_time):
         + ")"
     )
     # Log the number of zones configured.
-    indigo.server.log("[utils.print_debug_output]       ... " + str(len(zones)) + " zone(s) are configured")
+    indigo.server.log(
+        "[utils.print_debug_output]       ... "
+        + str(len(zones))
+        + " zone(s) are configured"
+    )
     if len(locked_zones_str) > 0:
         indigo.server.log(
             "[utils.print_debug_output]       ... "
