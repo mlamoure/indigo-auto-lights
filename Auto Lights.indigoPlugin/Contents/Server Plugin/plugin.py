@@ -50,6 +50,7 @@ class Plugin(indigo.PluginBase):
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
+        self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
 
     def startup(self: indigo.PluginBase) -> None:
         """
@@ -177,7 +178,6 @@ class Plugin(indigo.PluginBase):
                 self.start_configuration_web_server()
 
     def _init_config_and_agent(self):
-        self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
         if not os.path.exists(self._config_file_str):
             shutil.copyfile(confg_file_empty_str, self._config_file_str)
