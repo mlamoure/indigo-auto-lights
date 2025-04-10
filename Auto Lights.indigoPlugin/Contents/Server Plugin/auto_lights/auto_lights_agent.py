@@ -150,7 +150,7 @@ class AutoLightsAgent:
                 if zone.current_lights_status != zone.target_brightness:
                     zone.locked = True
                     self.logger.info(
-                        f"[AutoLightsAgent.process_device_change] New lock created for zone '{zone.name}'; device change from '{orig_dev.name}' (id: {orig_dev.id}); lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}"
+                        f"[AutoLightsAgent.process_device_change] New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'; lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}"
                     )
                     processed.append(zone)
             elif device_prop in ["presence_dev_id", "luminance_dev_ids"]:
