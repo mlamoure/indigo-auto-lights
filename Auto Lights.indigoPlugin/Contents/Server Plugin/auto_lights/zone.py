@@ -543,12 +543,10 @@ class Zone:
             return True
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
-            self._debug(
-                f"Zone '{self._name}': is_dark: device {dev_id} sensorValue={sensor_value}, minimum_luminance={self.minimum_luminance}"
-            )
+
             if sensor_value < self.minimum_luminance:
                 self._debug(
-                    f"Zone '{self._name}': device {dev_id} is below threshold, returning True"
+                    f"Zone '{self._name}': device {dev_id} is below minimum brightness threshold, returning True"
                 )
                 return True
         self._debug(
@@ -656,17 +654,25 @@ class Zone:
 
     def calculate_target_brightness(self) -> None:
         if not self.adjust_brightness:
-            self.logger.debug("Adjust brightness disabled, setting on_lights to 100 and off_lights to 0")
-            new_tb = [100] * len(self._on_lights_dev_ids) + [0] * len(self._off_lights_dev_ids)
+            self.logger.debug(
+                "Adjust brightness disabled, setting on_lights to 100 and off_lights to 0"
+            )
+            new_tb = [100] * len(self._on_lights_dev_ids) + [0] * len(
+                self._off_lights_dev_ids
+            )
             self.target_brightness = new_tb
-            self.logger.debug(f"Calculated target brightness (no adjustment): {self.target_brightness}")
+            self.logger.debug(
+                f"Calculated target brightness (no adjustment): {self.target_brightness}"
+            )
             return
         diff = self.luminance - self.minimum_luminance
         diff = diff if diff > 0 else 0
         self.logger.debug(
             f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, diff={diff}"
         )
-        new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(self._off_lights_dev_ids)
+        new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(
+            self._off_lights_dev_ids
+        )
         self.target_brightness = new_tb
         self.logger.debug(f"Calculated target brightness: {self.target_brightness}")
 
