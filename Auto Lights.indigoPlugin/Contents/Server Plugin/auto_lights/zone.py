@@ -2,6 +2,7 @@ import ast
 import datetime
 import inspect
 import logging
+import math
 from typing import List, Union, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -673,7 +674,7 @@ class Zone:
                 f"Calculated target brightness (no adjustment): {self.target_brightness}"
             )
             return
-        pct_delta = 1 - (self.luminance / self.minimum_luminance)
+        pct_delta = math.ceil(1 - (self.luminance / self.minimum_luminance))
         self.logger.debug(
             f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
         )
