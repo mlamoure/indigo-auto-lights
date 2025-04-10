@@ -537,7 +537,9 @@ class Zone:
         Decide if the zone is considered dark based on sensor readings by averaging luminance devices.
         """
         if not self.luminance_dev_ids:
-            self._debug(f"Zone '{self._name}': is_dark: No luminance devices, returning True")
+            self._debug(
+                f"Zone '{self._name}': is_dark: No luminance devices, returning True"
+            )
             return True
         total = 0
         count = 0
@@ -546,12 +548,16 @@ class Zone:
             total += sensor_value
             count += 1
         avg = total / count
-        self._debug(f"Zone '{self._name}': computed average luminance: {avg}")
+
         if avg < self.minimum_luminance:
-            self._debug(f"Zone '{self._name}': average below minimum {self.minimum_luminance}, returning True")
+            self._debug(
+                f"Zone '{self._name}': average below minimum {self.minimum_luminance}, returning True"
+            )
             return True
         else:
-            self._debug(f"Zone '{self._name}': average meets or exceeds minimum {self.minimum_luminance}, returning False")
+            self._debug(
+                f"Zone '{self._name}': average meets or exceeds minimum {self.minimum_luminance}, returning False"
+            )
             return False
 
     def current_state_any_light_is_on(self) -> bool:
