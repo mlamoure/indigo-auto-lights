@@ -153,7 +153,7 @@ class AutoLightsAgent:
                         f"[AutoLightsAgent.process_device_change] New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'; lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}"
                     )
                     processed.append(zone)
-            elif device_prop in ["presence_dev_id", "luminance_dev_ids"]:
+            elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if self.process_zone(zone):
                     processed.append(zone)
 
