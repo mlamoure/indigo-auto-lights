@@ -79,7 +79,8 @@ class Zone:
         stack = inspect.stack()
         current_fn = stack[1].function if len(stack) > 1 else ""
         caller_fn = stack[2].function if len(stack) > 2 else ""
-        self.logger.debug(f"[call: {caller_fn}][current: {current_fn}] {message}")
+        caller_line = stack[2].code_context[0].strip() if len(stack) > 2 and stack[2].code_context else ""
+        self.logger.debug(f"[call: {caller_fn} | line: {caller_line}][current: {current_fn}] {message}")
 
     def from_config_dict(self, cfg: dict) -> None:
         if "enabled_var_id" in cfg:
