@@ -117,18 +117,21 @@
                 "title": "Luminance Device(s)",
                 "tooltip": "Devices that will determine the luminance for the zone.  If multiple are given, the average is taken."
               },
-              "presence_dev_id": {
-                "type": "integer",
+              "presence_dev_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice,thresholdTimer,persistenceTimer,activityTimer,pseudoRelay",
-                "title": "Presence Device",
-                "tooltip": "Identifier for the presence sensor."
+                "title": "Presence Devices",
+                "tooltip": "Identifiers for the presence sensor(s)."
               }
             },
             "required": [
               "on_lights_dev_ids",
               "luminance_dev_ids",
-              "presence_dev_id"
+              "presence_dev_ids"
             ]
           },
           "minimum_luminance_settings": {
