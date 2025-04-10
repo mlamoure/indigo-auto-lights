@@ -62,20 +62,9 @@ class Plugin(indigo.PluginBase):
         indigo.devices.subscribeToChanges()
         indigo.variables.subscribeToChanges()
 
-        confg_file_str = "config_web_editor/config/auto_lights_conf.json"
-        confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
-        if not os.path.exists(confg_file_str):
-            shutil.copyfile(confg_file_empty_str, confg_file_str)
-
         if not self._disable_web_server:
             self.start_configuration_web_server()
-
-        conf_path = os.path.abspath(confg_file_str)
-
-        config = AutoLightsConfig(conf_path)
-        self._agent = AutoLightsAgent(config)
-
-        self._agent.process_all_zones()
+        self._init_config_and_agent()
 
     def shutdown(self: indigo.PluginBase) -> None:
         """
@@ -168,10 +157,40 @@ class Plugin(indigo.PluginBase):
                 "web_config_bind_ip", "127.0.0.1"
             )
             self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
-
+    
             self._disable_web_server = values_dict.get("disable_web_server")
-
+    
             if self._disable_web_server:
                 self.stop_configuration_web_server()
             else:
                 self.start_configuration_web_server()
+    
+    def _init_config_and_agent(self):
+        confg_file_str = "config_web_editor/config/auto_lights_conf.json"
+        confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
+        if not os.path.exists(confg_file_str):
+            shutil.copyfile(confg_file_empty_str, confg_file_str)
+        conf_path = os.path.abspath(confg_file_str)
+        self._config_path = conf_path
+        self._config_mtime = os.path.getmtime(conf_path)
+        config = AutoLightsConfig(conf_path)
+        self._agent = AutoLightsAgent(config)
+        self._agent.process_all_zones()
+    
+        def _watch_config():
+            import time
+            while True:
+                try:
+                    current_mtime = os.path.getmtime(conf_path)
+                    if current_mtime != self._config_mtime:
+                        self._config_mtime = current_mtime
+                        self.logger.info("Configuration file changed. Reloading config and agent.")
+                        config = AutoLightsConfig(conf_path)
+                        self._agent = AutoLightsAgent(config)
+                        self._agent.process_all_zones()
+                except Exception as e:
+                    self.logger.error("Error watching config: " + str(e))
+                time.sleep(5)
+    
+        self._config_watch_thread = threading.Thread(target=_watch_config, daemon=True)
+        self._config_watch_thread.start()
