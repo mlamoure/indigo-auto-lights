@@ -79,11 +79,7 @@ class Zone:
         stack = inspect.stack()
         current_fn = stack[1].function if len(stack) > 1 else ""
         caller_fn = stack[2].function if len(stack) > 2 else ""
-        caller_line = (
-            stack[2].code_context[0].strip()
-            if len(stack) > 2 and stack[2].code_context
-            else ""
-        )
+        caller_line = stack[2].lineno if len(stack) > 2 else 0
         self.logger.debug(
             f"[call: {caller_fn} : {caller_line}][current: {current_fn}] {message}"
         )
