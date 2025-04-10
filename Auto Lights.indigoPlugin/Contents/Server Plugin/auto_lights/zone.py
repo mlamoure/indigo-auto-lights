@@ -745,5 +745,5 @@ class Zone:
         """
         utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
 
-    def has_lock_occured(self) -> bool:
+    def has_lock_occurred(self) -> bool:
         return self.current_lights_status != self._target_brightness_lock_comparison
