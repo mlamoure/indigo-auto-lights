@@ -1,4 +1,3 @@
-import ast
 import datetime
 import inspect
 import logging
@@ -414,33 +413,6 @@ class Zone:
             if indigo.devices[dev_id].lastChanged > device_last_changed:
                 device_last_changed = indigo.devices[dev_id].lastChanged
         return device_last_changed
-
-    @property
-    def previous_target_var_name(self) -> str:
-        return self._name.replace(" ", "_") + "__autoLights_previousTarget"
-
-    @property
-    def previous_execution_lights_target(self) -> Union[str, List[Union[bool, int]]]:
-        if self._previous_execution_lights_target is not None:
-            return self._previous_execution_lights_target
-        if "auto_lights_script" not in indigo.variables.folders:
-            indigo.folders.create("auto_lights_script")
-        var_folder = indigo.variables.folders["auto_lights_script"]
-        try:
-            prev_var = indigo.variables[self.previous_target_var_name]
-        except KeyError:
-            prev_var = indigo.variable.create(
-                self.previous_target_var_name, "false", folder=var_folder
-            )
-        self._previous_execution_lights_target = prev_var.value
-        try:
-            self._previous_execution_lights_target = ast.literal_eval(prev_var.value)
-        except Exception as e:
-            indigo.server.log(
-                f"[Zone.previous_execution_lights_target] Zone '{self._name}': Error converting previous_execution_lights_target: {e}"
-            )
-            self._previous_execution_lights_target = []
-        return self._previous_execution_lights_target
 
     @property
     def check_out_var(self) -> indigo.Variable:
