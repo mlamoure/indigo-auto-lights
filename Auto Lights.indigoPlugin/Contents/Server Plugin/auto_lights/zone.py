@@ -57,7 +57,6 @@ class Zone:
         self._target_brightness_all_off = None
 
         # Behavior flags and settings
-        self._adjust_brightness = False
         self._adjust_brightness_when_active = True
         self._perform_confirm = True
         self._lock_duration = None
@@ -668,13 +667,12 @@ class Zone:
         If adjust_brightness is True, set the on lights to (luminance - minimum_luminance) if >0, else 0.
         Set off lights to 0.
         """
-        if self._adjust_brightness:
-            diff = self.luminance - self.minimum_luminance
-            diff = diff if diff > 0 else 0
-            new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(
-                self._off_lights_dev_ids
-            )
-            self.target_brightness = new_tb
+        diff = self.luminance - self.minimum_luminance
+        diff = diff if diff > 0 else 0
+        new_tb = [diff] * len(self._on_lights_dev_ids) + [0] * len(
+            self._off_lights_dev_ids
+        )
+        self.target_brightness = new_tb
 
     def has_device(self, dev_id: int) -> str:
         """
