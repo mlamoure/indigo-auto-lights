@@ -239,6 +239,7 @@ def generate_form_class_from_schema(schema):
 
         if subschema.get("type") == "object":
             from wtforms import FormField
+
             # Ensure nested properties are marked required
             nested_required = subschema.get("required", [])
             if not isinstance(nested_required, list):
@@ -261,7 +262,7 @@ def generate_form_class_from_schema(schema):
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-schema_path = os.path.join(current_dir, "config_schema.json")
+schema_path = os.path.join(current_dir, "config/config_schema.json")
 with open(schema_path) as f:
     config_schema = json.load(f, object_pairs_hook=OrderedDict)
 
@@ -284,13 +285,19 @@ def save_config(config_data):
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=2)
 
+
 def auto_backup_config():
     import shutil, glob
-    auto_backup_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups")
+
+    auto_backup_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups"
+    )
     os.makedirs(auto_backup_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     backup_file = os.path.join(auto_backup_dir, f"auto_backup_{timestamp}.json")
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json")
+    config_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
+    )
     shutil.copy2(config_path, backup_file)
     backups = sorted(glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")))
     if len(backups) > 25:
@@ -574,41 +581,59 @@ def get_luminance_value():
 @app.route("/config_backup", methods=["GET", "POST"])
 def config_backup():
     import shutil, glob
+
     config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
     manual_backup_dir = os.path.join(config_dir, "backups")
     auto_backup_dir = os.path.join(config_dir, "auto_backups")
     os.makedirs(manual_backup_dir, exist_ok=True)
     os.makedirs(auto_backup_dir, exist_ok=True)
-    
+
     if request.method == "POST":
         action = request.form.get("action")
         backup_type = request.form.get("backup_type")
         backup_file = request.form.get("backup_file")
         config_path = os.path.join(config_dir, "auto_lights_conf.json")
         if action == "create_manual":
-            dest = os.path.join(manual_backup_dir, f"manual_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.json")
+            dest = os.path.join(
+                manual_backup_dir,
+                f"manual_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.json",
+            )
             shutil.copy2(config_path, dest)
             flash("Manual backup created.")
         elif action == "restore":
             if backup_file:
-                src = os.path.join(manual_backup_dir if backup_type == "manual" else auto_backup_dir, backup_file)
+                src = os.path.join(
+                    manual_backup_dir if backup_type == "manual" else auto_backup_dir,
+                    backup_file,
+                )
                 shutil.copy2(src, config_path)
                 flash("Backup restored.")
         elif action == "delete":
             if backup_file:
-                path_to_delete = os.path.join(manual_backup_dir if backup_type == "manual" else auto_backup_dir, backup_file)
+                path_to_delete = os.path.join(
+                    manual_backup_dir if backup_type == "manual" else auto_backup_dir,
+                    backup_file,
+                )
                 if os.path.exists(path_to_delete):
                     os.remove(path_to_delete)
                     flash("Backup deleted.")
         return redirect(url_for("config_backup"))
-    
-    manual_backups = [os.path.basename(p) for p in glob.glob(os.path.join(manual_backup_dir, "*.json"))]
-    auto_backups_files = sorted(glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")), reverse=True)
+
+    manual_backups = [
+        os.path.basename(p)
+        for p in glob.glob(os.path.join(manual_backup_dir, "*.json"))
+    ]
+    auto_backups_files = sorted(
+        glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")), reverse=True
+    )
     auto_backups = []
     for ab in auto_backups_files:
         desc = "Automatic backup"
         auto_backups.append({"filename": os.path.basename(ab), "description": desc})
-    return render_template("config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups)
+    return render_template(
+        "config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups
+    )
+
 
 @app.route("/shutdown", methods=["POST"])
 def shutdown():

@@ -125,7 +125,7 @@
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.SensorDevice,thresholdTimer,persistenceTimer,activityTimer,pseudoRelay",
                 "title": "Presence Devices",
-                "tooltip": "Identifiers for the presence sensor(s)."
+                "tooltip": "Devices that determine if there is presence in the zone or room."
               }
             },
             "required": [
