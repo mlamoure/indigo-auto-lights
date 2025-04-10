@@ -77,7 +77,10 @@ class Plugin(indigo.PluginBase):
     def runConcurrentThread(self: indigo.PluginBase):
         try:
             while True:
-
+                current_mtime = os.path.getmtime(self._config_file_str)
+                if current_mtime != self._config_mtime:
+                    self.logger.debug("Config file modified, reloading configuration.")
+                    self._init_config_and_agent()
                 self.sleep(5)
         except self.StopThread:
             pass  # Optionally catch the StopThread exception and do any needed cleanup.
@@ -174,11 +177,11 @@ class Plugin(indigo.PluginBase):
                 self.start_configuration_web_server()
 
     def _init_config_and_agent(self):
-        confg_file_str = "config_web_editor/config/auto_lights_conf.json"
+        self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
-        if not os.path.exists(confg_file_str):
-            shutil.copyfile(confg_file_empty_str, confg_file_str)
-        conf_path = os.path.abspath(confg_file_str)
+        if not os.path.exists(self._config_file_str):
+            shutil.copyfile(confg_file_empty_str, self._config_file_str)
+        conf_path = os.path.abspath(self._config_file_str)
         self._config_path = conf_path
         self._config_mtime = os.path.getmtime(conf_path)
         config = AutoLightsConfig(conf_path)
