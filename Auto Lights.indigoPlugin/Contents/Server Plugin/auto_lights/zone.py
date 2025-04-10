@@ -305,7 +305,7 @@ class Zone:
                 self.logger.warning(
                     f"Expected {len(self._on_lights_dev_ids)} brightness values but got {len(value)}."
                 )
-            new_brightness = []
+            on_brightness = []
             for index, val in enumerate(value):
                 # Cap integer brightness values
                 if isinstance(val, int):
@@ -321,35 +321,35 @@ class Zone:
 
                 # For relay devices, force boolean state from numeric value
                 if isinstance(device, indigo.DimmerDevice):
-                    new_brightness.append(val)
+                    on_brightness.append(val)
                 else:
-                    new_brightness.append(val > 0)
-            self._target_brightness = new_brightness
+                    on_brightness.append(val > 0)
+            self._target_brightness = on_brightness
             self._debug(
                 f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
             )
             return
 
         # Process single (non-list) input: Create target brightness for each light
-        new_brightness = []
+        on_brightness = []
         # For "on" lights
         for dev_id in self.on_lights_dev_ids:
             device = indigo.devices[dev_id]
             # Special handling for a specific plugin (senseme)
             if device.pluginId == "com.pennypacker.indigoplugin.senseme":
                 # Scale the value from 0-100 to the device-specific range (0-16)
-                new_brightness.append(int((value / 100) * 16))
+                on_brightness.append(int((value / 100) * 16))
             elif isinstance(value, int):
                 # If it's a dimmer, cap the brightness, otherwise for relay devices, use boolean.
                 brightness = min(value, 100)
                 if isinstance(device, indigo.DimmerDevice):
-                    new_brightness.append(brightness)
+                    on_brightness.append(brightness)
                 else:
-                    new_brightness.append(brightness > 0)
+                    on_brightness.append(brightness > 0)
             elif isinstance(value, bool):
-                new_brightness.append(value)
+                on_brightness.append(value)
             else:
-                new_brightness.append(value)
+                on_brightness.append(value)
 
         # For "off" lights
         off_brightness = []
@@ -376,7 +376,7 @@ class Zone:
                     off_brightness.append(device.states["brightness"])
                 else:
                     off_brightness.append(False)
-        self._target_brightness = new_brightness + off_brightness
+        self._target_brightness = on_brightness + off_brightness
         self._debug(
             f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
         )
