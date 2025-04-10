@@ -534,31 +534,37 @@ class Zone:
 
     def is_dark(self) -> bool:
         """
-        Decide if the zone is considered dark based on sensor readings by averaging luminance devices.
+        Determine if the zone is considered dark based on sensor readings by averaging
+        luminance devices' sensor values.
+
+        Returns:
+            bool: True if the calculated average luminance is below the minimum threshold,
+                  or if no valid sensor values are available; otherwise False.
         """
         if not self.luminance_dev_ids:
             self._debug(
                 f"Zone '{self._name}': is_dark: No luminance devices, returning True"
             )
             return True
-        total = 0
-        count = 0
-        for dev_id in self.luminance_dev_ids:
-            sensor_value = indigo.devices[dev_id].sensorValue
-            total += sensor_value
-            count += 1
-        avg = total / count
 
-        if avg < self.minimum_luminance:
+        # Fetch sensor values safely; if a device doesn't have a sensorValue, you can decide on a default behavior.
+        sensor_values = [
+            indigo.devices[dev_id].sensorValue
+            for dev_id in self.luminance_dev_ids
+            if hasattr(indigo.devices[dev_id], "sensorValue")
+        ]
+
+        if not sensor_values:
             self._debug(
-                f"Zone '{self._name}': average below minimum {self.minimum_luminance}, returning True"
+                f"Zone '{self._name}': is_dark: No valid sensor values available, returning True"
             )
             return True
-        else:
-            self._debug(
-                f"Zone '{self._name}': average meets or exceeds minimum {self.minimum_luminance}, returning False"
-            )
-            return False
+
+        avg = sum(sensor_values) / len(sensor_values)
+        self._debug(
+            f"Zone '{self._name}': Calculated average luminance: {avg} (minimum required: {self.minimum_luminance})."
+        )
+        return avg < self.minimum_luminance
 
     def current_state_any_light_is_on(self) -> bool:
         """
