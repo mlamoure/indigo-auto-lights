@@ -325,8 +325,12 @@ class Zone:
                 else:
                     on_brightness.append(val > 0)
             self._target_brightness = on_brightness
+            self._target_brightness_lock_comparison = [
+                b for dev_id, b in zip(self.on_lights_dev_ids, on_brightness)
+                if dev_id not in self._exclude_from_lock_dev_ids
+            ]
             self._debug(
-                f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
+                f"Zone '{self._name}' target_brightness now: {self._target_brightness} | lock_comparison: {self._target_brightness_lock_comparison}"
             )
             return
 
@@ -377,8 +381,15 @@ class Zone:
                 else:
                     off_brightness.append(False)
         self._target_brightness = on_brightness + off_brightness
+        self._target_brightness_lock_comparison = []
+        for dev_id, bright in zip(self.on_lights_dev_ids, on_brightness):
+            if dev_id not in self._exclude_from_lock_dev_ids:
+                self._target_brightness_lock_comparison.append(bright)
+        for dev_id, bright in zip(self.off_lights_dev_ids, off_brightness):
+            if dev_id not in self._exclude_from_lock_dev_ids:
+                self._target_brightness_lock_comparison.append(bright)
         self._debug(
-            f"Zone '{self._name}' target_brightness now: {self._target_brightness}"
+            f"Zone '{self._name}' target_brightness now: {self._target_brightness} | lock_comparison: {self._target_brightness_lock_comparison}"
         )
 
     @property
