@@ -705,7 +705,7 @@ class Zone:
         elif dev_id in self._off_lights_dev_ids:
             result = "off_lights_dev_ids"
         elif self._presence_dev_ids == dev_id:
-            result = "presence_dev_id"
+            result = "presence_dev_ids"
         elif dev_id in self._luminance_dev_ids:
             result = "luminance_dev_ids"
         else:
