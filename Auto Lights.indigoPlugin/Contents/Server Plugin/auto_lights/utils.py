@@ -208,7 +208,7 @@ def print_debug_output(config, zones, zones_ran, total_time):
             if idx != len(disabled_zones) - 1:
                 disabled_zones_str = disabled_zones_str + ", "
     # Log summary of script execution time and threading status.
-    indigo.server.log(
+    logger.debug(
         "[utils.print_debug_output] auto_lights script DEBUG: completed running "
         + str(zones_ran)
         + " zone(s) in "
@@ -218,13 +218,13 @@ def print_debug_output(config, zones, zones_ran, total_time):
         + ")"
     )
     # Log the number of zones configured.
-    indigo.server.log(
+    logger.info(
         "[utils.print_debug_output]       ... "
         + str(len(zones))
         + " zone(s) are configured"
     )
     if len(locked_zones_str) > 0:
-        indigo.server.log(
+        logger.info(
             "[utils.print_debug_output]       ... "
             + str(len(locked_zones))
             + " zone(s) are locked ["
@@ -232,7 +232,7 @@ def print_debug_output(config, zones, zones_ran, total_time):
             + "]"
         )
     if len(no_active_periods_str) > 0:
-        indigo.server.log(
+        logger.info(
             "[utils.print_debug_output]       ... "
             + str(len(no_active_periods))
             + " zone(s) have no active periods ["
@@ -240,7 +240,7 @@ def print_debug_output(config, zones, zones_ran, total_time):
             + "]"
         )
     if len(disabled_zones_str) > 0:
-        indigo.server.log(
+        logger.info(
             "[utils.print_debug_output]       ... "
             + str(len(disabled_zones))
             + " zone(s) are disabled ["
