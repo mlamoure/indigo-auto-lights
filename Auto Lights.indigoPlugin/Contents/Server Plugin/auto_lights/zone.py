@@ -534,25 +534,25 @@ class Zone:
 
     def is_dark(self) -> bool:
         """
-        Decide if the zone is considered dark based on sensor readings or the current lighting period.
+        Decide if the zone is considered dark based on sensor readings by averaging luminance devices.
         """
         if not self.luminance_dev_ids:
-            self._debug(
-                f"Zone '{self._name}': is_dark: No luminance devices, returning True"
-            )
+            self._debug(f"Zone '{self._name}': is_dark: No luminance devices, returning True")
             return True
+        total = 0
+        count = 0
         for dev_id in self.luminance_dev_ids:
             sensor_value = indigo.devices[dev_id].sensorValue
-
-            if sensor_value < self.minimum_luminance:
-                self._debug(
-                    f"Zone '{self._name}': device {dev_id} is below minimum brightness threshold, returning True"
-                )
-                return True
-        self._debug(
-            f"Zone '{self._name}': All devices above threshold, returning False"
-        )
-        return False
+            total += sensor_value
+            count += 1
+        avg = total / count
+        self._debug(f"Zone '{self._name}': computed average luminance: {avg}")
+        if avg < self.minimum_luminance:
+            self._debug(f"Zone '{self._name}': average below minimum {self.minimum_luminance}, returning True")
+            return True
+        else:
+            self._debug(f"Zone '{self._name}': average meets or exceeds minimum {self.minimum_luminance}, returning False")
+            return False
 
     def current_state_any_light_is_on(self) -> bool:
         """
