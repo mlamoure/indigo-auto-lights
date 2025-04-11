@@ -201,7 +201,9 @@ class Zone:
 
     @off_lights_dev_ids.setter
     def off_lights_dev_ids(self, value: List[int]) -> None:
-        self._off_lights_dev_ids = value
+        # Remove any device ids that are also present in on_lights_dev_ids
+        cleaned = [dev for dev in value if dev not in self.on_lights_dev_ids]
+        self._off_lights_dev_ids = cleaned
 
     @property
     def presence_dev_ids(self) -> List[int]:
