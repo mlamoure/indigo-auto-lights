@@ -195,3 +195,6 @@ class AutoLightsAgent:
                     processed.append(zone)
 
         return processed
+
+    def get_zones(self) -> List[Zone]:
+        return self._config.zones

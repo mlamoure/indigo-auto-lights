@@ -191,7 +191,17 @@ class Plugin(indigo.PluginBase):
             self.indigo_log_handler.setLevel(self.logLevel)
             self.plugin_file_handler.setLevel(self.logLevel)
 
-    def _init_config_and_agent(self):
+    def get_zone_list(
+        self: indigo.PluginBase, filter="", values_dict=None, type_id="", target_id=0
+    ):
+        menu_items = []
+
+        for zone in self._agent.get_zones():
+            menu_items.append((zone.name, zone.name))
+
+        return menu_items
+
+    def _init_config_and_agent(self: indigo.PluginBase):
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
         if not os.path.exists(self._config_file_str):
             shutil.copyfile(confg_file_empty_str, self._config_file_str)
@@ -201,3 +211,9 @@ class Plugin(indigo.PluginBase):
         config = AutoLightsConfig(conf_path)
         self._agent = AutoLightsAgent(config)
         self._agent.process_all_zones()
+
+    def reset_zone_locks(self: indigo.PluginBase, values_dict, type_id=0, dev_id=0):
+        pass
+
+    def reset_all_locks(self: indigo.PluginBase, values_dict, type_id=0, dev_id=0):
+        pass

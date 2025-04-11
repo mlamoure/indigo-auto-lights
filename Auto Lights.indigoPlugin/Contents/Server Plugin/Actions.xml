@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<Actions>
+    <SupportURL>https://wiki.indigodomo.com/doku.php?id=plugins:example_dev_1</SupportURL>
+    <Action id="reset_all_locks">
+        <Name>Reset All Zone Locks</Name>
+        <CallbackMethod>reset_all_locks</CallbackMethod>
+    </Action>
+    <Action id="reset_zone_locks">
+        <Name>Reset Specific Zone Lock</Name>
+        <CallbackMethod>reset_zone_locks</CallbackMethod>
+        <ConfigUI>
+            <Field id="zone_list" type="menu">
+                <Label>Zone:</Label>
+                <List class="self" filter="stuff" method="get_zone_list"/>
+            </Field>
+        </ConfigUI>
+    </Action>
+</Actions>
