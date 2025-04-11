@@ -644,7 +644,7 @@ class Zone:
         """
         action_reason = ""
 
-        if self.lighting_periods is None:
+        if self.current_lighting_period is None:
             return "No lighting periods available"
 
         # Check if the zone is in "On and Off" mode, has presence detected, and is dark.
