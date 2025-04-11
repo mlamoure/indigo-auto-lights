@@ -708,6 +708,9 @@ class Zone:
         utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
 
     def has_lock_occurred(self) -> bool:
+        if self._checked_out:
+            return False
+
         self._debug(
             f"Zone '{self._name}' lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
         )

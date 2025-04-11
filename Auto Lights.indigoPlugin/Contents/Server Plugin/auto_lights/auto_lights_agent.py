@@ -38,6 +38,7 @@ class AutoLightsAgent:
             )
             return False
 
+        zone.check_out()
         ################################################################
         # Lock logic
         ################################################################
@@ -49,12 +50,14 @@ class AutoLightsAgent:
                 self.logger.debug(
                     f"[AutoLightsAgent.process_zone] Zone '{zone.name}': zone is locked until {zone.lock_expiration}"
                 )
+                zone.check_in()
                 return False
 
         ################################################################
         # Period logic
         ################################################################
         if zone.lighting_periods is None:
+            zone.check_in()
             return False
 
         ################################################################
@@ -115,14 +118,7 @@ class AutoLightsAgent:
                 f"[AutoLightsAgent.process_zone] Zone '{zone.name}': no changes to make, checked in"
             )
 
-            zone.check_in()
-
-        ###### END ZONE LOOP #######
-
-        ################################################################
-        # Debug
-        ################################################################
-
+        zone.check_in()
         return True
 
     def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> List[Zone]:
