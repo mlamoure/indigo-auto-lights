@@ -39,7 +39,6 @@ class Zone:
         self._enabled_var_id = None
 
         self._lighting_periods = []
-        self._current_lighting_period = None
 
         # Device lists for lights
         self._on_lights_dev_ids = []
@@ -396,15 +395,14 @@ class Zone:
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
-        if self._current_lighting_period is None:
-            if not self.lighting_periods:
-                self.logger.info(f"Zone '{self._name}': no active lighting periods.")
-                return None
-            for period in self.lighting_periods:
-                if period.is_active_period():
-                    self._current_lighting_period = period
-                    break
-        return self._current_lighting_period
+        if not self.lighting_periods:
+            self.logger.info(f"Zone '{self._name}': no active lighting periods.")
+            return None
+
+        for period in self.lighting_periods:
+            if period.is_active_period():
+                self._current_lighting_period = period
+                break
 
     @property
     def lighting_periods(self) -> List[LightingPeriod]:
@@ -603,9 +601,7 @@ class Zone:
         indigo.variable.updateValue(
             self.previous_target_var_name, str(self._current_lights_status)
         )
-        self.logger.info(
-            f"Zone '{self._name}': zone lock reset because {reason}"
-        )
+        self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
 
     def has_brightness_changes(self) -> bool:
         """
@@ -746,7 +742,9 @@ class Zone:
         utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
 
     def has_lock_occurred(self) -> bool:
-        self.logger.debug(f"Zone '{self._name}' lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}")
+        self.logger.debug(
+            f"Zone '{self._name}' lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
+        )
         result = self.current_lights_status != self._target_brightness_lock_comparison
         self.logger.debug(f"Zone '{self._name}' has_lock_occurred result: {result}")
         return result
