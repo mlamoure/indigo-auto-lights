@@ -287,7 +287,7 @@ class Zone:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
         self._debug(
-            f"Zone '{self._name}': replied target brightness = {self._target_brightness}"
+            f"replied target brightness = {self._target_brightness}"
         )
         return self._target_brightness
 
