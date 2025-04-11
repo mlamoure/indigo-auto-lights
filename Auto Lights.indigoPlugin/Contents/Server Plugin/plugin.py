@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import threading
@@ -37,7 +38,6 @@ class Plugin(indigo.PluginBase):
             plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs
         )
 
-        self.debug: bool = True
         self._agent = None
         self._web_server_thread = None
 
@@ -50,6 +50,12 @@ class Plugin(indigo.PluginBase):
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
+
+        self.logLevel = int(plugin_prefs.get("log_level", logging.INFO))
+        self.logger.debug(f"{self.logLevel=}")
+        self.indigo_log_handler.setLevel(self.logLevel)
+        self.plugin_file_handler.setLevel(self.logLevel)
+
         self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
 
     def startup(self: indigo.PluginBase) -> None:
@@ -81,7 +87,9 @@ class Plugin(indigo.PluginBase):
                 if os.path.exists(self._config_file_str):
                     current_mtime = os.path.getmtime(self._config_file_str)
                     if current_mtime != self._config_mtime:
-                        self.logger.debug("Config file modified, reloading configuration.")
+                        self.logger.debug(
+                            "Config file modified, reloading configuration."
+                        )
                         self._init_config_and_agent()
                 self.sleep(5)
         except self.StopThread:
@@ -123,7 +131,7 @@ class Plugin(indigo.PluginBase):
 
     def start_configuration_web_server(self: indigo.PluginBase):
         if self._web_server_thread is not None:
-            self.stop_web_server_thread()
+            self.stop_configuration_web_server()
 
         if (
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
@@ -177,6 +185,11 @@ class Plugin(indigo.PluginBase):
                 self.stop_configuration_web_server()
             else:
                 self.start_configuration_web_server()
+
+            self.logLevel = int(values_dict.get("log_level", logging.INFO))
+            self.logger.debug(f"{self.logLevel=}")
+            self.indigo_log_handler.setLevel(self.logLevel)
+            self.plugin_file_handler.setLevel(self.logLevel)
 
     def _init_config_and_agent(self):
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
