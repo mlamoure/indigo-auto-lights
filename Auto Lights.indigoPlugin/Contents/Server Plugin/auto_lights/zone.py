@@ -117,6 +117,8 @@ class Zone:
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
 
+        self.calculate_target_brightness()
+
     # (4) Properties
     @property
     def name(self) -> str:
@@ -191,7 +193,6 @@ class Zone:
     @on_lights_dev_ids.setter
     def on_lights_dev_ids(self, value: List[int]) -> None:
         self._on_lights_dev_ids = value
-        self.target_brightness = self.current_lights_status
 
     @property
     def off_lights_dev_ids(self) -> List[int]:
@@ -201,7 +202,6 @@ class Zone:
     @off_lights_dev_ids.setter
     def off_lights_dev_ids(self, value: List[int]) -> None:
         self._off_lights_dev_ids = value
-        self.target_brightness = self.current_lights_status
 
     @property
     def presence_dev_ids(self) -> List[int]:
@@ -318,7 +318,9 @@ class Zone:
         if isinstance(value, list):
             all_lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
             if len(value) != len(all_lights_dev_ids):
-                raise ValueError("Length of brightness list must match the total number of devices.")
+                raise ValueError(
+                    "Length of brightness list must match the total number of devices."
+                )
             for idx, val in enumerate(value):
                 dev = indigo.devices[all_lights_dev_ids[idx]]
                 brightness = self._normalize_dev_target_brightness(dev, val)
@@ -330,7 +332,11 @@ class Zone:
             force_off = (isinstance(value, bool) and not value) or value == 0
 
             # Set brightness for primary lights.
-            lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids if force_off else self.on_lights_dev_ids
+            lights_dev_ids = (
+                self.on_lights_dev_ids + self.off_lights_dev_ids
+                if force_off
+                else self.on_lights_dev_ids
+            )
             for dev_id in lights_dev_ids:
                 dev = indigo.devices[dev_id]
                 brightness = self._normalize_dev_target_brightness(dev, value)
@@ -352,8 +358,12 @@ class Zone:
                         current_brightness = False
                     self._target_brightness.append(current_brightness)
                     if dev_id not in self.exclude_from_lock_dev_ids:
-                        self._target_brightness_lock_comparison.append(current_brightness)
-        self._debug(f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}")
+                        self._target_brightness_lock_comparison.append(
+                            current_brightness
+                        )
+        self._debug(
+            f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
+        )
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
