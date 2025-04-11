@@ -67,7 +67,6 @@ class Zone:
         self._config = config
 
         self._last_changed_by = "none"
-        self._previous_execution_lights_target = None
         self._locked = False
         self._target_brightness_lock_comparison = None
         self._lock_enabled = False
@@ -595,12 +594,7 @@ class Zone:
     def reset_lock(self, reason: str):
         """Reset the lock for the zone."""
         self._lock_expiration = datetime.datetime.now() - datetime.timedelta(minutes=1)
-        indigo.variable.updateValue(self.lock_var, str(self.lock_expiration_str))
         self._locked = False
-        self._previous_execution_lights_target = self.current_lights_status
-        indigo.variable.updateValue(
-            self.previous_target_var_name, str(self._current_lights_status)
-        )
         self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
 
     def has_brightness_changes(self) -> bool:
