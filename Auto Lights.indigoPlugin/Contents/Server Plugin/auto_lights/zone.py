@@ -353,6 +353,7 @@ class Zone:
                     self._target_brightness.append(current_brightness)
                     if dev_id not in self.exclude_from_lock_dev_ids:
                         self._target_brightness_lock_comparison.append(current_brightness)
+        self._debug(f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}")
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
