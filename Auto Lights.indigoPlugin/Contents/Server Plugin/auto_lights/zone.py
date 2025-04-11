@@ -316,19 +316,18 @@ class Zone:
         self._target_brightness_lock_comparison = []
 
         if isinstance(value, list):
-            all_lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
-            if len(value) != len(all_lights_dev_ids):
+            if len(value) != len(self.on_lights_dev_ids):
                 raise ValueError(
                     "Length of brightness list must match the total number of devices."
                 )
             for idx, val in enumerate(value):
-                dev = indigo.devices[all_lights_dev_ids[idx]]
+                dev = indigo.devices[self.on_lights_dev_ids[idx]]
                 brightness = self._normalize_dev_target_brightness(dev, val)
                 self._target_brightness.append(brightness)
-                if all_lights_dev_ids[idx] not in self.exclude_from_lock_dev_ids:
+                if self.on_lights_dev_ids[idx] not in self.exclude_from_lock_dev_ids:
                     self._target_brightness_lock_comparison.append(brightness)
         else:
-            # When a scalar is provided, check if we are forcing off.
+            # When a single value is provided, check if we are forcing off.  Either False or 0.
             force_off = (isinstance(value, bool) and not value) or value == 0
 
             # Set brightness for primary lights.
