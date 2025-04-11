@@ -80,7 +80,7 @@ class Zone:
         caller_fn = stack[2].function if len(stack) > 2 else ""
         caller_line = stack[2].lineno if len(stack) > 2 else 0
         self.logger.debug(
-            f"[caller: {caller_fn} : {caller_line}][func: {current_fn}] {message}"
+            f"[caller: {caller_fn} : {caller_line}][func: {current_fn}] Zone '{self._name}': {message}"
         )
 
     def from_config_dict(self, cfg: dict) -> None:
@@ -332,7 +332,9 @@ class Zone:
 
         if isinstance(value, list):
             if len(value) != len(self.on_lights_dev_ids):
-                raise ValueError("Length of brightness list must match the total number of devices.")
+                raise ValueError(
+                    "Length of brightness list must match the total number of devices."
+                )
             for idx, val in enumerate(value):
                 dev_id = self.on_lights_dev_ids[idx]
                 bright = normalize(dev_id, val)
@@ -341,7 +343,11 @@ class Zone:
                     self._target_brightness_lock_comparison.append(bright)
         else:
             force_off = (isinstance(value, bool) and not value) or value == 0
-            lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids if force_off else self.on_lights_dev_ids
+            lights_dev_ids = (
+                self.on_lights_dev_ids + self.off_lights_dev_ids
+                if force_off
+                else self.on_lights_dev_ids
+            )
             for dev_id in lights_dev_ids:
                 bright = normalize(dev_id, value)
                 self._target_brightness.append(bright)
@@ -637,7 +643,7 @@ class Zone:
             new_tb = [100] * len(self._on_lights_dev_ids)
 
             self.target_brightness = new_tb
-            self.logger.debug(
+            self._debug(
                 f"Calculated target brightness (no adjustment): {self.target_brightness}"
             )
             return
