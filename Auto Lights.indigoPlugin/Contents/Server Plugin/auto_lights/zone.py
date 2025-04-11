@@ -643,6 +643,7 @@ class Zone:
         action_reason = ""
 
         if self.current_lighting_period is None:
+            self._debug(f"no lighting periods available")
             return "No lighting periods available"
 
         # Check if the zone is in "On and Off" mode, has presence detected, and is dark.
@@ -679,6 +680,7 @@ class Zone:
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
             action_reason = "presence is not detected"
+            self.target_brightness = 0
 
         return action_reason
 
