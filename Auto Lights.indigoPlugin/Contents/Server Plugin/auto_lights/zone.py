@@ -356,10 +356,19 @@ class Zone:
                     else:
                         current_brightness = False
                     self._target_brightness.append(current_brightness)
-                    if dev_id not in self.exclude_from_lock_dev_ids:
-                        self._target_brightness_lock_comparison.append(
-                            current_brightness
-                        )
+
+        for dev_id in self.off_lights_dev_ids:
+            if dev_id not in self.exclude_from_lock_dev_ids:
+                dev = indigo.devices[dev_id]
+                if isinstance(dev, indigo.DimmerDevice):
+                    current_brightness = dev.brightness
+                elif isinstance(dev, indigo.RelayDevice):
+                    current_brightness = dev.onState
+                elif "brightness" in dev.states:
+                    current_brightness = int(dev.states["brightness"])
+                else:
+                    current_brightness = False
+                self._target_brightness_lock_comparison.append(current_brightness)
         self._debug(
             f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
         )
