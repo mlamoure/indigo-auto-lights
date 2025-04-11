@@ -638,20 +638,25 @@ class Zone:
 
     def calculate_target_brightness(self) -> str:
         """Calculate and set the target brightness for the zone.
-        
+
         Returns:
             action_reason (str): Explanation of the action taken.
         """
         action_reason = ""
-        
+
+        if self.lighting_periods is None:
+            return "No lighting periods available"
+
         # Check if the zone is in "On and Off" mode, has presence detected, and is dark.
         if (
             self.current_lighting_period.mode == "On and Off"
             and self.has_presence_detected()
             and self.is_dark()
         ):
-            action_reason = "Presence is detected for a On and Off Zone, the zone is dark"
-            
+            action_reason = (
+                "Presence is detected for a On and Off Zone, the zone is dark"
+            )
+
             # Case 1: No dimmer adjustment is enabled.
             if not self.adjust_brightness:
                 new_tb = [100] * len(self._on_lights_dev_ids)
@@ -660,7 +665,7 @@ class Zone:
                     f"Calculated target brightness (no dimmer adjustment): {self.target_brightness}"
                 )
                 return action_reason
-            
+
             # Case 2: Dimmer adjustment is enabled.
             else:
                 # Compute percentage delta relative to sensor luminance and minimum luminance.
@@ -672,9 +677,7 @@ class Zone:
                 )
                 new_tb = [pct_delta] * len(self._on_lights_dev_ids)
                 self.target_brightness = new_tb
-                self._debug(
-                    f"Calculated target brightness: {self.target_brightness}"
-                )
+                self._debug(f"Calculated target brightness: {self.target_brightness}")
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
             action_reason = "presence is not detected"
