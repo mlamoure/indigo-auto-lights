@@ -191,6 +191,7 @@ class Zone:
     @on_lights_dev_ids.setter
     def on_lights_dev_ids(self, value: List[int]) -> None:
         self._on_lights_dev_ids = value
+        self.target_brightness = self.current_lights_status
 
     @property
     def off_lights_dev_ids(self) -> List[int]:
@@ -200,6 +201,7 @@ class Zone:
     @off_lights_dev_ids.setter
     def off_lights_dev_ids(self, value: List[int]) -> None:
         self._off_lights_dev_ids = value
+        self.target_brightness = self.current_lights_status
 
     @property
     def presence_dev_ids(self) -> List[int]:
@@ -287,131 +289,79 @@ class Zone:
         )
         return self._target_brightness
 
+    @staticmethod
+    def _normalize_dev_target_brightness(dev, brightness_value) -> Union[int, bool]:
+        """
+        Determine the correct brightness setting for the given device
+        based on the input brightness_value.
+        """
+        # For dimmer devices:
+        if isinstance(dev, indigo.DimmerDevice):
+            # If numeric, cap it at 100; otherwise, allow bool/other to pass through
+            if isinstance(brightness_value, int):
+                return min(brightness_value, 100)
+            return brightness_value
+
+        # For relay devices or anything else that isn't a dimmer:
+        # Convert numeric > 0 to True, 0 to False
+        if isinstance(brightness_value, int):
+            return brightness_value > 0
+        # If it's already bool, just return it
+        return bool(brightness_value)
+
     @target_brightness.setter
     def target_brightness(
         self, value: Union[List[Union[bool, int]], int, bool]
     ) -> None:
-        """
-        Set target brightness for on/off lights.
-        Supports three types of `value`:
-          1) A list of brightness values (one per on-light device).
-          2) An integer brightness (applies to all on-lights; off-lights are turned off or preserved).
-          3) A boolean (True = on, False = off).
-        """
-        self._debug(
-            f"Zone '{self._name}' target_brightness setter called with "
-            f"value={value}, type={type(value)}"
-        )
 
-        def interpret_brightness(dev, brightness_value) -> Union[int, bool]:
-            """
-            Determine the correct brightness setting for the given device
-            based on the input brightness_value.
-            """
-            # If device is a SenseMe plugin, map 0–100 -> 0–16
-            if dev.pluginId == "com.pennypacker.indigoplugin.senseme" and isinstance(
-                brightness_value, int
-            ):
-                return int(min(brightness_value, 100) / 100 * 16)
-
-            # For dimmer devices:
-            if isinstance(dev, indigo.DimmerDevice):
-                # If numeric, cap it at 100; otherwise, allow bool/other to pass through
-                if isinstance(brightness_value, int):
-                    return min(brightness_value, 100)
-                return brightness_value
-
-            # For relay devices or anything else that isn't a dimmer:
-            # Convert numeric > 0 to True, 0 to False
-            if isinstance(brightness_value, int):
-                return brightness_value > 0
-            # If it's already bool, just return it
-            return bool(brightness_value)
-
-        # -------------------------------------------------------------------
-        # 1) If the user passed a list, interpret each brightness for on-lights.
-        # -------------------------------------------------------------------
-        if isinstance(value, list):
-            if len(value) != len(self._on_lights_dev_ids):
-                self.logger.warning(
-                    f"Zone '{self._name}', expected {len(self._on_lights_dev_ids)} "
-                    f"brightness values but got {len(value)}."
-                )
-
-            on_brightness = []
-            for idx, val in enumerate(value):
-                try:
-                    device = indigo.devices[self._on_lights_dev_ids[idx]]
-                except IndexError:
-                    self.logger.error(
-                        f"Zone '{self._name}', no matching on-light device at "
-                        f"index {idx} for provided brightness list."
-                    )
-                    continue
-
-                on_brightness.append(interpret_brightness(device, val))
-
-            self._target_brightness = on_brightness
-            self._target_brightness_lock_comparison = [
-                b
-                for dev_id, b in zip(self._on_lights_dev_ids, on_brightness)
-                if dev_id not in self._exclude_from_lock_dev_ids
-            ]
-
-            self._debug(
-                f"Zone '{self._name}' target_brightness now: {self._target_brightness} "
-                f"| lock_comparison: {self._target_brightness_lock_comparison}"
-            )
-            return
-
-        # -------------------------------------------------------------------
-        # 2) Single brightness/boolean value for all on-lights, off-lights.
-        # -------------------------------------------------------------------
-        on_brightness = []
-        for dev_id in self._on_lights_dev_ids:
-            dev = indigo.devices[dev_id]
-            on_brightness.append(interpret_brightness(dev, value))
-
-        # Decide how off-lights should be handled:
-        # If the single value is 0 or False, we force them off;
-        # otherwise, we preserve their current state.
-        force_off = (isinstance(value, bool) and not value) or value == 0
-        off_brightness = []
-        for dev_id in self._off_lights_dev_ids:
-            dev = indigo.devices[dev_id]
-            if force_off:
-                # For dimmers, or if they have a 'brightness' state, explicitly set 0
-                if isinstance(dev, indigo.DimmerDevice) or "brightness" in dev.states:
-                    off_brightness.append(0)
-                else:
-                    off_brightness.append(False)
-            else:
-                # Preserve current brightness or onState
-                if isinstance(dev, indigo.DimmerDevice):
-                    off_brightness.append(dev.brightness)
-                elif isinstance(dev, indigo.RelayDevice):
-                    off_brightness.append(dev.onState)
-                elif "brightness" in dev.states:
-                    off_brightness.append(int(dev.states["brightness"]))
-                else:
-                    off_brightness.append(False)
-
-        # Combine them:
-        self._target_brightness = on_brightness + off_brightness
-
-        # Build lock comparison ignoring excluded devices:
+        self._target_brightness = []
         self._target_brightness_lock_comparison = []
-        for dev_id, bright in zip(self._on_lights_dev_ids, on_brightness):
-            if dev_id not in self._exclude_from_lock_dev_ids:
-                self._target_brightness_lock_comparison.append(bright)
-        for dev_id, bright in zip(self._off_lights_dev_ids, off_brightness):
-            if dev_id not in self._exclude_from_lock_dev_ids:
-                self._target_brightness_lock_comparison.append(bright)
+        if isinstance(value, List):
+            all_lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
+            for idx, val in enumerate(value):
+                dev = indigo.devices[all_lights_dev_ids[idx]]
+                brightness = self._normalize_dev_target_brightness(dev, val)
+                self._target_brightness.append(brightness)
 
-        self._debug(
-            f"Zone '{self._name}' target_brightness now: {self._target_brightness} "
-            f"| lock_comparison: {self._target_brightness_lock_comparison}"
-        )
+                if all_lights_dev_ids[idx] not in self.exclude_from_lock_dev_ids:
+                    self._target_brightness_lock_comparison.append(brightness)
+        else:
+            force_off = (isinstance(value, bool) and not value) or value == 0
+
+            lights_dev_ids = []
+            if force_off:
+                lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
+            else:
+                lights_dev_ids = self.on_lights_dev_ids
+
+            for dev_id in lights_dev_ids:
+                dev = indigo.devices[dev_id]
+                brightness = self._normalize_dev_target_brightness(dev, value)
+                self._target_brightness.append(brightness)
+
+                if dev_id not in self.exclude_from_lock_dev_ids:
+                    self._target_brightness_lock_comparison.append(brightness)
+
+            if not force_off:
+                for dev_id in self.off_lights_dev_ids:
+                    dev = indigo.devices[dev_id]
+                    brightness = None
+                    # Preserve current brightness or onState
+                    if isinstance(dev, indigo.DimmerDevice):
+                        self._target_brightness.append(dev.brightness)
+                        brightness = dev.brightness
+                    elif isinstance(dev, indigo.RelayDevice):
+                        self._target_brightness.append(dev.onState)
+                        brightness = dev.onState
+                    elif "brightness" in dev.states:
+                        self._target_brightness.append(int(dev.states["brightness"]))
+                        brightness = int(dev.states["brightness"])
+                    else:
+                        self._target_brightness.append(False)
+                        brightness = False
+
+                    if dev_id not in self.exclude_from_lock_dev_ids:
+                        self._target_brightness_lock_comparison.append(brightness)
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
