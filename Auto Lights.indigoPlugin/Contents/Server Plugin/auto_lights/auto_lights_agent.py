@@ -83,19 +83,7 @@ class AutoLightsAgent:
 
         # Next, look to the target_brightness
         if not action_reason and zone.current_lighting_period is not None:
-            if (
-                zone.current_lighting_period.mode == "On and Off"
-                and zone.has_presence_detected()
-                and zone.is_dark()
-            ):
-                zone.calculate_target_brightness()
-                action_reason = (
-                    "Presence is detected for a On and Off Zone, the zone is dark"
-                )
-
-            elif not zone.has_presence_detected():
-                zone.target_brightness = 0
-                action_reason = "presence is not detected"
+            action_reason = zone.calculate_target_brightness()
 
         ################################################################
         # Save and write log

@@ -286,9 +286,7 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
-        self._debug(
-            f"replied target brightness = {self._target_brightness}"
-        )
+        self._debug(f"replied target brightness = {self._target_brightness}")
         return self._target_brightness
 
     @staticmethod
@@ -638,22 +636,40 @@ class Zone:
                 lines.append(f"{key}: {repr(value)}")
         return "\n".join(lines)
 
-    def calculate_target_brightness(self) -> None:
-        if not self.adjust_brightness:
-            new_tb = [100] * len(self._on_lights_dev_ids)
-
-            self.target_brightness = new_tb
-            self._debug(
-                f"Calculated target brightness (no adjustment): {self.target_brightness}"
+    def calculate_target_brightness(self) -> str:
+        action_reason = ""
+        if (
+            self.current_lighting_period.mode == "On and Off"
+            and self.has_presence_detected()
+            and self.is_dark()
+        ):
+            action_reason = (
+                "Presence is detected for a On and Off Zone, the zone is dark"
             )
-            return
-        pct_delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
-        self._debug(
-            f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
-        )
-        new_tb = [pct_delta] * len(self._on_lights_dev_ids)
-        self.target_brightness = new_tb
-        self._debug(f"Calculated target brightness: {self.target_brightness}")
+
+            # if the zone is not set to calculate dimmer brightness
+            if not self.adjust_brightness:
+                new_tb = [100] * len(self._on_lights_dev_ids)
+
+                self.target_brightness = new_tb
+                self._debug(
+                    f"Calculated target brightness (no dimmer adjustment): {self.target_brightness}"
+                )
+                return action_reason
+            else:
+                pct_delta = math.ceil(
+                    (1 - (self.luminance / self.minimum_luminance)) * 100
+                )
+                self._debug(
+                    f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
+                )
+                new_tb = [pct_delta] * len(self._on_lights_dev_ids)
+                self.target_brightness = new_tb
+                self._debug(f"Calculated target brightness: {self.target_brightness}")
+        elif not self.has_presence_detected():
+            action_reason = "presence is not detected"
+
+        return action_reason
 
     def has_device(self, dev_id: int) -> str:
         """
