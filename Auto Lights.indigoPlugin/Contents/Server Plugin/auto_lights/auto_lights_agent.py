@@ -198,3 +198,15 @@ class AutoLightsAgent:
 
     def get_zones(self) -> List[Zone]:
         return self._config.zones
+
+    def reset_locks(self, zone_name: str = None) -> None:
+        """
+        Reset locks for zones. If zone_name is provided, only reset that zone's lock; otherwise, reset locks for all zones.
+        """
+        if zone_name:
+            for zone in self._config.zones:
+                if zone.name == zone_name:
+                    zone.reset_lock("manual reset")
+        else:
+            for zone in self._config.zones:
+                zone.reset_lock("manual reset")
