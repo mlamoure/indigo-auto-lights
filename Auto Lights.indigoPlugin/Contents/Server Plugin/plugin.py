@@ -212,8 +212,12 @@ class Plugin(indigo.PluginBase):
         self._agent = AutoLightsAgent(config)
         self._agent.process_all_zones()
 
-    def reset_zone_locks(self: indigo.PluginBase, values_dict, type_id=0, dev_id=0):
-        pass
+    def reset_zone_lock(
+        self: indigo.PluginBase, action, dev, caller_waiting_for_result
+    ):
+        self._agent.reset_locks(action.props.get("zone_list"))
 
-    def reset_all_locks(self: indigo.PluginBase, values_dict, type_id=0, dev_id=0):
-        pass
+    def reset_all_locks(
+        self: indigo.PluginBase, action, dev, caller_waiting_for_result
+    ):
+        self._agent.reset_locks()

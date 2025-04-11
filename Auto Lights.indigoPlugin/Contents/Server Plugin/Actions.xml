@@ -7,7 +7,7 @@
     </Action>
     <Action id="reset_zone_locks">
         <Name>Reset Specific Zone Lock</Name>
-        <CallbackMethod>reset_zone_locks</CallbackMethod>
+        <CallbackMethod>reset_zone_lock</CallbackMethod>
         <ConfigUI>
             <Field id="zone_list" type="menu">
                 <Label>Zone:</Label>
