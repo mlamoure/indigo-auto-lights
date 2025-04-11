@@ -302,7 +302,7 @@ class Zone:
         if isinstance(value, list):
             if len(value) != len(self._on_lights_dev_ids):
                 self.logger.warning(
-                    f"Expected {len(self._on_lights_dev_ids)} brightness values but got {len(value)}."
+                    f"Zone '{self._name}', expected {len(self._on_lights_dev_ids)} brightness values but got {len(value)}."
                 )
             on_brightness = []
             for index, val in enumerate(value):
@@ -314,7 +314,7 @@ class Zone:
                     device = indigo.devices[self._on_lights_dev_ids[index]]
                 except IndexError:
                     self.logger.error(
-                        f"No matching on-light device at index {index} for provided brightness list."
+                        f"Zone '{self._name}', no matching on-light device at index {index} for provided brightness list."
                     )
                     continue
 
