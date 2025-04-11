@@ -144,9 +144,13 @@ class AutoLightsAgent:
         for zone in self._config.zones:
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
+                if not zone.enabled:
+                    continue
+
                 self.logger.debug(
                     f"[AutoLightsAgent.process_device_change] has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
                 )
+
                 if not zone.locked and zone.has_lock_occurred():
                     zone.locked = True
                     self.logger.info(
