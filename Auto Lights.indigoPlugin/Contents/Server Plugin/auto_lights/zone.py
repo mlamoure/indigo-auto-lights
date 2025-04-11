@@ -117,8 +117,6 @@ class Zone:
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
 
-        self.calculate_target_brightness()
-
     # (4) Properties
     @property
     def name(self) -> str:

@@ -145,6 +145,9 @@ class AutoLightsConfig:
             z.lighting_periods = zone_lps
             self._zones.append(z)
 
+        for zone in self._zones:
+            zone.calculate_target_brightness()
+
     @property
     def zones(self) -> List[Zone]:
         return self._zones
