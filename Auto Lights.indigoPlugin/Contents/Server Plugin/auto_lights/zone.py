@@ -310,58 +310,49 @@ class Zone:
         return bool(brightness_value)
 
     @target_brightness.setter
-    def target_brightness(
-        self, value: Union[List[Union[bool, int]], int, bool]
-    ) -> None:
-
+    def target_brightness(self, value: Union[list, int, bool]) -> None:
+        # Reset internal state lists.
         self._target_brightness = []
         self._target_brightness_lock_comparison = []
-        if isinstance(value, List):
+
+        if isinstance(value, list):
             all_lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
+            if len(value) != len(all_lights_dev_ids):
+                raise ValueError("Length of brightness list must match the total number of devices.")
             for idx, val in enumerate(value):
                 dev = indigo.devices[all_lights_dev_ids[idx]]
                 brightness = self._normalize_dev_target_brightness(dev, val)
                 self._target_brightness.append(brightness)
-
                 if all_lights_dev_ids[idx] not in self.exclude_from_lock_dev_ids:
                     self._target_brightness_lock_comparison.append(brightness)
         else:
+            # When a scalar is provided, check if we are forcing off.
             force_off = (isinstance(value, bool) and not value) or value == 0
 
-            lights_dev_ids = []
-            if force_off:
-                lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
-            else:
-                lights_dev_ids = self.on_lights_dev_ids
-
+            # Set brightness for primary lights.
+            lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids if force_off else self.on_lights_dev_ids
             for dev_id in lights_dev_ids:
                 dev = indigo.devices[dev_id]
                 brightness = self._normalize_dev_target_brightness(dev, value)
                 self._target_brightness.append(brightness)
-
                 if dev_id not in self.exclude_from_lock_dev_ids:
                     self._target_brightness_lock_comparison.append(brightness)
 
+            # If not forcing off, handle off lights by preserving their current state.
             if not force_off:
                 for dev_id in self.off_lights_dev_ids:
                     dev = indigo.devices[dev_id]
-                    brightness = None
-                    # Preserve current brightness or onState
                     if isinstance(dev, indigo.DimmerDevice):
-                        self._target_brightness.append(dev.brightness)
-                        brightness = dev.brightness
+                        current_brightness = dev.brightness
                     elif isinstance(dev, indigo.RelayDevice):
-                        self._target_brightness.append(dev.onState)
-                        brightness = dev.onState
+                        current_brightness = dev.onState
                     elif "brightness" in dev.states:
-                        self._target_brightness.append(int(dev.states["brightness"]))
-                        brightness = int(dev.states["brightness"])
+                        current_brightness = int(dev.states["brightness"])
                     else:
-                        self._target_brightness.append(False)
-                        brightness = False
-
+                        current_brightness = False
+                    self._target_brightness.append(current_brightness)
                     if dev_id not in self.exclude_from_lock_dev_ids:
-                        self._target_brightness_lock_comparison.append(brightness)
+                        self._target_brightness_lock_comparison.append(current_brightness)
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
