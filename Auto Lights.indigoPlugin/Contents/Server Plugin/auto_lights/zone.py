@@ -604,7 +604,7 @@ class Zone:
             self.previous_target_var_name, str(self._current_lights_status)
         )
         self.logger.info(
-            f"[Zone.reset_lock] Zone '{self._name}': zone lock reset because {reason}"
+            f"Zone '{self._name}': zone lock reset because {reason}"
         )
 
     def has_brightness_changes(self) -> bool:

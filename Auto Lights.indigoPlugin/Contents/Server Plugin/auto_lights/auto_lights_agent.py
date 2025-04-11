@@ -99,7 +99,7 @@ class AutoLightsAgent:
         ################################################################
         if zone.has_brightness_changes():
             self.logger.info(
-                "[AutoLightsAgent.process_zone] Zone '"
+                "Zone '"
                 + zone.name
                 + "': processing change to "
                 + zone.last_changed_by
@@ -150,7 +150,7 @@ class AutoLightsAgent:
                 if not zone.locked and zone.has_lock_occurred():
                     zone.locked = True
                     self.logger.info(
-                        f"[AutoLightsAgent.process_device_change] New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'; lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}"
+                        f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'; lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}"
                     )
                     processed.append(zone)
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
