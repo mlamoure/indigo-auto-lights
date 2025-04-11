@@ -248,7 +248,7 @@ class Zone:
         for devId in self.luminance_dev_ids:
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
-        self._debug(f"Zone '{self._name}': computed luminance: {self._luminance}")
+        self._debug(f"computed luminance: {self._luminance}")
         return self._luminance
 
     @property
@@ -406,7 +406,7 @@ class Zone:
             var_folder = indigo.variables.folders["auto_lights_script"]
             debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
             self._debug(
-                f"[Zone.check_out_var] Zone '{self._name}': check_out_var: created variable {var_name}"
+                f"[Zone.check_out_var] check_out_var: created variable {var_name}"
             )
         return debug_var
 
@@ -711,8 +711,8 @@ class Zone:
             return False
 
         self._debug(
-            f"Zone '{self._name}' lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
+            f"lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
         )
         result = self.current_lights_status != self._target_brightness_lock_comparison
-        self._debug(f"Zone '{self._name}' has_lock_occurred result: {result}")
+        self._debug(f"has_lock_occurred result: {result}")
         return result
