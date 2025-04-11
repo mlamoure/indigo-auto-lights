@@ -407,7 +407,7 @@ class Zone:
                 pass
             var_folder = indigo.variables.folders["auto_lights_script"]
             debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
-            indigo.server.log(
+            self._debug(
                 f"[Zone.check_out_var] Zone '{self._name}': check_out_var: created variable {var_name}"
             )
         return debug_var
@@ -650,12 +650,12 @@ class Zone:
             )
             return
         pct_delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
-        self.logger.debug(
+        self._debug(
             f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
         )
         new_tb = [pct_delta] * len(self._on_lights_dev_ids)
         self.target_brightness = new_tb
-        self.logger.debug(f"Calculated target brightness: {self.target_brightness}")
+        self._debug(f"Calculated target brightness: {self.target_brightness}")
 
     def has_device(self, dev_id: int) -> str:
         """
@@ -709,9 +709,9 @@ class Zone:
         utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
 
     def has_lock_occurred(self) -> bool:
-        self.logger.debug(
+        self._debug(
             f"Zone '{self._name}' lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
         )
         result = self.current_lights_status != self._target_brightness_lock_comparison
-        self.logger.debug(f"Zone '{self._name}' has_lock_occurred result: {result}")
+        self._debug(f"Zone '{self._name}' has_lock_occurred result: {result}")
         return result
