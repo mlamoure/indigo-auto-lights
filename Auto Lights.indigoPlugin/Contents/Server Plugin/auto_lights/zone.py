@@ -469,6 +469,11 @@ class Zone:
         return latest_device
 
     @property
+    def last_changed(self) -> datetime.datetime:
+        """Returns the last changed timestamp from the last_changed_device property."""
+        return self.last_changed_device.lastChanged
+
+    @property
     def check_out_var(self) -> indigo.Variable:
         var_name = self._name.replace(" ", "_") + "_autoLights__checkedOut"
         try:
