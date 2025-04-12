@@ -91,11 +91,11 @@ def send_to_indigo(
 
                     if action_description in ("turning on", "turning off"):
                         logger.info(
-                            f"[utils.send_to_indigo] {action_description} '{device.name}'"
+                            f"{action_description} '{device.name}'"
                         )
                     else:
                         logger.info(
-                            f"[utils.send_to_indigo] {action_description} brightness for '{device.name}' "
+                            f"{action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {desired_brightness}%"
                         )
 
@@ -122,7 +122,7 @@ def send_to_indigo(
                         indigo.device.turnOn(device_id, delay=0)
 
                     if action_description:
-                        indigo.server.log(f"{action_description} '{device.name}'")
+                        logger.info(f"{action_description} '{device.name}'")
 
                 time.sleep(pause_between_actions)
                 device = indigo.devices[device_id]
