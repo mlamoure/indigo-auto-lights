@@ -30,19 +30,53 @@ More advanced features:
 * For dimmer devices, Auto Lights can optionally set the brightness to a % based on the current luminance level of the
   room. For example: target brightness = (1 - (Current Luminance / Minimum Luminance)) * 100
 
+# Requirements
+
+* Latest Indigo - I only test on the latest
+* "Allow Remote Access" must be on for your server, with Reflector and API Key -- See here for why.
+* Presence and lighting devices to control, for any Zone you wish to use with Auto Lights
+
+## The Web Config
+
+Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
+too advanced for the Indigo native ConfigUI.
+
+The Web Config is run as a separate web server on your Indigo Server. Because of this, it must interact with your Indigo
+via API, and I've only implemented support for using the API key, so therefore the reflector is required. I may look
+into moving this to the native auth in the future.
+
+There is no authorization on the Web Config interface itself. If this concerns you, there are two options available:
+
+* Set your web server to only bind to localhost
+* Disable the web config server once you've configured your Auto Lights. The plugin does not need it for execution, it's
+  only needed to build your config.
+
+# Plugin Settings
+
+## Indigo Plugin Settings
+
+## Auto Lights Settings
+
+# Lighting Periods
+
 # Zones
 
 ## Presence Devices {#zones-presence-devices}
 
-> **TIP:** Auto Lights supports the use of the Timed Device plugin. It can be extremely helpful for smoothing out intermittent signals or combining multiple inputs into a unified virtual presence device. For example, in a Living Room that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion sensor with signals from an IP-enabled TV to detect activity.
-
-## Lighting Periods {#zones-lighting-periods}
+> **TIP:** Auto Lights supports the use of the Timed Device plugin. It can be extremely helpful for smoothing out
+> intermittent signals or combining multiple inputs into a unified virtual presence device. For example, in a Living
+> Room
+> that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion sensor
+> with signals from an IP-enabled TV to detect activity.
 
 ## Locks {#zones-locks}
 
+* There are Indigo Actions to reset a lock for any given Zone, or all Zones.
+
 # Todo
 
-Originally built as a script before becoming a plugin in 2025, Auto Lights has been rigorously tested, though the conversion
+Originally built as a script before becoming a plugin in 2025, Auto Lights has been rigorously tested, though the
+conversion
 may have introduced issues. The following improvements are planned:
 
 - [ ] Make luminance devices and minimum luminance levels optional
