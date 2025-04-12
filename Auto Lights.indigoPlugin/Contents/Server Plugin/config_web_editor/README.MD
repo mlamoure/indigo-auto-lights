@@ -71,7 +71,7 @@ might control whether Auto Lights is globally enabled or assign a variable that 
 mode. These settings serve as a “master control” for features like lock durations or how the plugin
 handles brightness calculations for all your Zones.
 
-# Lighting Periods
+# ⏰💡 Lighting Periods 💡⏰
 
 Lighting Periods let you define windows of time (like “Morning” or “Night”) that set different
 behaviors for your lights. Each period has a start and end time, and a mode that describes what
