@@ -1,9 +1,8 @@
-import logging
 from typing import List
 
+from .auto_lights_base import AutoLightsBase
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone
-from .auto_lights_base import AutoLightsBase
 
 try:
     import indigo
@@ -137,13 +136,6 @@ class AutoLightsAgent(AutoLightsBase):
                 )
 
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
-                    lock_extension_line = (
-                        "\n  lock_extension_duration: {} minutes".format(
-                            zone.lock_extension_duration
-                        )
-                        if zone.extend_lock_when_active
-                        else ""
-                    )
                     self.logger.info(
                         f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'."
                     )
@@ -151,8 +143,12 @@ class AutoLightsAgent(AutoLightsBase):
                     self.logger.info(f"    lock_duration: {zone.lock_duration} minutes")
                     self.logger.info(f"    lock_expiration: {zone.lock_expiration_str}")
                     self.logger.info(
-                        f"    extend_lock_when_active: {zone.extend_lock_when_active}{lock_extension_line}"
+                        f"    extend_lock_when_active: {zone.extend_lock_when_active}"
                     )
+                    if zone.extend_lock_when_active:
+                        self.logger.info(
+                            f"    lock_extension_duration: {zone.lock_extension_duration} minutes"
+                        )
                     processed.append(zone)
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if self.process_zone(zone):
