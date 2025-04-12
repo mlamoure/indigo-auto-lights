@@ -286,9 +286,9 @@ class Zone:
         return self._luminance
 
     @property
-    def current_lights_status(self) -> List[Union[int, bool]]:
+    def current_lights_status(self) -> List[dict]:
         """Retrieve the current status of on and off lights for the zone."""
-        self._current_lights_status = []
+        status = []
 
         def get_device_status(device):
             if isinstance(device, indigo.DimmerDevice):
@@ -301,18 +301,20 @@ class Zone:
         for dev_id in self.on_lights_dev_ids:
             if dev_id in self.exclude_from_lock_dev_ids:
                 continue
-            self._current_lights_status.append(
-                get_device_status(indigo.devices[dev_id])
-            )
+            status.append({
+                "dev_id": dev_id,
+                "brightness": get_device_status(indigo.devices[dev_id])
+            })
 
         # Gather off_lights
         for dev_id in self.off_lights_dev_ids:
             if dev_id in self.exclude_from_lock_dev_ids:
                 continue
-            self._current_lights_status.append(
-                get_device_status(indigo.devices[dev_id])
-            )
-        return self._current_lights_status
+            status.append({
+                "dev_id": dev_id,
+                "brightness": get_device_status(indigo.devices[dev_id])
+            })
+        return status
 
     @property
     def target_brightness(self) -> List[dict]:
