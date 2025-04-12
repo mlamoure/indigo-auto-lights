@@ -513,18 +513,23 @@ class Zone:
     @locked.setter
     def locked(self, value: bool) -> None:
         """
-        Sets the locked state for the zone. If setting to True and the zone was previously unlocked,
-        updates the lock expiration time to the current time plus the lock duration in minutes.
-
+        Sets the locked state for the zone. If setting to True, updates the lock expiration time 
+        and schedules a background event to process the lock expiration. If setting to False, cancels any 
+        pending lock timers and unlocks the zone.
+    
         Args:
             value (bool): The desired locked state.
         """
-        if value and not self.locked:
-            self.lock_expiration = datetime.datetime.now() + datetime.timedelta(
-                minutes=self.lock_duration
-            )
-
-        self._lock_expiration = datetime.datetime.now() - datetime.timedelta(minutes=1)
+        if value:
+            new_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_duration)
+            self.lock_expiration = new_expiration
+            self.logger.info(f"Zone '{self._name}' locked until {self.lock_expiration_str}")
+        else:
+            if self._lock_timer is not None:
+                self._lock_timer.cancel()
+                self._lock_timer = None
+            self._lock_expiration = datetime.datetime.now() - datetime.timedelta(minutes=1)
+            self.logger.info(f"Zone '{self._name}' unlocked")
 
     @property
     def lock_expiration_str(self) -> str:
