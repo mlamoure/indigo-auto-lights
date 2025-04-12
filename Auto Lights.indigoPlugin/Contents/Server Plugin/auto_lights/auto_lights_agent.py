@@ -135,8 +135,7 @@ class AutoLightsAgent:
                     f"[AutoLightsAgent.process_device_change] has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
                 )
 
-                if not zone.locked and zone.has_lock_occurred():
-                    zone.locked = True
+                if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
                     self.logger.info(
                         f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'; lock duration: {zone.lock_duration} seconds; extend_lock_when_active: {zone.extend_lock_when_active}"
                     )

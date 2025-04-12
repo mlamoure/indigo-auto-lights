@@ -70,7 +70,7 @@ class Zone:
         self._last_changed_by = "none"
         self._locked = False
         self._target_brightness_lock_comparison = None
-        self._lock_enabled = False
+        self._lock_enabled = True
         self._lock_extension_duration = None
 
         self._checked_out = False
@@ -465,6 +465,10 @@ class Zone:
 
     @locked.setter
     def locked(self, value: bool) -> None:
+        # check if a new clock is being set
+        if value and not self._locked:
+            self.lock_expiration = datetime.datetime.now() + self.lock_duration
+
         self._locked = value
 
     @property
@@ -751,4 +755,7 @@ class Zone:
         )
         result = self.current_lights_status != self._target_brightness_lock_comparison
         self._debug(f"has_lock_occurred result: {result}")
+
+        self.locked = result
+
         return result
