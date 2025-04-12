@@ -1,0 +1,928 @@
+{
+  "plugin_config": {
+    "guest_mode_var_id": 874336279,
+    "enabled_var_id": 1972107582,
+    "default_lock_duration": 30,
+    "default_lock_extension_duration": 10,
+    "global_behavior_variables": [
+      {
+        "var_id": 1451030242,
+        "var_value": "False"
+      },
+      {
+        "var_id": 115713944,
+        "var_value": "True"
+      }
+    ]
+  },
+  "zones": [
+    {
+      "name": "Downstairs Entryway",
+      "enabled_var_id": 41865262,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          535660670
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          1830390569
+        ],
+        "presence_dev_id": 1059102247
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": 100,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 395275223
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": true
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Downstairs Hallway",
+      "enabled_var_id": 41865262,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1672811334
+        ],
+        "off_lights_dev_ids": [
+          1672811334
+        ],
+        "luminance_dev_ids": [
+          6264435,
+          1800709152
+        ],
+        "presence_dev_ids": [
+          1099605699,
+          1007593469
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 1019444452
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": 15,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Downstairs Seasonal Items",
+      "enabled_var_id": 140330963,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          625961145
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          285751791,
+          1166795092
+        ],
+        "presence_dev_id": 1338303349
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "perform_confirm": false,
+        "turn_off_while_sleeping": true,
+        "unlock_when_no_presence": false
+      }
+    },
+    {
+      "name": "Upstairs Seasonal Items",
+      "enabled_var_id": 915357741,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1759908034
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          1233274862
+        ],
+        "presence_dev_id": 249494446
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": 30,
+        "extend_lock_when_active": false,
+        "perform_confirm": true,
+        "turn_off_while_sleeping": false,
+        "unlock_when_no_presence": false
+      }
+    },
+    {
+      "name": "Basement Seasonal Items",
+      "enabled_var_id": 145681736,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          113971426
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          1092997165
+        ],
+        "presence_dev_ids": [
+          43502504
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "perform_confirm": true,
+        "turn_off_while_sleeping": true,
+        "unlock_when_no_presence": false
+      }
+    },
+    {
+      "type": "Zone",
+      "name": "Garage",
+      "enabled_var_id": 1639667076,
+      "last_changed_by_var_id": 43969711,
+      "on_lights_dev_ids": [
+        904690844
+      ],
+      "luminance_dev_id": [
+        748404286
+      ],
+      "presence_dev_id": 1743152426,
+      "minimum_luminance": 150,
+      "use_timed_brightness": false,
+      "turn_off_while_sleeping": true,
+      "lighting_periods": [
+        {
+          "name": "all periods",
+          "mode": "OnOffZone",
+          "from_time": [
+            0,
+            0
+          ],
+          "to_time": [
+            23,
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kitchen",
+      "enabled_var_id": 1841015211,
+      "lighting_period_ids": [],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          132419668,
+          654682849
+        ],
+        "off_lights_dev_ids": [
+          821077573,
+          1720177024
+        ],
+        "luminance_dev_ids": [
+          1237063200
+        ],
+        "presence_dev_ids": [
+          1444838879
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 1894949425
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Mudroom",
+      "enabled_var_id": 41865262,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          39643769
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          117501951
+        ],
+        "presence_dev_ids": [
+          1845597426
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 395275223
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Dining Room",
+      "enabled_var_id": 821802840,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          767934699
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          397050121
+        ],
+        "presence_dev_ids": [
+          99267001
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 1055597227
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Sunroom",
+      "enabled_var_id": 1916907094,
+      "lighting_period_ids": [],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1994440374
+        ],
+        "off_lights_dev_ids": [
+          1193199296
+        ],
+        "luminance_dev_ids": [
+          285751791
+        ],
+        "presence_dev_ids": [
+          273722637
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 734770645
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": true
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "type": "GuestBedroomZone",
+      "name": "Upstairs Guest Bedrooms",
+      "enabled_var_id": 1900140177,
+      "last_changed_by_var_id": 1947783379,
+      "on_lights_dev_ids": [
+        1691171703,
+        1938976004,
+        451339824
+      ],
+      "luminance_dev_id": [
+        1233274862
+      ],
+      "presence_dev_id": 963726168,
+      "minimum_luminance_var_id": 338672815,
+      "turn_off_while_sleeping": false,
+      "use_timed_brightness": false,
+      "lighting_periods": [
+        {
+          "name": "12:00am to 7:30am",
+          "mode": "OffZone",
+          "from_time": [
+            0,
+            0
+          ],
+          "to_time": [
+            7,
+            30
+          ]
+        },
+        {
+          "name": "7:30am to 10pm",
+          "mode": "OnOffZone",
+          "from_time": [
+            7,
+            30
+          ],
+          "to_time": [
+            20,
+            0
+          ]
+        },
+        {
+          "name": "10:01pm to 11:59pm OffZone",
+          "mode": "OffZone",
+          "from_time": [
+            20,
+            1
+          ],
+          "to_time": [
+            23,
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Living Room",
+      "enabled_var_id": 591744714,
+      "lighting_period_ids": [
+        2
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1183208037,
+          1214639462
+        ],
+        "off_lights_dev_ids": [
+          1442978166
+        ],
+        "luminance_dev_ids": [
+          1166795092
+        ],
+        "presence_dev_ids": [
+          273722637
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 462919412
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": true
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "type": "Zone",
+      "name": "Basement Bar",
+      "enabled_var_id": 1648048529,
+      "last_changed_by_var_id": 1429492948,
+      "on_lights_dev_ids": [
+        973065389,
+        495342017,
+        1337984758
+      ],
+      "off_lights_dev_ids": [],
+      "luminance_dev_id": [
+        1264488761
+      ],
+      "presence_dev_id": 1508773282,
+      "minimum_luminance_var_id": 597796883,
+      "use_timed_brightness": false,
+      "use_timed_brightness_adjustments": false,
+      "turn_off_while_sleeping": true,
+      "perform_confirm": false,
+      "lighting_periods": [
+        {
+          "name": "All day OnOffZone",
+          "mode": "OnOffZone",
+          "from_time": [
+            0,
+            0
+          ],
+          "to_time": [
+            23,
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Zone",
+      "name": "Basement TV Area",
+      "enabled_var_id": 1754015165,
+      "last_changed_by_var_id": 1687865610,
+      "on_lights_dev_ids": [
+        184139903
+      ],
+      "off_lights_dev_ids": [
+        1863458916,
+        343606413
+      ],
+      "exclude_from_lock_dev_id": [
+        343606413
+      ],
+      "luminance_dev_id": [
+        1264488761
+      ],
+      "presence_dev_id": [
+        1508773282
+      ],
+      "minimum_luminance_var_id": 65104407,
+      "use_timed_brightness": false,
+      "use_timed_brightness_adjustments": false,
+      "turn_off_while_sleeping": true,
+      "lighting_periods": [
+        {
+          "name": "All day OnOffZone",
+          "mode": "OnOffZone",
+          "from_time": [
+            0,
+            0
+          ],
+          "to_time": [
+            23,
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Basement Office",
+      "enabled_var_id": 1015999282,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          71981847,
+          1964209201,
+          745429801
+        ],
+        "off_lights_dev_ids": [
+          735116060
+        ],
+        "luminance_dev_ids": [
+          705055874
+        ],
+        "presence_dev_ids": [
+          1504871896
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 1820193880
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": [
+          1964209201
+        ]
+      }
+    },
+    {
+      "name": "Basement Stairs",
+      "enabled_var_id": 1451731822,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1976276645
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          1899558228
+        ],
+        "presence_dev_id": 148982550
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": 999999,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "perform_confirm": false,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Basement Server and Storage Area",
+      "enabled_var_id": 222455906,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1683587960
+        ],
+        "off_lights_dev_ids": [
+          1822109423
+        ],
+        "luminance_dev_ids": [
+          314268264
+        ],
+        "presence_dev_ids": [
+          43976459
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": 100,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "type": "Zone",
+      "name": "Basement Bathroom",
+      "enabled_var_id": 1011170165,
+      "last_changed_by_var_id": 1153634367,
+      "on_lights_dev_ids": [
+        585509037
+      ],
+      "off_lights_dev_ids": [
+        1515980924,
+        40999313
+      ],
+      "luminance_dev_id": [
+        314268264
+      ],
+      "presence_dev_id": [
+        43502504
+      ],
+      "minimum_luminance_var_id": 892596993,
+      "use_timed_brightness": false,
+      "turn_off_while_sleeping": true,
+      "unlock_when_no_presence": false,
+      "lighting_periods": [
+        {
+          "name": "All day OffZone",
+          "mode": "OnOffZone",
+          "from_time": [
+            0,
+            0
+          ],
+          "to_time": [
+            23,
+            59
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Master Bathroom",
+      "enabled_var_id": 147860844,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          809826386
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          1612437029
+        ],
+        "presence_dev_ids": [
+          589044884
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 1558632652
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": false,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "type": "Zone",
+      "name": "Master Closet",
+      "enabled_var_id": 147860844,
+      "last_changed_by_var_id": 1305196237,
+      "on_lights_dev_ids": [
+        1284985449
+      ],
+      "luminance_dev_id": [
+        524252587
+      ],
+      "presence_dev_id": 1135522275,
+      "minimum_luminance": 100000,
+      "use_timed_brightness": false,
+      "applicable_time_from": 6,
+      "applicable_time_to": 23,
+      "lock_duration": 10,
+      "turn_off_while_sleeping": false,
+      "lighting_periods": [
+        {
+          "name": "12am to 6am OffZone",
+          "mode": "OffZone",
+          "from_time": [
+            0,
+            0
+          ],
+          "to_time": [
+            6,
+            0
+          ]
+        },
+        {
+          "name": "6am to 8pm OnOffZone",
+          "mode": "OnOffZone",
+          "from_time": [
+            6,
+            0
+          ],
+          "to_time": [
+            20,
+            0
+          ]
+        },
+        {
+          "name": "8pm to 12am OffZone",
+          "mode": "OnOffZone",
+          "from_time": [
+            20,
+            0
+          ],
+          "to_time": [
+            23,
+            59
+          ],
+          "lock_duration": 5
+        }
+      ]
+    },
+    {
+      "name": "Master Bedroom",
+      "enabled_var_id": 147860844,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1019616463,
+          1774729169
+        ],
+        "off_lights_dev_ids": [
+          1154023853
+        ],
+        "luminance_dev_ids": [
+          1612437029
+        ],
+        "presence_dev_ids": [
+          1135522275
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": 300,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Autumn's Bedroom",
+      "enabled_var_id": 1921677586,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1938976004,
+          1088116295,
+          424374103
+        ],
+        "off_lights_dev_ids": [
+          1179790665
+        ],
+        "luminance_dev_ids": [
+          1595146704
+        ],
+        "presence_dev_ids": [
+          845195989
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 578574150
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": true
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Office",
+      "enabled_var_id": 98911027,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          1470114356,
+          1238508429
+        ],
+        "off_lights_dev_ids": [
+          758435920
+        ],
+        "luminance_dev_ids": [
+          1560121211,
+          955808303
+        ],
+        "presence_dev_ids": [
+          450766362
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 1558632652
+      },
+      "behavior_settings": {
+        "adjust_brightness": false,
+        "lock_duration": null,
+        "extend_lock_when_active": true,
+        "perform_confirm": true,
+        "unlock_when_no_presence": true
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    },
+    {
+      "name": "Upstairs Hallway",
+      "enabled_var_id": 41865262,
+      "lighting_period_ids": [
+        1
+      ],
+      "device_settings": {
+        "on_lights_dev_ids": [
+          71279250,
+          331497948
+        ],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [
+          621871328,
+          699685751
+        ],
+        "presence_dev_ids": [
+          69494899,
+          1604241330
+        ]
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": true,
+        "minimum_luminance_var_id": 395275223
+      },
+      "behavior_settings": {
+        "adjust_brightness": true,
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "perform_confirm": true,
+        "unlock_when_no_presence": false
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      }
+    }
+  ],
+  "lighting_periods": [
+    {
+      "name": "All Day Zone",
+      "mode": "On and Off",
+      "from_time_hour": 0,
+      "from_time_minute": 0,
+      "to_time_hour": 23,
+      "to_time_minute": 59,
+      "lock_duration": null,
+      "id": 1
+    },
+    {
+      "name": "5am to 7pm",
+      "mode": "On and Off",
+      "from_time_hour": 5,
+      "from_time_minute": 0,
+      "to_time_hour": 17,
+      "to_time_minute": 0,
+      "lock_duration": null,
+      "id": 2
+    }
+  ]
+}
