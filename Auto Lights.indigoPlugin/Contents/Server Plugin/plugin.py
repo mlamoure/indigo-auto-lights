@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import threading
+from socket import socket
 
 import requests
 
@@ -138,16 +139,17 @@ class Plugin(indigo.PluginBase):
             and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
         ):
             if self._web_config_bind_ip == "0.0.0.0":
-                try:
-                    external_ip = requests.get("https://api.ipify.org").text
-                except Exception:
-                    external_ip = "external_ip"
+                hostname = socket.gethostname()
+                local_ip = socket.gethostbyname(hostname)
                 self.logger.info(
-                    f"Starting the configuration web server... Visit http://localhost:{self._web_config_bind_port} (local access) or http://{external_ip}:{self._web_config_bind_port} (external access)"
+                    f"Starting the configuration web server... Visit http://{hostname}:{self._web_config_bind_port} or http://{local_ip}:{self._web_config_bind_port}"
                 )
             elif self._web_config_bind_ip == "127.0.0.1":
                 self.logger.info(
-                    f"Starting the configuration web server... Visit http://127.0.0.1:{self._web_config_bind_port} or http://localhost:{self._web_config_bind_port} (local access only)"
+                    f"Starting the configuration web server... Visit http://127.0.0.1:{self._web_config_bind_port} or http://localhost:{self._web_config_bind_port}"
+                )
+                self.logger.info(
+                    f"NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
                 )
             else:
                 self.logger.info(
