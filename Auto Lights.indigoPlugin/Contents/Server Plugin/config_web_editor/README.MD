@@ -12,7 +12,7 @@ letting you focus on fine-tuning your triggers instead of handling routine confi
 
 Main features of Auto Lights:
 
-* Each Zone has a set of "On / Off Lights", and a set of [presence devices](#presence-devices).
+* Each Zone has a set of "On / Off Lights", and a set of [presence devices](#zones-presence-devices).
 * Each Zone has a set of Lighting Periods, which define based on the time of day whether Auto Lights is the primary for
   turning lights on and off, or just off, for that period.
 * When presence is detected in a Zone, and the current Lighting Period indicates Auto Lights is in control of the
@@ -30,13 +30,15 @@ More advanced features:
 * For dimmer devices, Auto Lights can optionally set the brightness to a % based on the current luminance level of the
   room. For example: target brightness = (1 - (Current Luminance / Minimum Luminance)) * 100
 
-# Presence Devices
+# Zones
+
+## Presence Devices {#zones-presence-devices}
 
 > **TIP:** Auto Lights supports the use of the Timed Device plugin. It can be extremely helpful for smoothing out intermittent signals or combining multiple inputs into a unified virtual presence device. For example, in a Living Room that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion sensor with signals from an IP-enabled TV to detect activity.
 
-# Lighting Periods
+## Lighting Periods {#zones-lighting-periods}
 
-# Locks
+## Locks {#zones-locks}
 
 # Todo
 
