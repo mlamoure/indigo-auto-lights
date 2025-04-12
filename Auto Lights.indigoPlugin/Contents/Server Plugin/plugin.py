@@ -138,23 +138,23 @@ class Plugin(indigo.PluginBase):
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
             and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
         ):
+            urls = []
             if self._web_config_bind_ip == "0.0.0.0":
                 hostname = socket.gethostname()
                 local_ip = socket.gethostbyname(hostname)
-                self.logger.info(
-                    f"Starting the configuration web server... Visit http://{hostname}:{self._web_config_bind_port} or http://{local_ip}:{self._web_config_bind_port}"
-                )
+                urls.append(f"http://{hostname}:{self._web_config_bind_port}")
+                urls.append(f"http://{local_ip}:{self._web_config_bind_port}")
             elif self._web_config_bind_ip == "127.0.0.1":
+                urls.append(f"http://127.0.0.1:{self._web_config_bind_port}")
+                urls.append(f"http://localhost:{self._web_config_bind_port}")
                 self.logger.info(
-                    f"Starting the configuration web server... Visit http://127.0.0.1:{self._web_config_bind_port} or http://localhost:{self._web_config_bind_port}"
-                )
-                self.logger.info(
-                    f"NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
+                    "NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
                 )
             else:
-                self.logger.info(
-                    f"Starting the configuration web server... Visit http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
-                )
+                urls.append(f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}")
+            self.logger.info(
+                f"Starting the configuration web server... Visit {' or '.join(urls)}"
+            )
             self._web_server_thread = threading.Thread(
                 target=run_flask_app,
                 args=(self._web_config_bind_ip, self._web_config_bind_port),
