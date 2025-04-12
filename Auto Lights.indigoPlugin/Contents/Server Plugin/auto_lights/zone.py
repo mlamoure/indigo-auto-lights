@@ -467,7 +467,7 @@ class Zone:
     def locked(self, value: bool) -> None:
         # check if a new clock is being set
         if value and not self._locked:
-            self.lock_expiration = datetime.datetime.now() + self.lock_duration
+            self.lock_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_duration)
 
         self._locked = value
 
