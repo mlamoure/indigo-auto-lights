@@ -616,7 +616,7 @@ class Zone(AutoLightsBase):
             state_on = presence_device.states.get("onState", False)
             state_onoff = presence_device.states.get("onOffState", False)
             self._debug_log(
-                f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {state_onoff}, onState: {state_on}"
+                f"Presence device '{presence_device.name}' onOffState: {state_onoff}, onState: {state_on}"
             )
             detected = state_onoff or state_on
             if detected:
@@ -694,7 +694,7 @@ class Zone(AutoLightsBase):
             and item["dev_id"] not in self.exclude_from_lock_dev_ids
         }
         self._debug_log(
-            f"current status = {current_dict}, target status = {target_dict}"
+            f"current_lights_status = {current_dict}, target_brightness = {target_dict}"
         )
 
         result = current_dict != target_dict
