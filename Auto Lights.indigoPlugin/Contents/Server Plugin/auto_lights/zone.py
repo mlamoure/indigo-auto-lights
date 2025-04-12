@@ -315,7 +315,7 @@ class Zone:
         return self._current_lights_status
 
     @property
-    def target_brightness(self) -> List[Union[bool, int]]:
+    def target_brightness(self) -> List[dict]:
         """Get the target brightness for zone devices."""
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
@@ -362,7 +362,7 @@ class Zone:
             for value_item in value:
                 bright = {
                     "dev_id": value_item["dev_id"],
-                    "brightness": self._normalize_dev_target_brightness(
+                    "target_brightness": self._normalize_dev_target_brightness(
                         value_item["dev_id"], value_item["target_brightness"]
                     ),
                 }
@@ -376,13 +376,23 @@ class Zone:
                 lights_dev_ids = self.on_lights_dev_ids
 
             for dev_id in lights_dev_ids:
-                bright = (dev_id, self._normalize_dev_target_brightness(dev_id, value))
+                bright = {
+                    "dev_id": dev_id,
+                    "target_brightness": self._normalize_dev_target_brightness(
+                        dev_id, value
+                    ),
+                }
 
                 self._target_brightness.append(bright)
 
             if not force_off:
                 for dev_id in self.off_lights_dev_ids:
-                    bright = (dev_id, self._normalize_dev_target_brightness(dev_id))
+                    bright = {
+                        "dev_id": dev_id,
+                        "target_brightness": self._normalize_dev_target_brightness(
+                            dev_id
+                        ),
+                    }
 
                     self._target_brightness.append(bright)
 
@@ -392,7 +402,11 @@ class Zone:
 
     @property
     def _target_brightness_lock_comparison(self) -> List[dict]:
-        return [item for item in self.target_brightness if item["dev_id"] not in self.exclude_from_lock_dev_ids]
+        return [
+            item
+            for item in self.target_brightness
+            if item["dev_id"] not in self.exclude_from_lock_dev_ids
+        ]
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
