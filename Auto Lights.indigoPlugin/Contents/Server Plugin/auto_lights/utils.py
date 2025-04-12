@@ -1,4 +1,3 @@
-import datetime
 import logging
 import time
 
@@ -90,9 +89,7 @@ def send_to_indigo(
                         action_description = "decreasing"
 
                     if action_description in ("turning on", "turning off"):
-                        logger.info(
-                            f"{action_description} '{device.name}'"
-                        )
+                        logger.info(f"{action_description} '{device.name}'")
                     else:
                         logger.info(
                             f"{action_description} brightness for '{device.name}' "
@@ -115,10 +112,10 @@ def send_to_indigo(
                         desired_brightness = desired_brightness == 100
 
                     if device.onState and not desired_brightness:
-                        action_description = "turning off"
+                        action_description = "    turning off"
                         indigo.device.turnOff(device_id, delay=0)
                     elif not device.onState and desired_brightness:
-                        action_description = "turning on"
+                        action_description = "    turning on"
                         indigo.device.turnOn(device_id, delay=0)
 
                     if action_description:
@@ -130,8 +127,8 @@ def send_to_indigo(
 
             elif iteration_counter % 4 == 0:
                 logger.info(
-                    f"... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
-                    f"Max additional wait time: {remaining_wait} more seconds."
+                    f"    .... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
+                    f"    Max additional wait time: {remaining_wait} more seconds."
                 )
                 check_interval = 2.0
                 time.sleep(check_interval)
@@ -141,8 +138,8 @@ def send_to_indigo(
             else:
                 if iteration_counter > 1:
                     logger.info(
-                        f"... not yet confirmed changes to '{device.name}'. Waiting up to "
-                        f"{remaining_wait} more seconds."
+                        f"   ... not yet confirmed changes to '{device.name}'. Waiting up to "
+                        f"       {remaining_wait} more seconds."
                     )
                 time.sleep(check_interval)
                 device = indigo.devices[device_id]
@@ -155,95 +152,11 @@ def send_to_indigo(
 
     if action_description and not is_confirmed:
         logger.info(
-            f"... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
-            f"attempts: {command_attempts})"
+            f"    ... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
+            f"        attempts: {command_attempts})"
         )
     else:
         logger.debug(
-            f"... confirmed change to '{device.name}' (time: {total_time} seconds, "
-            f"attempts: {command_attempts})"
-        )
-
-
-def print_debug_output(config, zones, zones_ran, total_time):
-    """
-    Log debugging details about the auto_lights script's execution.
-    Provides information about locked zones,
-    zones with no active periods, and any disabled zones.
-    """
-    threading_str = "threading DISABLED"
-    if config.threading_enabled:
-        threading_str = "threading ENABLED"
-    # Identify zones that are locked, have no active periods, or are disabled.
-    locked_zones = [x for x in zones if x.locked]
-    no_active_periods = [x for x in zones if x.current_lighting_period is None]
-    disabled_zones = [x for x in zones if not x.enabled]
-
-    # Prepare output strings for each category.
-    locked_zones_str = ""
-    no_active_periods_str = ""
-    disabled_zones_str = ""
-    if len(locked_zones) > 0:
-        for idx, zone in enumerate(locked_zones):
-            lock_time_remaining = round(
-                (zone.lock_expiration - datetime.datetime.now()).total_seconds() / 60
-            )
-            locked_zones_str = (
-                locked_zones_str
-                + zone.name
-                + " (expires in "
-                + str(lock_time_remaining)
-                + " min)"
-            )
-            if idx != len(locked_zones) - 1:
-                locked_zones_str = locked_zones_str + ", "
-    if len(no_active_periods) > 0:
-        for idx, zone in enumerate(no_active_periods):
-            no_active_periods_str = no_active_periods_str + zone.name
-            if idx != len(no_active_periods) - 1:
-                no_active_periods_str = no_active_periods_str + ", "
-    if len(disabled_zones) > 0:
-        for idx, zone in enumerate(disabled_zones):
-            disabled_zones_str = disabled_zones_str + zone.name
-            if idx != len(disabled_zones) - 1:
-                disabled_zones_str = disabled_zones_str + ", "
-    # Log summary of script execution time and threading status.
-    logger.debug(
-        "[utils.print_debug_output] auto_lights script DEBUG: completed running "
-        + str(zones_ran)
-        + " zone(s) in "
-        + str(total_time)
-        + " seconds. ("
-        + threading_str
-        + ")"
-    )
-    # Log the number of zones configured.
-    logger.info(
-        "[utils.print_debug_output]       ... "
-        + str(len(zones))
-        + " zone(s) are configured"
-    )
-    if len(locked_zones_str) > 0:
-        logger.info(
-            "[utils.print_debug_output]       ... "
-            + str(len(locked_zones))
-            + " zone(s) are locked ["
-            + locked_zones_str
-            + "]"
-        )
-    if len(no_active_periods_str) > 0:
-        logger.info(
-            "[utils.print_debug_output]       ... "
-            + str(len(no_active_periods))
-            + " zone(s) have no active periods ["
-            + no_active_periods_str
-            + "]"
-        )
-    if len(disabled_zones_str) > 0:
-        logger.info(
-            "[utils.print_debug_output]       ... "
-            + str(len(disabled_zones))
-            + " zone(s) are disabled ["
-            + disabled_zones_str
-            + "]"
+            f"        ... confirmed change to '{device.name}' (time: {total_time} seconds, "
+            f"            attempts: {command_attempts})"
         )
