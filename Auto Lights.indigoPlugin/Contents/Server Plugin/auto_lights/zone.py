@@ -355,50 +355,43 @@ class Zone:
 
     @target_brightness.setter
     def target_brightness(self, value: Union[list, int, bool]) -> None:
-        # Reset internal state lists.
+        """
+        Set the target brightness for the zone's devices.
+
+        Accepts:
+          - A list of dictionaries, each containing:
+              - 'dev_id': The ID of the device.
+              - 'target_brightness': The desired brightness for that device.
+          - An integer or boolean value:
+              - For False or 0, sets all devices (both on and off) to off.
+              - For other values, applies to on_lights devices first; then,
+                if not forcing off, off_lights are appended with their current state.
+        """
+        # Reset internal state.
         self._target_brightness = []
-
         if isinstance(value, list):
-            for value_item in value:
-                bright = {
-                    "dev_id": value_item["dev_id"],
+            for item in value:
+                self._target_brightness.append({
+                    "dev_id": item["dev_id"],
                     "target_brightness": self._normalize_dev_target_brightness(
-                        value_item["dev_id"], value_item["target_brightness"]
-                    ),
-                }
-
-                self._target_brightness.append(bright)
+                        item["dev_id"], item["target_brightness"]
+                    )
+                })
         else:
             force_off = (isinstance(value, bool) and not value) or value == 0
-            if force_off:
-                lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
-            else:
-                lights_dev_ids = self.on_lights_dev_ids
-
-            for dev_id in lights_dev_ids:
-                bright = {
+            lights = self.on_lights_dev_ids + self.off_lights_dev_ids if force_off else self.on_lights_dev_ids
+            for dev_id in lights:
+                self._target_brightness.append({
                     "dev_id": dev_id,
-                    "target_brightness": self._normalize_dev_target_brightness(
-                        dev_id, value
-                    ),
-                }
-
-                self._target_brightness.append(bright)
-
+                    "target_brightness": self._normalize_dev_target_brightness(dev_id, value)
+                })
             if not force_off:
                 for dev_id in self.off_lights_dev_ids:
-                    bright = {
+                    self._target_brightness.append({
                         "dev_id": dev_id,
-                        "target_brightness": self._normalize_dev_target_brightness(
-                            dev_id
-                        ),
-                    }
-
-                    self._target_brightness.append(bright)
-
-        self._debug_log(
-            f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
-        )
+                        "target_brightness": self._normalize_dev_target_brightness(dev_id)
+                    })
+        self._debug_log(f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}")
 
     @property
     def _target_brightness_lock_comparison(self) -> List[dict]:
