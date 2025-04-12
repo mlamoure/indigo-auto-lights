@@ -690,8 +690,7 @@ class Zone(AutoLightsBase):
         target_dict = {
             item["dev_id"]: item["brightness"]
             for item in self.target_brightness
-            if exclude_lock_devices
-            and item["dev_id"] not in self.exclude_from_lock_dev_ids
+            if not exclude_lock_devices or item["dev_id"] not in self.exclude_from_lock_dev_ids
         }
         self._debug_log(
             f"current_lights_status = {current_dict}, target_brightness = {target_dict}"
