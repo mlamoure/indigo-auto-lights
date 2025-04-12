@@ -3,6 +3,8 @@ This module implements the web configuration editor for the Auto Lights plugin.
 It provides routes for editing plugin configuration, zones, lighting periods, and backups.
 All functions and major code blocks are documented for clarity and PEP8 compliance.
 """
+
+# --- Standard library imports (alphabetical) ---
 import json
 import os
 import secrets
@@ -11,6 +13,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 
+# --- Third-party imports ---
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_wtf import FlaskForm
@@ -24,6 +27,26 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
+# --- Local imports ---
+from .tools.indigo_api_tools import (
+    indigo_get_all_house_variables,
+    indigo_get_all_house_devices,
+    indigo_get_house_devices,
+    indigo_create_new_variable,
+)
+
+# Load environment variables if needed
+load_dotenv()
+
+# Flask application setup
+app = Flask(__name__)
+SECRET_KEY = secrets.token_hex(16)
+app.config["SECRET_KEY"] = SECRET_KEY
+app.jinja_env.globals.update(enumerate=enumerate)
+
+# Lock for synchronizing access to caches
+_cache_lock = threading.Lock()
+
 # Set refresh interval (default: 15 minutes)
 REFRESH_INTERVAL_SECONDS = 900  # 15 minutes
 
@@ -31,14 +54,11 @@ REFRESH_INTERVAL_SECONDS = 900  # 15 minutes
 _indigo_devices_cache = {"data": None}
 _indigo_variables_cache = {"data": None}
 
-# Lock for synchronizing access to caches
-_cache_lock = threading.Lock()
-
 
 def refresh_indigo_caches():
     """
     Periodically refreshes the caches for Indigo devices and variables.
-    Runs indefinitely with a sleep interval defined by REFRESH_INTERVAL_SECONDS.
+    Runs indefinitely, sleeping for REFRESH_INTERVAL_SECONDS between refreshes.
     """
     while True:
         try:
@@ -53,40 +73,12 @@ def refresh_indigo_caches():
         time.sleep(REFRESH_INTERVAL_SECONDS)
 
 
-from .tools.indigo_api_tools import (
-    indigo_get_all_house_variables,
-    indigo_get_all_house_devices,
-    indigo_get_house_devices,
-    indigo_create_new_variable,
-)
-
-load_dotenv()
-app = Flask(__name__)
-SECRET_KEY = secrets.token_hex(16)
-app.config["SECRET_KEY"] = SECRET_KEY
-app.jinja_env.globals.update(enumerate=enumerate)
-
-
 def start_cache_refresher():
     """
-    Starts the cache refresher thread which periodically refreshes Indigo caches.
+    Starts a daemon thread that periodically refreshes Indigo caches.
     """
     thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
     thread.start()
-
-
-def get_lighting_period_choices():
-    """
-    Retrieves lighting period choices from the configuration.
-    Returns a list of tuples containing (id, name) for each lighting period.
-    """
-    config_data = load_config()
-    lighting_periods = config_data.get("lighting_periods", [])
-    choices = []
-    for period in lighting_periods:
-        if "id" in period and "name" in period:
-            choices.append((period["id"], period["name"]))
-    return choices
 
 
 def get_cached_indigo_variables():
@@ -102,9 +94,6 @@ def get_cached_indigo_variables():
             except Exception as e:
                 app.logger.error(f"Error refreshing variables cache: {e}")
         return _indigo_variables_cache["data"]
-
-
-app.jinja_env.globals.update(get_cached_indigo_variables=get_cached_indigo_variables)
 
 
 def get_cached_indigo_devices():
@@ -124,6 +113,23 @@ def get_cached_indigo_devices():
         return _indigo_devices_cache["data"]
 
 
+app.jinja_env.globals.update(get_cached_indigo_variables=get_cached_indigo_variables)
+
+
+def get_lighting_period_choices():
+    """
+    Retrieves lighting period choices from the configuration.
+    Returns a list of tuples (id, name) for each lighting period.
+    """
+    config_data = load_config()
+    lighting_periods = config_data.get("lighting_periods", [])
+    choices = []
+    for period in lighting_periods:
+        if "id" in period and "name" in period:
+            choices.append((period["id"], period["name"]))
+    return choices
+
+
 def create_field(field_name, field_schema):
     """
     Creates a WTForms field based on the provided field schema.
@@ -141,6 +147,7 @@ def create_field(field_name, field_schema):
     validators = []
     if required:
         validators.append(DataRequired())
+
     allowed_types = None
     if field_schema.get("x-include-device-classes"):
         allowed_types = {
@@ -148,20 +155,23 @@ def create_field(field_name, field_schema):
         }
 
     field_type = field_schema.get("type")
+
+    # Example of variable-specific drop-down for Indigo variables
     if field_name.endswith("_var_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_variables()
         choices = [(opt["id"], opt["name"]) for opt in options]
         if not required:
             choices.insert(0, (-1, "None Selected"))
-        f = SelectField(
+        field = SelectField(
             label=label_text,
             description=tooltip_text,
             choices=choices,
             coerce=int,
             validators=validators,
         )
+
+    # Example of multi-select for device IDs
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
-        local_validators = list(validators)
         options = get_cached_indigo_devices()
         if allowed_types:
             options = [
@@ -171,13 +181,15 @@ def create_field(field_name, field_schema):
                 or str(dev.get("deviceTypeId", "")).strip() in allowed_types
             ]
         choices = [(dev["id"], dev["name"]) for dev in options]
-        f = SelectMultipleField(
+        field = SelectMultipleField(
             label=label_text,
             description=tooltip_text,
             choices=choices,
             coerce=int,
-            validators=local_validators,
+            validators=validators,
         )
+
+    # Single select for device IDs
     elif field_name.endswith("_dev_id") and field_schema.get("x-drop-down"):
         options = get_cached_indigo_devices()
         if allowed_types:
@@ -187,9 +199,8 @@ def create_field(field_name, field_schema):
                 if str(dev.get("class", "")).strip() in allowed_types
                 or str(dev.get("deviceTypeId", "")).strip() in allowed_types
             ]
-
         choices = [(dev["id"], dev["name"]) for dev in options]
-        f = SelectField(
+        field = SelectField(
             label=label_text,
             description=tooltip_text,
             choices=choices,
@@ -197,22 +208,23 @@ def create_field(field_name, field_schema):
             validators=validators,
             render_kw=({"required": True} if required else {}),
         )
-    # If field name contains _id or _ids and schema has the custom x-drop-down marker,
-    # use a SelectField or SelectMultipleField.
+
     elif field_name == "lighting_period_ids":
-        f = SelectMultipleField(
+        field = SelectMultipleField(
             label=label_text,
             description=tooltip_text,
             choices=get_lighting_period_choices(),
             coerce=int,
             validators=validators,
         )
+
+    # Example of an enumerated select for lock durations
     elif field_name in [
         "lock_duration",
         "default_lock_duration",
         "default_lock_extension_duration",
     ]:
-        f = SelectField(
+        field = SelectField(
             label=label_text,
             description=tooltip_text,
             coerce=lambda x: int(x) if x != "" else None,
@@ -229,35 +241,44 @@ def create_field(field_name, field_schema):
                 (120, "2 hours"),
             ],
         )
+
+    # Basic integer field
     elif field_type == "integer":
-        f = IntegerField(
+        field = IntegerField(
             label=label_text, description=tooltip_text, validators=validators
         )
+
+    # Basic decimal/float field
     elif field_type == "number":
-        f = DecimalField(
+        field = DecimalField(
             label=label_text, description=tooltip_text, validators=validators
         )
+
+    # Simple boolean
     elif field_type == "boolean":
-        f = BooleanField(
+        field = BooleanField(
             label=label_text, description=tooltip_text, validators=validators
         )
+
+    # Simple enumerated string select
     elif field_type == "string" and field_schema.get("enum"):
         enum_values = field_schema.get("enum", [])
         choices = [(val, val) for val in enum_values]
-        f = SelectField(
+        field = SelectField(
             label=label_text,
             description=tooltip_text,
             choices=choices,
             validators=validators,
         )
+
+    # Default to basic string field
     else:
-        # Default to string field for any other types.
-        f = StringField(
+        field = StringField(
             label=label_text, description=tooltip_text, validators=validators
         )
 
-    f.description = tooltip_text
-    return f
+    field.description = tooltip_text
+    return field
 
 
 def generate_form_class_from_schema(schema):
@@ -268,8 +289,11 @@ def generate_form_class_from_schema(schema):
         schema (dict): JSON schema defining form properties.
 
     Returns:
-        A dynamically generated WTForms form class.
+        A dynamically generated WTForms form class (subclass of FlaskForm).
     """
+    from collections import OrderedDict
+    from wtforms import FormField
+
     attrs = OrderedDict()
     for prop, subschema in schema.get("properties", {}).items():
         required_fields = schema.get("required", [])
@@ -278,9 +302,7 @@ def generate_form_class_from_schema(schema):
         subschema_is_required = prop in required_fields
 
         if subschema.get("type") == "object":
-            from wtforms import FormField
-
-            # Ensure nested properties are marked required
+            # If the property is itself an object, create a subform
             nested_required = subschema.get("required", [])
             if not isinstance(nested_required, list):
                 nested_required = []
@@ -290,7 +312,7 @@ def generate_form_class_from_schema(schema):
             subform_class = generate_form_class_from_schema(subschema)
             attrs[prop] = FormField(subform_class, label=subschema.get("title", prop))
         else:
-            # Mark this property as required based on top-level "required"
+            # Mark property as required based on top-level schema
             subschema["required"] = subschema_is_required
             attrs[prop] = create_field(prop, subschema)
 
@@ -301,18 +323,12 @@ def generate_form_class_from_schema(schema):
     return type("DynamicFormNoCSRF", (DynamicFormNoCSRF,), attrs)
 
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-schema_path = os.path.join(current_dir, "config/config_schema.json")
-with open(schema_path) as f:
-    config_schema = json.load(f, object_pairs_hook=OrderedDict)
-
-
 def load_config():
     """
     Loads the auto lights configuration from the JSON file.
 
     Returns:
-        dict: The configuration dictionary.
+        dict: The configuration dictionary, or a default dict if unavailable.
     """
     config_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
@@ -326,9 +342,9 @@ def load_config():
 
 def save_config(config_data):
     """
-    Saves the auto lights configuration to the JSON file.
-    Prior to saving, creates a backup in the auto_backups folder with a timestamp
-    and prunes backups beyond 20.
+    Saves the auto lights configuration to the JSON file. Before saving,
+    creates a timestamped backup if an existing config is found, and prunes
+    older backups beyond 20.
 
     Args:
         config_data (dict): The configuration to be saved.
@@ -343,15 +359,18 @@ def save_config(config_data):
         os.makedirs(backup_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         backup_file = os.path.join(backup_dir, f"auto_backup_{timestamp}.json")
+
         import shutil
 
         shutil.copy2(config_path, backup_file)
+
         import glob
 
         backups = sorted(glob.glob(os.path.join(backup_dir, "auto_backup_*.json")))
         while len(backups) > 20:
             os.remove(backups[0])
             backups.pop(0)
+
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=2)
 
@@ -359,22 +378,22 @@ def save_config(config_data):
 @app.route("/plugin_config", methods=["GET", "POST"])
 def plugin_config():
     """
-    Route for viewing and updating the plugin configuration.
-
-    GET: Renders the plugin configuration form.
-    POST: Updates the configuration with submitted data and saves changes.
+    Route that displays or updates the plugin configuration.
+    GET: Renders the configuration form with current plugin settings.
+    POST: Saves updated configuration to the JSON file, then redirects.
     """
     config_data = load_config()
     plugin_schema = config_schema["properties"]["plugin_config"]
     PluginFormClass = generate_form_class_from_schema(plugin_schema)
     plugin_form = PluginFormClass(data=config_data.get("plugin_config", {}))
+
     if request.method == "POST":
         updated_config = {
             field_name: field.data
             for field_name, field in plugin_form._fields.items()
             if field_name != "submit"
         }
-        # --- Begin new code to process global_behavior_variables ---
+        # Process global_behavior_variables
         global_vars = []
         for key in request.form:
             if key.startswith("global_behavior_variables-") and key.endswith("-var_id"):
@@ -396,28 +415,29 @@ def plugin_config():
                         }
                     )
         updated_config["global_behavior_variables"] = global_vars
-        # --- End new code ---
+
         config_data["plugin_config"] = updated_config
         save_config(config_data)
         flash("Plugin configuration saved.")
         return redirect(url_for("plugin_config"))
+
     return render_template("plugin_edit.html", plugin_form=plugin_form)
 
 
 @app.route("/zones", methods=["GET", "POST"])
 def zones():
     """
-    Route for displaying and updating zones.
-
-    GET: Renders the zones configuration form.
-    POST: Processes updates to zone configurations and saves them.
+    Route for displaying and updating all zones.
+    GET: Shows the current zones in a form.
+    POST: Saves new or updated zone data to the configuration.
     """
     config_data = load_config()
     ZonesFormClass = generate_form_class_from_schema(
         config_schema["properties"]["zones"]["items"]
     )
-    zones = config_data.get("zones", [])
-    zones_forms = [ZonesFormClass(data=zone) for zone in zones]
+    zones_data = config_data.get("zones", [])
+    zones_forms = [ZonesFormClass(data=zone) for zone in zones_data]
+
     if request.method == "POST":
         updated_zones = []
         for zone_form in zones_forms:
@@ -431,6 +451,7 @@ def zones():
         save_config(config_data)
         flash("Zones updated.")
         return redirect(url_for("zones"))
+
     return render_template("zones.html", zones_forms=zones_forms)
 
 
@@ -438,17 +459,18 @@ def zones():
 def lighting_periods():
     """
     Route for viewing and updating lighting periods.
-
-    GET: Renders the lighting periods configuration form.
-    POST: Saves changes made to lighting periods.
+    GET: Shows a form for each lighting period.
+    POST: Saves changes to those periods in the JSON config.
     """
     config_data = load_config()
     lighting_periods_schema = config_schema["properties"]["lighting_periods"]["items"]
     LightingPeriodsFormClass = generate_form_class_from_schema(lighting_periods_schema)
-    lighting_periods = config_data.get("lighting_periods", [])
+
+    lighting_periods_data = config_data.get("lighting_periods", [])
     lighting_periods_forms = [
-        LightingPeriodsFormClass(data=period) for period in lighting_periods
+        LightingPeriodsFormClass(data=period) for period in lighting_periods_data
     ]
+
     if request.method == "POST":
         updated_periods = []
         for period_form in lighting_periods_forms:
@@ -462,6 +484,7 @@ def lighting_periods():
         save_config(config_data)
         flash("Lighting periods updated.")
         return redirect(url_for("lighting_periods"))
+
     return render_template(
         "lighting_periods.html", lighting_periods_forms=lighting_periods_forms
     )
@@ -470,16 +493,13 @@ def lighting_periods():
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):
     """
-    Route for viewing, updating, or creating a zone configuration.
-
-    GET: Renders the form for the specified zone.
-    POST: Updates an existing zone or creates a new zone and saves the configuration.
-
-    Args:
-        zone_id (str): Index of the zone or 'new' for creating a new zone.
+    Route for viewing, updating, or creating a single zone.
+    GET: Displays a form for the specified zone (or a new one if zone_id = 'new').
+    POST: Updates or creates the zone in the configuration, then saves.
     """
     config_data = load_config()
-    zones = config_data.get("zones", [])
+    zones_data = config_data.get("zones", [])
+
     if zone_id == "new":
         zone_schema = config_schema["properties"]["zones"]["items"]
         defaults = {}
@@ -490,15 +510,18 @@ def zone_config(zone_id):
         is_new = True
     else:
         index = int(zone_id)
-        if index < 0 or index >= len(zones):
+        if index < 0 or index >= len(zones_data):
             flash("Invalid zone index.")
             return redirect(url_for("zones"))
-        zone = zones[index]
+        zone = zones_data[index]
         is_new = False
+
     ZonesFormClass = generate_form_class_from_schema(
         config_schema["properties"]["zones"]["items"]
     )
     zone_form = ZonesFormClass(data=zone)
+
+    # Attempt to update choices for exclude_from_lock_dev_ids
     try:
         on_lights = zone.get("device_settings", {}).get("on_lights_dev_ids", [])
         off_lights = zone.get("device_settings", {}).get("off_lights_dev_ids", [])
@@ -508,6 +531,7 @@ def zone_config(zone_id):
         zone_form.advanced_settings.exclude_from_lock_dev_ids.choices = choices
     except Exception:
         pass
+
     if request.method == "POST":
         zone_data = {
             field_name: field.data
@@ -515,33 +539,31 @@ def zone_config(zone_id):
             if field_name != "submit"
         }
         if is_new:
-            zones.append(zone_data)
-            config_data["zones"] = zones
+            zones_data.append(zone_data)
+            config_data["zones"] = zones_data
             save_config(config_data)
             flash("New zone created successfully.")
             return redirect(url_for("zones"))
         else:
-            zones[index] = zone_data
-            config_data["zones"] = zones
+            zones_data[index] = zone_data
+            config_data["zones"] = zones_data
             save_config(config_data)
             flash("Zone updated.")
             return redirect(url_for("zone_config", zone_id=zone_id))
+
     return render_template("zone_edit.html", zone_form=zone_form, index=zone_id)
 
 
 @app.route("/lighting_period/<period_id>", methods=["GET", "POST"])
 def lighting_period_config(period_id):
     """
-    Route for viewing, updating, or creating a lighting period.
-
-    GET: Renders the form for the specified lighting period.
-    POST: Updates an existing period or creates a new one and saves the configuration.
-
-    Args:
-        period_id (str): Index of the lighting period or 'new' for creating a new period.
+    Route for viewing, updating, or creating a single lighting period.
+    GET: Displays a form for the specified period (or a new one if period_id = 'new').
+    POST: Updates or creates the period, then saves.
     """
     config_data = load_config()
-    lighting_periods = config_data.get("lighting_periods", [])
+    lighting_periods_data = config_data.get("lighting_periods", [])
+
     if period_id == "new":
         period_schema = config_schema["properties"]["lighting_periods"]["items"]
         defaults = {}
@@ -552,17 +574,21 @@ def lighting_period_config(period_id):
         is_new = True
     else:
         index = int(period_id)
-        if index < 0 or index >= len(lighting_periods):
+        if index < 0 or index >= len(lighting_periods_data):
             flash("Invalid lighting period index.")
             return redirect(url_for("lighting_periods"))
-        period = lighting_periods[index]
+        period = lighting_periods_data[index]
         is_new = False
+
     LightingPeriodFormClass = generate_form_class_from_schema(
         config_schema["properties"]["lighting_periods"]["items"]
     )
     if hasattr(LightingPeriodFormClass, "id"):
+        # Remove the 'id' attribute from the dynamic form class if it causes collisions
         delattr(LightingPeriodFormClass, "id")
+
     lighting_period_form = LightingPeriodFormClass(data=period)
+
     if request.method == "POST":
         period_data = {
             field_name: field.data
@@ -570,20 +596,21 @@ def lighting_period_config(period_id):
             if field_name != "submit"
         }
         if is_new:
-            new_id = max([p.get("id", 0) for p in lighting_periods] or [0]) + 1
+            new_id = max([p.get("id", 0) for p in lighting_periods_data] or [0]) + 1
             period_data["id"] = new_id
-            lighting_periods.append(period_data)
-            config_data["lighting_periods"] = lighting_periods
+            lighting_periods_data.append(period_data)
+            config_data["lighting_periods"] = lighting_periods_data
             save_config(config_data)
             flash("New lighting period created successfully.")
             return redirect(url_for("lighting_periods"))
         else:
             period_data["id"] = period.get("id")
-            lighting_periods[index] = period_data
-            config_data["lighting_periods"] = lighting_periods
+            lighting_periods_data[index] = period_data
+            config_data["lighting_periods"] = lighting_periods_data
             save_config(config_data)
             flash("Lighting period updated.")
             return redirect(url_for("lighting_period_config", period_id=period_id))
+
     return render_template(
         "lighting_period_edit.html",
         lighting_period_form=lighting_period_form,
@@ -594,10 +621,8 @@ def lighting_period_config(period_id):
 @app.route("/")
 def index():
     """
-    Route for the home page.
-
-    Returns:
-        Rendered index.html template.
+    Route for the home page of this configuration interface.
+    Displays a simple index or landing page.
     """
     return render_template("index.html")
 
@@ -605,10 +630,8 @@ def index():
 @app.route("/README.MD")
 def readme():
     """
-    Route for serving the README.MD file as markdown.
-
-    Returns:
-        The README content with the appropriate Content-Type header.
+    Route that serves the README file as markdown content.
+    Returns the file content with 'text/markdown' Content-Type.
     """
     try:
         with open("README.MD", "r") as f:
@@ -622,10 +645,8 @@ def readme():
 def create_new_variable():
     """
     Route to create a new Indigo variable.
-
     Expects JSON data containing 'name'.
-    Returns:
-        JSON response with the new variable's id and name.
+    Returns the new variable's ID and name as JSON.
     """
     data = request.get_json()
     var_name = data.get("name", "")
@@ -636,20 +657,18 @@ def create_new_variable():
 @app.route("/zone/delete/<zone_id>")
 def zone_delete(zone_id):
     """
-    Route to delete a specified zone.
-
-    Args:
-        zone_id (str): Index of the zone to delete.
+    Route to delete a specified zone by its index.
+    Redirects back to the zones list after deletion.
     """
     config_data = load_config()
-    zones = config_data.get("zones", [])
+    zones_data = config_data.get("zones", [])
     try:
         index = int(zone_id)
-        if index < 0 or index >= len(zones):
+        if index < 0 or index >= len(zones_data):
             flash("Invalid zone index.")
         else:
-            del zones[index]
-            config_data["zones"] = zones
+            del zones_data[index]
+            config_data["zones"] = zones_data
             save_config(config_data)
             flash("Zone deleted.")
     except Exception as e:
@@ -660,12 +679,9 @@ def zone_delete(zone_id):
 @app.route("/refresh_variables", methods=["GET"])
 def refresh_variables():
     """
-    Route to force a refresh of the Indigo variables cache.
-
-    Returns:
-        JSON response with the refreshed variables.
+    Route to force a refresh of Indigo variables in the in-memory cache.
+    Returns the refreshed variables as JSON.
     """
-    # Force a refresh by calling the Indigo API function directly.
     refreshed = indigo_get_all_house_variables()
     from flask import g
 
@@ -676,27 +692,21 @@ def refresh_variables():
 @app.route("/get_luminance_value", methods=["POST"])
 def get_luminance_value():
     """
-    Route to compute the average luminance value from a list of device IDs.
-
-    Expects JSON with a "device_ids" key.
-    Returns:
-        JSON with the computed average luminance.
+    Route to compute the average luminance from a list of device IDs (in JSON).
+    Returns the average sensor value in JSON.
     """
     data = request.get_json()
     device_ids = data.get("device_ids", [])
     if not device_ids:
         return {"average": 0}
-    ids_str = ",".join(str(id) for id in device_ids)
+    ids_str = ",".join(str(dev_id) for dev_id in device_ids)
     devices = indigo_get_house_devices(ids_str)
     sensor_values = [
         d.get("sensorValue", 0)
         for d in devices.get("devices", [])
         if d.get("sensorValue") is not None
     ]
-    if sensor_values:
-        avg = sum(sensor_values) / len(sensor_values)
-    else:
-        avg = 0
+    avg = sum(sensor_values) / len(sensor_values) if sensor_values else 0
     return {"average": avg}
 
 
@@ -704,9 +714,8 @@ def get_luminance_value():
 def config_backup():
     """
     Route for managing configuration backups.
-
-    GET: Displays available manual and automatic backups.
-    POST: Handles creation, restoration, or deletion of backups.
+    GET: Lists available manual and automatic backups.
+    POST: Handles creation, restoration, or deletion of selected backups.
     """
     import shutil, glob
 
@@ -721,6 +730,7 @@ def config_backup():
         backup_type = request.form.get("backup_type")
         backup_file = request.form.get("backup_file")
         config_path = os.path.join(config_dir, "auto_lights_conf.json")
+
         if action == "create_manual":
             dest = os.path.join(
                 manual_backup_dir,
@@ -728,6 +738,7 @@ def config_backup():
             )
             shutil.copy2(config_path, dest)
             flash("Manual backup created.")
+
         elif action == "restore":
             if backup_file:
                 src = os.path.join(
@@ -736,6 +747,7 @@ def config_backup():
                 )
                 shutil.copy2(src, config_path)
                 flash("Backup restored.")
+
         elif action == "delete":
             if backup_file:
                 path_to_delete = os.path.join(
@@ -745,6 +757,7 @@ def config_backup():
                 if os.path.exists(path_to_delete):
                     os.remove(path_to_delete)
                     flash("Backup deleted.")
+
         return redirect(url_for("config_backup"))
 
     manual_backups = [
@@ -758,6 +771,7 @@ def config_backup():
     for ab in auto_backups_files:
         desc = "Automatic backup"
         auto_backups.append({"filename": os.path.basename(ab), "description": desc})
+
     return render_template(
         "config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups
     )
@@ -766,10 +780,7 @@ def config_backup():
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
     """
-    Route to shut down the Flask development server.
-
-    Returns:
-        Confirmation message upon server shutdown.
+    Route to gracefully shut down the Flask development server.
     """
     shutdown_func = request.environ.get("werkzeug.server.shutdown")
     if shutdown_func is None:
@@ -782,14 +793,12 @@ def run_flask_app(
     host: str = "127.0.0.1", port: int = 9500, debug: bool = False
 ) -> None:
     """
-    Runs the Flask web application for the Auto Lights plugin.
-
+    Starts the Flask application, initializes caches, and begins the background refresher.
     Args:
-        host (str): Host address for the server.
+        host (str): Host address to listen on.
         port (int): Port number.
-        debug (bool): Whether to run the server in debug mode.
+        debug (bool): Whether to run Flask in debug mode.
     """
-    # Configure host and port as needed
     try:
         new_devices = indigo_get_all_house_devices()
         new_variables = indigo_get_all_house_variables()
@@ -799,5 +808,13 @@ def run_flask_app(
         app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
     except Exception as e:
         app.logger.error(f"Error refreshing caches: {e}")
+
     start_cache_refresher()
     app.run(host=host, port=port, debug=debug)
+
+
+# JSON schema loaded at module level, so it can be referenced by multiple routes
+current_dir = os.path.dirname(os.path.abspath(__file__))
+schema_path = os.path.join(current_dir, "config", "config_schema.json")
+with open(schema_path) as f:
+    config_schema = json.load(f, object_pairs_hook=OrderedDict)
