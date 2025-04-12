@@ -428,7 +428,6 @@ def zone_config(zone_id):
     except Exception:
         pass
     if request.method == "POST":
-        auto_backup_config()
         zone_data = {
             field_name: field.data
             for field_name, field in zone_form._fields.items()
