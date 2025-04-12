@@ -3,6 +3,7 @@ import inspect
 import logging
 from typing import List, Union, Optional, TYPE_CHECKING
 
+from .auto_lights_base import AutoLightsBase
 import math
 
 if TYPE_CHECKING:
@@ -16,7 +17,7 @@ except ImportError:
     pass
 
 
-class Zone:
+class Zone(AutoLightsBase):
     """
     Represents an AutoLights zone.
 
@@ -89,20 +90,6 @@ class Zone:
 
         self._checked_out = False
 
-    def _debug_log(self, message: str) -> None:
-        """
-        Logs a debug message with caller function and line information.
-
-        Args:
-            message (str): The debug message to log.
-        """
-        stack = inspect.stack()
-        current_fn = stack[1].function if len(stack) > 1 else ""
-        caller_fn = stack[2].function if len(stack) > 2 else ""
-        caller_line = stack[2].lineno if len(stack) > 2 else 0
-        self.logger.debug(
-            f"[caller: {caller_fn} : {caller_line}][func: {current_fn}] Zone '{self._name}': {message}"
-        )
 
     def from_config_dict(self, cfg: dict) -> None:
         """

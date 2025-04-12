@@ -4,6 +4,7 @@ from typing import List
 
 from .lighting_period import LightingPeriod
 from .zone import Zone
+from .auto_lights_base import AutoLightsBase
 
 try:
     import indigo
@@ -11,7 +12,7 @@ except ImportError:
     pass
 
 
-class AutoLightsConfig:
+class AutoLightsConfig(AutoLightsBase):
     """
     Configuration handler for the auto_lights script, managing time-of-day logic, presence, and brightness values.
     """
@@ -23,7 +24,6 @@ class AutoLightsConfig:
 
         The properties can be adjusted as needed to fine-tune lighting behavior.
         """
-        self.logger = logging.getLogger("Plugin")
         self._enabled = False
 
         self._guest_mode = False
@@ -115,7 +115,7 @@ class AutoLightsConfig:
         self.from_config_dict(data)
 
     def from_config_dict(self, data: dict) -> None:
-        self.logger.debug("from_config_dict called")
+        self._debug_log("from_config_dict called")
         # Process plugin_config
         plugin_config = data.get("plugin_config", {})
         for key, value in plugin_config.items():
@@ -149,7 +149,7 @@ class AutoLightsConfig:
         for zone in self._zones:
             zone.calculate_target_brightness()
 
-        self.logger.debug("from_config_dict finished")
+        self._debug_log("from_config_dict finished")
 
     @property
     def zones(self) -> List[Zone]:

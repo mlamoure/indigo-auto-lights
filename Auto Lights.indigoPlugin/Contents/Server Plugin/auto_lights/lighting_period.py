@@ -1,5 +1,6 @@
 import datetime
 import logging
+from .auto_lights_base import AutoLightsBase
 
 try:
     import indigo
@@ -7,7 +8,7 @@ except ImportError:
     pass
 
 
-class LightingPeriod:
+class LightingPeriod(AutoLightsBase):
     """
     Represents a scheduled lighting period with start and end times, plus a designated mode.
     """

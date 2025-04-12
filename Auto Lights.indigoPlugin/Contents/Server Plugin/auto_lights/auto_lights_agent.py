@@ -3,6 +3,7 @@ from typing import List
 
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone
+from .auto_lights_base import AutoLightsBase
 
 try:
     import indigo
@@ -10,10 +11,9 @@ except ImportError:
     pass
 
 
-class AutoLightsAgent:
+class AutoLightsAgent(AutoLightsBase):
     def __init__(self, config: AutoLightsConfig) -> None:
         self._config = config
-        self.logger = logging.getLogger("Plugin")
 
     def process_zone(self, zone: Zone) -> bool:
         """
@@ -28,12 +28,12 @@ class AutoLightsAgent:
         if not self._config.enabled:
             return False
 
-        self.logger.debug(
+        self._debug_log(
             f"[AutoLightsAgent.process_zone] Zone '{zone.name}': processing: enabled={zone.enabled}, current_lights_status={zone.current_lights_status}"
         )
 
         if not zone.enabled:
-            self.logger.debug(
+            self._debug_log(
                 f"[AutoLightsAgent.process_zone] Zone '{zone.name}': auto lights is disabled for this zone."
             )
             return False
@@ -47,7 +47,7 @@ class AutoLightsAgent:
             if not zone.has_presence_detected() and zone.unlock_when_no_presence:
                 zone.reset_lock("no longer presence in zone")
             else:
-                self.logger.debug(
+                self._debug_log(
                     f"[AutoLightsAgent.process_zone] Zone '{zone.name}': zone is locked until {zone.lock_expiration}"
                 )
                 zone.check_in()
@@ -79,7 +79,7 @@ class AutoLightsAgent:
                         action_reason = f"global behavior variable {indigo.variables[var_id].name} matches value '{var_value}'"
                         break
                 except (KeyError, ValueError):
-                    self.logger.debug(f"Invalid global behavior variable ID: {var_id}")
+                    self._debug_log(f"Invalid global behavior variable ID: {var_id}")
 
         # Next, look to the target_brightness
         if not action_reason and zone.current_lighting_period is not None:
@@ -102,7 +102,7 @@ class AutoLightsAgent:
             zone.save_brightness_changes()
 
         else:
-            self.logger.debug(
+            self._debug_log(
                 f"[AutoLightsAgent.process_zone] Zone '{zone.name}': no changes to make, checked in"
             )
 
@@ -131,7 +131,7 @@ class AutoLightsAgent:
                 if not zone.enabled:
                     continue
 
-                self.logger.debug(
+                self._debug_log(
                     f"[AutoLightsAgent.process_device_change] has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
                 )
 
