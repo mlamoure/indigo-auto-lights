@@ -371,27 +371,43 @@ class Zone:
         self._target_brightness = []
         if isinstance(value, list):
             for item in value:
-                self._target_brightness.append({
-                    "dev_id": item["dev_id"],
-                    "target_brightness": self._normalize_dev_target_brightness(
-                        item["dev_id"], item["target_brightness"]
-                    )
-                })
+                self._target_brightness.append(
+                    {
+                        "dev_id": item["dev_id"],
+                        "target_brightness": self._normalize_dev_target_brightness(
+                            item["dev_id"], item["target_brightness"]
+                        ),
+                    }
+                )
         else:
             force_off = (isinstance(value, bool) and not value) or value == 0
-            lights = self.on_lights_dev_ids + self.off_lights_dev_ids if force_off else self.on_lights_dev_ids
+            lights = (
+                self.on_lights_dev_ids + self.off_lights_dev_ids
+                if force_off
+                else self.on_lights_dev_ids
+            )
             for dev_id in lights:
-                self._target_brightness.append({
-                    "dev_id": dev_id,
-                    "target_brightness": self._normalize_dev_target_brightness(dev_id, value)
-                })
+                self._target_brightness.append(
+                    {
+                        "dev_id": dev_id,
+                        "target_brightness": self._normalize_dev_target_brightness(
+                            dev_id, value
+                        ),
+                    }
+                )
             if not force_off:
                 for dev_id in self.off_lights_dev_ids:
-                    self._target_brightness.append({
-                        "dev_id": dev_id,
-                        "target_brightness": self._normalize_dev_target_brightness(dev_id)
-                    })
-        self._debug_log(f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}")
+                    self._target_brightness.append(
+                        {
+                            "dev_id": dev_id,
+                            "target_brightness": self._normalize_dev_target_brightness(
+                                dev_id
+                            ),
+                        }
+                    )
+        self._debug_log(
+            f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
+        )
 
     @property
     def _target_brightness_lock_comparison(self) -> List[dict]:
@@ -749,8 +765,7 @@ class Zone:
 
             # Case 1: No dimmer adjustment is enabled.
             if not self.adjust_brightness:
-                new_tb = [100] * len(self._on_lights_dev_ids)
-                self.target_brightness = new_tb
+                self.target_brightness = 100
                 self._debug_log(
                     f"Calculated target brightness (no dimmer adjustment): {self.target_brightness}"
                 )
@@ -765,8 +780,7 @@ class Zone:
                 self._debug_log(
                     f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
                 )
-                new_tb = [pct_delta] * len(self._on_lights_dev_ids)
-                self.target_brightness = new_tb
+                self.target_brightness = pct_delta
                 self._debug_log(
                     f"Calculated target brightness: {self.target_brightness}"
                 )
