@@ -13,7 +13,7 @@ focusing on the basics of your setup.
 
 The basic functions of Auto Lights is:
 
-* Each Zone has a set of "On / Off Lights", and a set of presence devices.
+* Each Zone has a set of "On / Off Lights", and a set of [presence devices](#presence-devices).
 * Each Zone has a set of Lighting Periods, which define based on the time of day whether Auto Lights is the primary for
   turning lights on and off, or just off, for that period.
 * When presence is detected in a Zone, and the current Lighting Period indicates Auto Lights is in control of the
