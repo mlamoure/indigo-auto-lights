@@ -392,12 +392,7 @@ class Zone:
 
     @property
     def _target_brightness_lock_comparison(self) -> List[dict]:
-        _target_brightness_lock_comparison = [{}]
-        for item in self.target_brightness:
-            if item["dev_id"] not in self.exclude_from_lock_dev_ids:
-                _target_brightness_lock_comparison.append(item)
-
-        return _target_brightness_lock_comparison
+        return [item for item in self.target_brightness if item["dev_id"] not in self.exclude_from_lock_dev_ids]
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
