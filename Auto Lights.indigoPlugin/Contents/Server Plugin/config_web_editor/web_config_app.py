@@ -1,3 +1,8 @@
+"""
+This module implements the web configuration editor for the Auto Lights plugin.
+It provides routes for editing plugin configuration, zones, lighting periods, and backups.
+All functions and major code blocks are documented for clarity and PEP8 compliance.
+"""
 import json
 import os
 import secrets
@@ -31,6 +36,10 @@ _cache_lock = threading.Lock()
 
 
 def refresh_indigo_caches():
+    """
+    Periodically refreshes the caches for Indigo devices and variables.
+    Runs indefinitely with a sleep interval defined by REFRESH_INTERVAL_SECONDS.
+    """
     while True:
         try:
             new_devices = indigo_get_all_house_devices()
@@ -59,11 +68,18 @@ app.jinja_env.globals.update(enumerate=enumerate)
 
 
 def start_cache_refresher():
+    """
+    Starts the cache refresher thread which periodically refreshes Indigo caches.
+    """
     thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
     thread.start()
 
 
 def get_lighting_period_choices():
+    """
+    Retrieves lighting period choices from the configuration.
+    Returns a list of tuples containing (id, name) for each lighting period.
+    """
     config_data = load_config()
     lighting_periods = config_data.get("lighting_periods", [])
     choices = []
@@ -74,6 +90,9 @@ def get_lighting_period_choices():
 
 
 def get_cached_indigo_variables():
+    """
+    Retrieves the Indigo variables from cache (or refreshes them if not available).
+    """
     with _cache_lock:
         if _indigo_variables_cache["data"] is None:
             try:
@@ -89,6 +108,9 @@ app.jinja_env.globals.update(get_cached_indigo_variables=get_cached_indigo_varia
 
 
 def get_cached_indigo_devices():
+    """
+    Retrieves the Indigo devices from cache (or refreshes them if not available).
+    """
     with _cache_lock:
         if _indigo_devices_cache["data"] is None:
             try:
@@ -103,6 +125,16 @@ def get_cached_indigo_devices():
 
 
 def create_field(field_name, field_schema):
+    """
+    Creates a WTForms field based on the provided field schema.
+
+    Args:
+        field_name (str): The name of the field.
+        field_schema (dict): Schema definition for the field.
+
+    Returns:
+        A WTForms field object.
+    """
     label_text = field_schema.get("title", field_name)
     tooltip_text = field_schema.get("tooltip", "")
     required = field_schema.get("required", False)
@@ -229,7 +261,15 @@ def create_field(field_name, field_schema):
 
 
 def generate_form_class_from_schema(schema):
-    # Dynamically creates a WTForms class using the provided schema definition.
+    """
+    Dynamically creates a WTForms form class from the provided JSON schema.
+
+    Args:
+        schema (dict): JSON schema defining form properties.
+
+    Returns:
+        A dynamically generated WTForms form class.
+    """
     attrs = OrderedDict()
     for prop, subschema in schema.get("properties", {}).items():
         required_fields = schema.get("required", [])
@@ -268,6 +308,12 @@ with open(schema_path) as f:
 
 
 def load_config():
+    """
+    Loads the auto lights configuration from the JSON file.
+
+    Returns:
+        dict: The configuration dictionary.
+    """
     config_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
     )
@@ -279,6 +325,14 @@ def load_config():
 
 
 def save_config(config_data):
+    """
+    Saves the auto lights configuration to the JSON file.
+    Prior to saving, creates a backup in the auto_backups folder with a timestamp
+    and prunes backups beyond 20.
+
+    Args:
+        config_data (dict): The configuration to be saved.
+    """
     config_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
     )
@@ -304,6 +358,12 @@ def save_config(config_data):
 
 @app.route("/plugin_config", methods=["GET", "POST"])
 def plugin_config():
+    """
+    Route for viewing and updating the plugin configuration.
+
+    GET: Renders the plugin configuration form.
+    POST: Updates the configuration with submitted data and saves changes.
+    """
     config_data = load_config()
     plugin_schema = config_schema["properties"]["plugin_config"]
     PluginFormClass = generate_form_class_from_schema(plugin_schema)
@@ -346,6 +406,12 @@ def plugin_config():
 
 @app.route("/zones", methods=["GET", "POST"])
 def zones():
+    """
+    Route for displaying and updating zones.
+
+    GET: Renders the zones configuration form.
+    POST: Processes updates to zone configurations and saves them.
+    """
     config_data = load_config()
     ZonesFormClass = generate_form_class_from_schema(
         config_schema["properties"]["zones"]["items"]
@@ -370,6 +436,12 @@ def zones():
 
 @app.route("/lighting_periods", methods=["GET", "POST"])
 def lighting_periods():
+    """
+    Route for viewing and updating lighting periods.
+
+    GET: Renders the lighting periods configuration form.
+    POST: Saves changes made to lighting periods.
+    """
     config_data = load_config()
     lighting_periods_schema = config_schema["properties"]["lighting_periods"]["items"]
     LightingPeriodsFormClass = generate_form_class_from_schema(lighting_periods_schema)
@@ -397,6 +469,15 @@ def lighting_periods():
 
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):
+    """
+    Route for viewing, updating, or creating a zone configuration.
+
+    GET: Renders the form for the specified zone.
+    POST: Updates an existing zone or creates a new zone and saves the configuration.
+
+    Args:
+        zone_id (str): Index of the zone or 'new' for creating a new zone.
+    """
     config_data = load_config()
     zones = config_data.get("zones", [])
     if zone_id == "new":
@@ -450,6 +531,15 @@ def zone_config(zone_id):
 
 @app.route("/lighting_period/<period_id>", methods=["GET", "POST"])
 def lighting_period_config(period_id):
+    """
+    Route for viewing, updating, or creating a lighting period.
+
+    GET: Renders the form for the specified lighting period.
+    POST: Updates an existing period or creates a new one and saves the configuration.
+
+    Args:
+        period_id (str): Index of the lighting period or 'new' for creating a new period.
+    """
     config_data = load_config()
     lighting_periods = config_data.get("lighting_periods", [])
     if period_id == "new":
@@ -503,11 +593,23 @@ def lighting_period_config(period_id):
 
 @app.route("/")
 def index():
+    """
+    Route for the home page.
+
+    Returns:
+        Rendered index.html template.
+    """
     return render_template("index.html")
 
 
 @app.route("/README.MD")
 def readme():
+    """
+    Route for serving the README.MD file as markdown.
+
+    Returns:
+        The README content with the appropriate Content-Type header.
+    """
     try:
         with open("README.MD", "r") as f:
             text = f.read()
@@ -518,6 +620,13 @@ def readme():
 
 @app.route("/create_new_variable", methods=["POST"])
 def create_new_variable():
+    """
+    Route to create a new Indigo variable.
+
+    Expects JSON data containing 'name'.
+    Returns:
+        JSON response with the new variable's id and name.
+    """
     data = request.get_json()
     var_name = data.get("name", "")
     new_var_id = indigo_create_new_variable(var_name)
@@ -526,6 +635,12 @@ def create_new_variable():
 
 @app.route("/zone/delete/<zone_id>")
 def zone_delete(zone_id):
+    """
+    Route to delete a specified zone.
+
+    Args:
+        zone_id (str): Index of the zone to delete.
+    """
     config_data = load_config()
     zones = config_data.get("zones", [])
     try:
@@ -544,6 +659,12 @@ def zone_delete(zone_id):
 
 @app.route("/refresh_variables", methods=["GET"])
 def refresh_variables():
+    """
+    Route to force a refresh of the Indigo variables cache.
+
+    Returns:
+        JSON response with the refreshed variables.
+    """
     # Force a refresh by calling the Indigo API function directly.
     refreshed = indigo_get_all_house_variables()
     from flask import g
@@ -554,6 +675,13 @@ def refresh_variables():
 
 @app.route("/get_luminance_value", methods=["POST"])
 def get_luminance_value():
+    """
+    Route to compute the average luminance value from a list of device IDs.
+
+    Expects JSON with a "device_ids" key.
+    Returns:
+        JSON with the computed average luminance.
+    """
     data = request.get_json()
     device_ids = data.get("device_ids", [])
     if not device_ids:
@@ -574,6 +702,12 @@ def get_luminance_value():
 
 @app.route("/config_backup", methods=["GET", "POST"])
 def config_backup():
+    """
+    Route for managing configuration backups.
+
+    GET: Displays available manual and automatic backups.
+    POST: Handles creation, restoration, or deletion of backups.
+    """
     import shutil, glob
 
     config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
@@ -631,6 +765,12 @@ def config_backup():
 
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
+    """
+    Route to shut down the Flask development server.
+
+    Returns:
+        Confirmation message upon server shutdown.
+    """
     shutdown_func = request.environ.get("werkzeug.server.shutdown")
     if shutdown_func is None:
         raise RuntimeError("Not running with the Werkzeug Server")
@@ -641,6 +781,14 @@ def shutdown():
 def run_flask_app(
     host: str = "127.0.0.1", port: int = 9500, debug: bool = False
 ) -> None:
+    """
+    Runs the Flask web application for the Auto Lights plugin.
+
+    Args:
+        host (str): Host address for the server.
+        port (int): Port number.
+        debug (bool): Whether to run the server in debug mode.
+    """
     # Configure host and port as needed
     try:
         new_devices = indigo_get_all_house_devices()
