@@ -17,6 +17,11 @@ class AutoLightsBase:
         caller_fn = stack[2].function if len(stack) > 2 else ""
         caller_line = stack[2].lineno if len(stack) > 2 else 0
 
-        self.logger.debug(
-            f"[caller: {caller_fn}:{caller_line}][func: {current_fn}] {message}"
-        )
+        if hasattr(self, "name"):
+            self.logger.debug(
+                f"[caller: {caller_fn}:{caller_line}][func: {current_fn}][Zone '{self.name}']: {message}"
+            )
+        else:
+            self.logger.debug(
+                f"[caller: {caller_fn}:{caller_line}][func: {current_fn}] {message}"
+            )
