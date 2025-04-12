@@ -2,8 +2,9 @@ import datetime
 import logging
 from typing import List, Union, Optional, TYPE_CHECKING
 
-from .auto_lights_base import AutoLightsBase
 import math
+
+from .auto_lights_base import AutoLightsBase
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
@@ -88,7 +89,6 @@ class Zone(AutoLightsBase):
         self._lock_extension_duration = None
 
         self._checked_out = False
-
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -904,6 +904,7 @@ class Zone(AutoLightsBase):
         result = current_dict != target_dict
         self._debug_log(f"has_lock_occurred result: {result}")
 
-        self.locked = result
+        if self.locked != result:
+            self.locked = result
 
         return result
