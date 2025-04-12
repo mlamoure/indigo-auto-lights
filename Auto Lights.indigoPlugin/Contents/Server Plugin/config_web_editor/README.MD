@@ -32,9 +32,9 @@ More advanced features:
 
 # Requirements
 
-* Latest Indigo - I only test on the latest
-* "Allow Remote Access" must be on for your server, with Reflector and API Key -- See here for why.
-* Presence and lighting devices to control, for any Zone you wish to use with Auto Lights
+- [x] Latest Indigo - I only test on the latest
+- [x] "Allow Remote Access" must be on for your server, with Reflector and API Key -- See here for why.
+- [x] Presence and lighting devices to control, for any Zone you wish to use with Auto Lights
 
 ## The Web Config
 
