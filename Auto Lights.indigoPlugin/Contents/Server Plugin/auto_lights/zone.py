@@ -205,7 +205,7 @@ class Zone:
     @property
     def last_changed_by(self) -> str:
         """Returns the name of the device with the most recent lastChanged value."""
-        return self.last_changed.name
+        return self.last_changed_device.name
 
     @property
     def exclude_from_lock_dev_ids(self) -> List[int]:
