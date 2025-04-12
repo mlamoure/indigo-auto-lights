@@ -882,10 +882,10 @@ class Zone:
         if self._checked_out:
             return False
 
-        self._debug_log(
-            f"lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
-        )
-        result = self.current_lights_status != self._target_brightness_lock_comparison
+        current_dict = {item["dev_id"]: item["brightness"] for item in self.current_lights_status}
+        target_dict = {item["dev_id"]: item["brightness"] for item in self.target_brightness if item["dev_id"] not in self.exclude_from_lock_dev_ids}
+        self._debug_log(f"lock check: current status = {current_dict}, target status = {target_dict}")
+        result = current_dict != target_dict
         self._debug_log(f"has_lock_occurred result: {result}")
 
         self.locked = result
