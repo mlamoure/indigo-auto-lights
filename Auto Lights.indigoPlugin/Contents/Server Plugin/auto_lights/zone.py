@@ -18,8 +18,24 @@ except ImportError:
 
 class Zone:
     """
-    Represents an AutoLights zone, encompassing configuration, devices,
-    lighting periods, and states for controlling lighting behavior.
+    Represents an AutoLights zone.
+
+    This class manages configuration, device lists, lighting periods,
+    and state information used to control the lighting behavior for a zone.
+    
+    It includes methods and properties to:
+      - Load and apply configuration from a dictionary.
+      - Compute and update target brightness levels.
+      - Determine lock status based on expiration times.
+      - Process sensor data and presence detection.
+      - Interface with Indigo devices via utility functions.
+    
+    Attributes:
+        _name (str): Name of the zone.
+        _enabled (bool): Indicates if the zone is active.
+        _lock_duration (int): Duration in minutes for zone locking.
+        _lock_expiration (datetime): Expiration time for the current lock.
+        ... (other attributes)
     """
 
     # (2) Class variables or constants would go here if we had any.
@@ -76,6 +92,12 @@ class Zone:
         self._checked_out = False
 
     def _debug(self, message: str) -> None:
+        """
+        Logs a debug message with caller function and line information.
+
+        Args:
+            message (str): The debug message to log.
+        """
         stack = inspect.stack()
         current_fn = stack[1].function if len(stack) > 1 else ""
         caller_fn = stack[2].function if len(stack) > 2 else ""
@@ -85,6 +107,13 @@ class Zone:
         )
 
     def from_config_dict(self, cfg: dict) -> None:
+        """
+        Updates the zone configuration based on a provided dictionary.
+
+        Args:
+            cfg (dict): Configuration dictionary with keys such as 'enabled_var_id',
+                        'device_settings', 'minimum_luminance_settings', and 'behavior_settings'.
+        """
         if "enabled_var_id" in cfg:
             self.enabled_var_id = cfg["enabled_var_id"]
         if "device_settings" in cfg:
@@ -129,6 +158,7 @@ class Zone:
 
     @property
     def enabled(self) -> bool:
+        """Indicates whether the zone is enabled."""
         return self._enabled
 
     @enabled.setter
@@ -149,6 +179,7 @@ class Zone:
 
     @property
     def perform_confirm(self) -> bool:
+        """Returns True if zone actions require confirmation, otherwise False."""
         return self._perform_confirm
 
     @perform_confirm.setter
@@ -157,6 +188,7 @@ class Zone:
 
     @property
     def unlock_when_no_presence(self) -> bool:
+        """Indicates whether the zone should automatically unlock when no presence is detected."""
         return self._unlock_when_no_presence
 
     @unlock_when_no_presence.setter
@@ -165,6 +197,7 @@ class Zone:
 
     @property
     def adjust_brightness(self) -> bool:
+        """Returns True if brightness adjustment is enabled for the zone."""
         return self._adjust_brightness
 
     @adjust_brightness.setter
@@ -173,6 +206,7 @@ class Zone:
 
     @property
     def last_changed_by(self) -> str:
+        """Returns the identifier of the last entity that changed the zone's state."""
         return self._last_changed_by
 
     @property
@@ -417,6 +451,7 @@ class Zone:
 
     @property
     def lock_enabled(self) -> bool:
+        """Indicates if the lock functionality is enabled for the zone."""
         return self._lock_enabled
 
     @lock_enabled.setter
@@ -425,6 +460,7 @@ class Zone:
 
     @property
     def extend_lock_when_active(self) -> bool:
+        """Returns True if the zone lock should be extended when activity is detected."""
         return self._extend_lock_when_active
 
     @extend_lock_when_active.setter
@@ -433,6 +469,11 @@ class Zone:
 
     @property
     def lock_duration(self) -> int:
+        """
+        Retrieves the lock duration in minutes for the zone.
+        If a lighting period override is active and specifies a lock duration, that value is returned.
+        Otherwise, the default configuration value is used.
+        """
         if (
             self.current_lighting_period
             and self.current_lighting_period.has_lock_duration_override
@@ -448,6 +489,10 @@ class Zone:
 
     @property
     def lock_extension_duration(self) -> int:
+        """
+        Retrieves the lock extension duration in minutes.
+        If not explicitly set, defaults to the value specified in the configuration.
+        """
         if self._lock_extension_duration is None:
             self._lock_extension_duration = self._config.default_lock_extension_duration
         return self._lock_extension_duration
@@ -467,7 +512,13 @@ class Zone:
 
     @locked.setter
     def locked(self, value: bool) -> None:
-        # check if a new clock is being set
+        """
+        Sets the locked state for the zone. If setting to True and the zone was previously unlocked,
+        updates the lock expiration time to the current time plus the lock duration in minutes.
+
+        Args:
+            value (bool): The desired locked state.
+        """
         if value and not self._locked:
             self.lock_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_duration)
 
