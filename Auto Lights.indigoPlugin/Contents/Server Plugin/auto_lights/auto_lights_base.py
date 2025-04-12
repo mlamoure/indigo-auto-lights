@@ -1,11 +1,13 @@
 import inspect
 import logging
 
+
 class AutoLightsBase:
     """
     A base class providing a standardized _debug_log method to all
     classes that inherit from it.
     """
+
     def __init__(self, logger_name="Plugin"):
         self.logger = logging.getLogger(logger_name)
 
@@ -16,5 +18,5 @@ class AutoLightsBase:
         caller_line = stack[2].lineno if len(stack) > 2 else 0
 
         self.logger.debug(
-            f"[caller: {caller_fn} : {caller_line}][func: {current_fn}] {message}"
+            f"[caller: {caller_fn}:{caller_line}][func: {current_fn}] {message}"
         )
