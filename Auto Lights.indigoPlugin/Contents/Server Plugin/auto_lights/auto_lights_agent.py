@@ -13,6 +13,7 @@ except ImportError:
 
 class AutoLightsAgent(AutoLightsBase):
     def __init__(self, config: AutoLightsConfig) -> None:
+        super().__init__()
         self._config = config
 
     def process_zone(self, zone: Zone) -> bool:
