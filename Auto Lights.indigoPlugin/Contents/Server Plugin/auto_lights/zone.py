@@ -461,7 +461,9 @@ class Zone:
         """Determines if the zone is currently locked."""
         if not self.lock_enabled:
             return False
-        return self._locked
+        if self._lock_expiration is None:
+            return False
+        return datetime.datetime.now() < self._lock_expiration
 
     @locked.setter
     def locked(self, value: bool) -> None:
