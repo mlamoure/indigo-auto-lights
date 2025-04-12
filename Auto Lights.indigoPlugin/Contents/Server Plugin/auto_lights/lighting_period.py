@@ -35,7 +35,6 @@ class LightingPeriod(AutoLightsBase):
         self._mode = mode
         self._lock_duration = None
         self._id = None
-        self.logger = logging.getLogger("Plugin")
 
     @property
     def id(self) -> int:
