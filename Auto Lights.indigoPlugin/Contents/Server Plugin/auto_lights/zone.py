@@ -301,27 +301,41 @@ class Zone:
         for dev_id in self.on_lights_dev_ids:
             if dev_id in self.exclude_from_lock_dev_ids:
                 continue
-            status.append({
-                "dev_id": dev_id,
-                "brightness": get_device_status(indigo.devices[dev_id])
-            })
+            status.append(
+                {
+                    "dev_id": dev_id,
+                    "brightness": get_device_status(indigo.devices[dev_id]),
+                }
+            )
 
         # Gather off_lights
         for dev_id in self.off_lights_dev_ids:
             if dev_id in self.exclude_from_lock_dev_ids:
                 continue
-            status.append({
-                "dev_id": dev_id,
-                "brightness": get_device_status(indigo.devices[dev_id])
-            })
+            status.append(
+                {
+                    "dev_id": dev_id,
+                    "brightness": get_device_status(indigo.devices[dev_id]),
+                }
+            )
         return status
 
     @property
     def target_brightness(self) -> List[dict]:
         """Get the target brightness for zone devices."""
         if self._target_brightness is None:
-            total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
-            self._target_brightness = [False] * total_devices
+            self._target_brightness = []
+            total_devices = self.on_lights_dev_ids + self.off_lights_dev_ids
+
+            # this will keep the devices the same as their current state
+            for dev_id in total_devices:
+                self._target_brightness.append(
+                    {
+                        "dev_id": dev_id,
+                        "brightness": self._normalize_dev_target_brightness(dev_id),
+                    }
+                )
+
         self._debug_log(f"replied target brightness = {self._target_brightness}")
         return self._target_brightness
 
@@ -882,9 +896,17 @@ class Zone:
         if self._checked_out:
             return False
 
-        current_dict = {item["dev_id"]: item["brightness"] for item in self.current_lights_status}
-        target_dict = {item["dev_id"]: item["brightness"] for item in self.target_brightness if item["dev_id"] not in self.exclude_from_lock_dev_ids}
-        self._debug_log(f"lock check: current status = {current_dict}, target status = {target_dict}")
+        current_dict = {
+            item["dev_id"]: item["brightness"] for item in self.current_lights_status
+        }
+        target_dict = {
+            item["dev_id"]: item["brightness"]
+            for item in self.target_brightness
+            if item["dev_id"] not in self.exclude_from_lock_dev_ids
+        }
+        self._debug_log(
+            f"lock check: current status = {current_dict}, target status = {target_dict}"
+        )
         result = current_dict != target_dict
         self._debug_log(f"has_lock_occurred result: {result}")
 
