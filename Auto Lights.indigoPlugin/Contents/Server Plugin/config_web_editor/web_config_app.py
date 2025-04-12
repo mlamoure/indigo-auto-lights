@@ -283,21 +283,23 @@ def save_config(config_data):
         os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
     )
     if os.path.exists(config_path):
-        backup_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups")
+        backup_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups"
+        )
         os.makedirs(backup_dir, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         backup_file = os.path.join(backup_dir, f"auto_backup_{timestamp}.json")
         import shutil
+
         shutil.copy2(config_path, backup_file)
         import glob
+
         backups = sorted(glob.glob(os.path.join(backup_dir, "auto_backup_*.json")))
         while len(backups) > 20:
             os.remove(backups[0])
             backups.pop(0)
     with open(config_path, "w") as f:
         json.dump(config_data, f, indent=2)
-
-
 
 
 @app.route("/plugin_config", methods=["GET", "POST"])
