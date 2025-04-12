@@ -91,7 +91,7 @@ class Zone:
 
         self._checked_out = False
 
-    def _debug(self, message: str) -> None:
+    def _debug_log(self, message: str) -> None:
         """
         Logs a debug message with caller function and line information.
 
@@ -283,7 +283,7 @@ class Zone:
         for devId in self.luminance_dev_ids:
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
-        self._debug(f"computed luminance: {self._luminance}")
+        self._debug_log(f"computed luminance: {self._luminance}")
         return self._luminance
 
     @property
@@ -321,7 +321,7 @@ class Zone:
         if self._target_brightness is None:
             total_devices = len(self.on_lights_dev_ids) + len(self.off_lights_dev_ids)
             self._target_brightness = [False] * total_devices
-        self._debug(f"replied target brightness = {self._target_brightness}")
+        self._debug_log(f"replied target brightness = {self._target_brightness}")
         return self._target_brightness
 
     @staticmethod
@@ -392,14 +392,14 @@ class Zone:
         for dev_id in self.off_lights_dev_ids:
             if dev_id not in self.exclude_from_lock_dev_ids:
                 self._target_brightness_lock_comparison.append(off_light_state(dev_id))
-        self._debug(
+        self._debug_log(
             f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
         )
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
         if not self.lighting_periods:
-            self._debug(f"no active lighting periods.")
+            self._debug_log(f"no active lighting periods.")
             return None
 
         for period in self.lighting_periods:
@@ -440,7 +440,7 @@ class Zone:
                 pass
             var_folder = indigo.variables.folders["auto_lights_script"]
             debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
-            self._debug(
+            self._debug_log(
                 f"[Zone.check_out_var] check_out_var: created variable {var_name}"
             )
         return debug_var
@@ -563,7 +563,7 @@ class Zone:
             presence_device = indigo.devices[dev_id]
             state_on = presence_device.states.get("onState", False)
             state_onoff = presence_device.states.get("onOffState", False)
-            self._debug(
+            self._debug_log(
                 f"Zone '{self._name}': presence device '{presence_device.name}' onOffState: {state_onoff}, onState: {state_on}"
             )
             detected = state_onoff or state_on
@@ -581,7 +581,7 @@ class Zone:
                   or if no valid sensor values are available; otherwise False.
         """
         if not self.luminance_dev_ids:
-            self._debug(
+            self._debug_log(
                 f"Zone '{self._name}': is_dark: No luminance devices, returning True"
             )
             return True
@@ -594,13 +594,13 @@ class Zone:
         ]
 
         if not sensor_values:
-            self._debug(
+            self._debug_log(
                 f"Zone '{self._name}': is_dark: No valid sensor values available, returning True"
             )
             return True
 
         avg = sum(sensor_values) / len(sensor_values)
-        self._debug(
+        self._debug_log(
             f"Zone '{self._name}': Calculated average luminance: {avg} (minimum required: {self.minimum_luminance})."
         )
         return avg < self.minimum_luminance
@@ -704,10 +704,10 @@ class Zone:
         """
         action_reason = ""
 
-        self._debug(f"calculate_target_brightness called")
+        self._debug_log(f"calculate_target_brightness called")
 
         if self.current_lighting_period is None:
-            self._debug(f"no lighting periods available")
+            self._debug_log(f"no lighting periods available")
             return "No lighting periods available"
 
         # Check if the zone is in "On and Off" mode, has presence detected, and is dark.
@@ -724,7 +724,7 @@ class Zone:
             if not self.adjust_brightness:
                 new_tb = [100] * len(self._on_lights_dev_ids)
                 self.target_brightness = new_tb
-                self._debug(
+                self._debug_log(
                     f"Calculated target brightness (no dimmer adjustment): {self.target_brightness}"
                 )
                 return action_reason
@@ -735,12 +735,12 @@ class Zone:
                 pct_delta = math.ceil(
                     (1 - (self.luminance / self.minimum_luminance)) * 100
                 )
-                self._debug(
+                self._debug_log(
                     f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
                 )
                 new_tb = [pct_delta] * len(self._on_lights_dev_ids)
                 self.target_brightness = new_tb
-                self._debug(f"Calculated target brightness: {self.target_brightness}")
+                self._debug_log(f"Calculated target brightness: {self.target_brightness}")
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
             action_reason = "presence is not detected"
@@ -803,11 +803,11 @@ class Zone:
         if self._checked_out:
             return False
 
-        self._debug(
+        self._debug_log(
             f"lock check: current_lights_status = {self.current_lights_status}, target lock comparison = {self._target_brightness_lock_comparison}"
         )
         result = self.current_lights_status != self._target_brightness_lock_comparison
-        self._debug(f"has_lock_occurred result: {result}")
+        self._debug_log(f"has_lock_occurred result: {result}")
 
         self.locked = result
 
