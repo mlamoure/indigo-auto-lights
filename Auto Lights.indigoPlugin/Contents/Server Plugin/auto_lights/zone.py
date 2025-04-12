@@ -84,7 +84,6 @@ class Zone:
         self._lock_timer = None
         self._config = config
 
-        self._last_changed_by = "none"
         self._lock_enabled = True
         self._lock_extension_duration = None
 
@@ -206,14 +205,7 @@ class Zone:
     @property
     def last_changed_by(self) -> str:
         """Returns the name of the device with the most recent lastChanged value."""
-        latest_time = datetime.datetime(1900, 1, 1)
-        latest_name = "none"
-        for dev_id in self.on_lights_dev_ids + self.off_lights_dev_ids + self.luminance_dev_ids + self.presence_dev_ids:
-            device = indigo.devices[dev_id]
-            if device.lastChanged > latest_time:
-                latest_time = device.lastChanged
-                latest_name = device.name
-        return latest_name
+        return self.last_changed.name
 
     @property
     def exclude_from_lock_dev_ids(self) -> List[int]:
