@@ -677,35 +677,29 @@ class Zone(AutoLightsBase):
         self.locked = False
         self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
 
-    def has_brightness_changes(self) -> bool:
+    def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
         Check if the current brightness or state of any on/off device differs from its target brightness.
         """
         if not self.enabled or not self.target_brightness:
             return False
 
-        def brightness_differs(dev, target):
-            if isinstance(dev, indigo.DimmerDevice):
-                return dev.brightness != target
-            elif isinstance(dev, indigo.RelayDevice):
-                return dev.onState != (False if target == 0 else True)
-            elif "brightness" in dev.states:
-                return int(dev.states["brightness"]) != target
-            return False
+        current_dict = {
+            item["dev_id"]: item["brightness"] for item in self.current_lights_status
+        }
+        target_dict = {
+            item["dev_id"]: item["brightness"]
+            for item in self.target_brightness
+            if exclude_lock_devices
+            and item["dev_id"] not in self.exclude_from_lock_dev_ids
+        }
+        self._debug_log(
+            f"current status = {current_dict}, target status = {target_dict}"
+        )
 
-        # Check on_lights
-        for idx, dev_id in enumerate(self.on_lights_dev_ids):
-            dev = indigo.devices[dev_id]
-            if brightness_differs(dev, self.target_brightness[idx]):
-                return True
+        result = current_dict != target_dict
 
-        # Check off_lights if all are supposed to be off
-        if self.target_brightness_all_off and self.off_lights_dev_ids:
-            for dev_id in self.off_lights_dev_ids:
-                dev = indigo.devices[dev_id]
-                if brightness_differs(dev, 0):
-                    return True
-        return False
+        return result
 
     def save_brightness_changes(self) -> None:
         """
@@ -890,18 +884,7 @@ class Zone(AutoLightsBase):
         if self._checked_out:
             return False
 
-        current_dict = {
-            item["dev_id"]: item["brightness"] for item in self.current_lights_status
-        }
-        target_dict = {
-            item["dev_id"]: item["brightness"]
-            for item in self.target_brightness
-            if item["dev_id"] not in self.exclude_from_lock_dev_ids
-        }
-        self._debug_log(
-            f"lock check: current status = {current_dict}, target status = {target_dict}"
-        )
-        result = current_dict != target_dict
+        result = self.has_brightness_changes(exclude_lock_devices=True)
         self._debug_log(f"has_lock_occurred result: {result}")
 
         if self.locked != result:
