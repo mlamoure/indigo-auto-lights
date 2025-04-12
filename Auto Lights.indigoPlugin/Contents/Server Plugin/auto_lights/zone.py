@@ -84,7 +84,6 @@ class Zone:
         self._config = config
 
         self._last_changed_by = "none"
-        self._locked = False
         self._target_brightness_lock_comparison = None
         self._lock_enabled = True
         self._lock_extension_duration = None
@@ -519,12 +518,12 @@ class Zone:
         Args:
             value (bool): The desired locked state.
         """
-        if value and not self._locked:
+        if value and not self.locked:
             self.lock_expiration = datetime.datetime.now() + datetime.timedelta(
                 minutes=self.lock_duration
             )
 
-        self._locked = value
+        self._lock_expiration = datetime.datetime.now() - datetime.timedelta(minutes=1)
 
     @property
     def lock_expiration_str(self) -> str:
@@ -624,8 +623,7 @@ class Zone:
 
     def reset_lock(self, reason: str):
         """Reset the lock for the zone."""
-        self._lock_expiration = datetime.datetime.now() - datetime.timedelta(minutes=1)
-        self._locked = False
+        self.locked = False
         self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
 
     def has_brightness_changes(self) -> bool:
