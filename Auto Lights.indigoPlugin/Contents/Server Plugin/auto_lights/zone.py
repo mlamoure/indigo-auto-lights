@@ -452,17 +452,21 @@ class Zone:
         self._lighting_periods = value
 
     @property
-    def last_changed(self) -> datetime.datetime:
-        device_last_changed = datetime.datetime(1900, 1, 1)
-        if (
-            self.presence_dev_id is not None
-            and indigo.devices[self.presence_dev_id].lastChanged > device_last_changed
-        ):
-            device_last_changed = indigo.devices[self.presence_dev_id].lastChanged
+    def last_changed_device(self) -> indigo.Device:
+        """Returns the indigo.Device with the most recent lastChanged value."""
+        latest_device = None
+        latest_time = datetime.datetime(1900, 1, 1)
+        for dev_id in self.presence_dev_ids:
+            dev = indigo.devices[dev_id]
+            if dev.lastChanged > latest_time:
+                latest_time = dev.lastChanged
+                latest_device = dev
         for dev_id in self.luminance_dev_ids:
-            if indigo.devices[dev_id].lastChanged > device_last_changed:
-                device_last_changed = indigo.devices[dev_id].lastChanged
-        return device_last_changed
+            dev = indigo.devices[dev_id]
+            if dev.lastChanged > latest_time:
+                latest_time = dev.lastChanged
+                latest_device = dev
+        return latest_device
 
     @property
     def check_out_var(self) -> indigo.Variable:
