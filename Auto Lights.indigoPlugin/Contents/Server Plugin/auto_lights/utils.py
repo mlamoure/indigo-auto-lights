@@ -92,7 +92,7 @@ def send_to_indigo(
                         logger.info(f"{action_description} '{device.name}'")
                     else:
                         logger.info(
-                            f"{action_description} brightness for '{device.name}' "
+                            f"    {action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {desired_brightness}%"
                         )
 
@@ -112,14 +112,14 @@ def send_to_indigo(
                         desired_brightness = desired_brightness == 100
 
                     if device.onState and not desired_brightness:
-                        action_description = "    turning off"
+                        action_description = "turning off"
                         indigo.device.turnOff(device_id, delay=0)
                     elif not device.onState and desired_brightness:
-                        action_description = "    turning on"
+                        action_description = "turning on"
                         indigo.device.turnOn(device_id, delay=0)
 
                     if action_description:
-                        logger.info(f"{action_description} '{device.name}'")
+                        logger.info(f"    {action_description} '{device.name}'")
 
                 time.sleep(pause_between_actions)
                 device = indigo.devices[device_id]
@@ -128,7 +128,7 @@ def send_to_indigo(
             elif iteration_counter % 4 == 0:
                 logger.info(
                     f"    .... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
-                    f"    Max additional wait time: {remaining_wait} more seconds."
+                    f"         Max additional wait time: {remaining_wait} more seconds."
                 )
                 check_interval = 2.0
                 time.sleep(check_interval)
