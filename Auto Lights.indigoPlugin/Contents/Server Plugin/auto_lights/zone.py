@@ -365,7 +365,7 @@ class Zone:
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
         if not self.lighting_periods:
-            self.logger.info(f"Zone '{self._name}': no active lighting periods.")
+            self._debug(f"no active lighting periods.")
             return None
 
         for period in self.lighting_periods:
@@ -648,6 +648,7 @@ class Zone:
         action_reason = ""
 
         self._debug(f"calculate_target_brightness called")
+
         if self.current_lighting_period is None:
             self._debug(f"no lighting periods available")
             return "No lighting periods available"
