@@ -702,19 +702,29 @@ class Zone:
     def save_brightness_changes(self) -> None:
         """
         Apply and confirm the target brightness changes for this zone's devices.
+        
+        This method updates devices based on their target brightness settings.
+        For devices that should be off, it sends an off command.
+        For on devices, it looks up the intended brightness value and sends the update.
+        If a device lacks a corresponding target, a warning is logged.
         """
+        # If all devices are targeted to be off, process off-lights first.
         if self.target_brightness_all_off:
             for dev_id in self.off_lights_dev_ids:
+                self._debug_log(f"Setting device {dev_id} off as per target_brightness_all_off")
                 self._send_to_indigo(dev_id, 0)
 
-        for idx, dev_id in enumerate(self.on_lights_dev_ids):
-            dev_target = None
-            for target_brightness in self.target_brightness:
-                if target_brightness["dev_id"] == dev_id:
-                    dev_target = target_brightness["target_brightness"]
+        # Build a mapping from device ID to its target brightness for quick lookup.
+        target_map = {item["dev_id"]: item["target_brightness"] for item in self.target_brightness}
 
-            if dev_target is not None:
-                self._send_to_indigo(dev_id, dev_target)
+        # Process on-lights devices using the target brightness mapping.
+        for dev_id in self.on_lights_dev_ids:
+            target_value = target_map.get(dev_id)
+            if target_value is not None:
+                self._debug_log(f"Setting device {dev_id} brightness to {target_value}")
+                self._send_to_indigo(dev_id, target_value)
+            else:
+                self.logger.warning(f"No target brightness found for device {dev_id}. Skipping update.")
 
     def write_debug_output(self, config) -> str:
         """
