@@ -137,13 +137,11 @@ class AutoLightsAgent:
 
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
                     lock_extension_line = "\n  lock_extension_duration: {} minutes".format(zone.lock_extension_duration) if zone.extend_lock_when_active else ""
-                    self.logger.info(
-                        f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'.\n"
-                        f"Lock Details:\n"
-                        f"  lock_duration: {zone.lock_duration} minutes\n"
-                        f"  lock_expiration: {zone.lock_expiration_str}\n"
-                        f"  extend_lock_when_active: {zone.extend_lock_when_active}{lock_extension_line}"
-                    )
+                    self.logger.info(f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'.")
+                    self.logger.info("Lock Details:")
+                    self.logger.info(f"  lock_duration: {zone.lock_duration} minutes")
+                    self.logger.info(f"  lock_expiration: {zone.lock_expiration_str}")
+                    self.logger.info(f"  extend_lock_when_active: {zone.extend_lock_when_active}{lock_extension_line}")
                     processed.append(zone)
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if self.process_zone(zone):
