@@ -205,8 +205,15 @@ class Zone:
 
     @property
     def last_changed_by(self) -> str:
-        """Returns the identifier of the last entity that changed the zone's state."""
-        return self._last_changed_by
+        """Returns the name of the device with the most recent lastChanged value."""
+        latest_time = datetime.datetime(1900, 1, 1)
+        latest_name = "none"
+        for dev_id in self.on_lights_dev_ids + self.off_lights_dev_ids + self.luminance_dev_ids + self.presence_dev_ids:
+            device = indigo.devices[dev_id]
+            if device.lastChanged > latest_time:
+                latest_time = device.lastChanged
+                latest_name = device.name
+        return latest_name
 
     @property
     def exclude_from_lock_dev_ids(self) -> List[int]:
