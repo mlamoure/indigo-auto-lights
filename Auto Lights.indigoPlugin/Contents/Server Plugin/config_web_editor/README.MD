@@ -22,10 +22,10 @@ The basic functions of Auto Lights is:
 
 More advanced features:
 
-* When it's detected that someone changed the lighting state for a Zone, Auto Lights places that Zone in a lock, so that
+* When it's detected that someone changed the lighting state for a Zone, Auto Lights places that Zone in
+  a [lock](#locks), so that
   it will not override the change from the user. Locks are time-based, and can be extended based on persistent presence
   until the room is empty again.
-*
 * Optionally, a luminance device can be defined, with a minimum luminance setting. So the logic becomes: If Presence
   while Dark -> Turn on the lights.
 * For dimmer devices, Auto Lights can optionally set the brightness to a % based on the current luminance level of the
@@ -39,6 +39,8 @@ have a motion sensor, you can create a threshhold timer that merges the state of
 assuming you have a IP-enabled TV that you can use to detect activity or use).
 
 # Lighting Periods
+
+# Locks
 
 # Remaining to do
 
