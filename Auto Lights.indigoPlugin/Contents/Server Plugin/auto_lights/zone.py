@@ -85,7 +85,6 @@ class Zone:
         self._config = config
 
         self._last_changed_by = "none"
-        self._target_brightness_lock_comparison = None
         self._lock_enabled = True
         self._lock_extension_duration = None
 
@@ -361,16 +360,14 @@ class Zone:
 
         if isinstance(value, list):
             for value_item in value:
-                for dev_id in self.on_lights_dev_ids:
-                    if value_item[0] == dev_id:
-                        bright = (
-                            dev_id,
-                            self._normalize_dev_target_brightness(
-                                dev_id, value_item[1]
-                            ),
-                        )
+                bright = {
+                    "dev_id": value_item["dev_id"],
+                    "brightness": self._normalize_dev_target_brightness(
+                        value_item["dev_id"], value_item["target_brightness"]
+                    ),
+                }
 
-                        self._target_brightness.append(bright)
+                self._target_brightness.append(bright)
         else:
             force_off = (isinstance(value, bool) and not value) or value == 0
             if force_off:
@@ -392,6 +389,10 @@ class Zone:
         self._debug_log(
             f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
         )
+
+    @property
+    def _target_brightness_lock_comparison(self) -> List:
+        pass
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
