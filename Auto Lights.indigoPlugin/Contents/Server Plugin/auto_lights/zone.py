@@ -39,6 +39,7 @@ class Zone:
         self._enabled_var_id = None
 
         self._lighting_periods = []
+        self._current_lighting_period = None
 
         # Device lists for lights
         self._on_lights_dev_ids = []
@@ -222,6 +223,8 @@ class Zone:
 
     @property
     def minimum_luminance(self) -> int:
+        if self._minimum_luminance is None:
+            return 20000
         return self._minimum_luminance
 
     @minimum_luminance.setter
@@ -369,6 +372,8 @@ class Zone:
             if period.is_active_period():
                 self._current_lighting_period = period
                 break
+
+        return self._current_lighting_period
 
     @property
     def lighting_periods(self) -> List[LightingPeriod]:
@@ -642,6 +647,7 @@ class Zone:
         """
         action_reason = ""
 
+        self._debug(f"calculate_target_brightness called")
         if self.current_lighting_period is None:
             self._debug(f"no lighting periods available")
             return "No lighting periods available"

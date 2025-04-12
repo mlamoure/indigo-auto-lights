@@ -115,6 +115,7 @@ class AutoLightsConfig:
         self.from_config_dict(data)
 
     def from_config_dict(self, data: dict) -> None:
+        self.logger.debug("from_config_dict called")
         # Process plugin_config
         plugin_config = data.get("plugin_config", {})
         for key, value in plugin_config.items():
@@ -147,6 +148,8 @@ class AutoLightsConfig:
 
         for zone in self._zones:
             zone.calculate_target_brightness()
+
+        self.logger.debug("from_config_dict finished")
 
     @property
     def zones(self) -> List[Zone]:
