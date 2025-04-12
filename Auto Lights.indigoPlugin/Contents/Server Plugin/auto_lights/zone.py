@@ -22,14 +22,14 @@ class Zone:
 
     This class manages configuration, device lists, lighting periods,
     and state information used to control the lighting behavior for a zone.
-    
+
     It includes methods and properties to:
       - Load and apply configuration from a dictionary.
       - Compute and update target brightness levels.
       - Determine lock status based on expiration times.
       - Process sensor data and presence detection.
       - Interface with Indigo devices via utility functions.
-    
+
     Attributes:
         _name (str): Name of the zone.
         _enabled (bool): Indicates if the zone is active.
@@ -520,7 +520,9 @@ class Zone:
             value (bool): The desired locked state.
         """
         if value and not self._locked:
-            self.lock_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_duration)
+            self.lock_expiration = datetime.datetime.now() + datetime.timedelta(
+                minutes=self.lock_duration
+            )
 
         self._locked = value
 
@@ -740,7 +742,9 @@ class Zone:
                 )
                 new_tb = [pct_delta] * len(self._on_lights_dev_ids)
                 self.target_brightness = new_tb
-                self._debug_log(f"Calculated target brightness: {self.target_brightness}")
+                self._debug_log(
+                    f"Calculated target brightness: {self.target_brightness}"
+                )
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
             action_reason = "presence is not detected"
