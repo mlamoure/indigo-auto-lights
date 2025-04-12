@@ -349,6 +349,7 @@ class Zone:
         # Reset internal state lists.
         self._target_brightness = []
         self._target_brightness_lock_comparison = []
+        force_off = False
 
         def normalize(dev_id, val):
             return self._normalize_dev_target_brightness(indigo.devices[dev_id], val)
@@ -389,9 +390,13 @@ class Zone:
             if not force_off:
                 for dev_id in self.off_lights_dev_ids:
                     self._target_brightness.append(off_light_state(dev_id))
-        for dev_id in self.off_lights_dev_ids:
-            if dev_id not in self.exclude_from_lock_dev_ids:
-                self._target_brightness_lock_comparison.append(off_light_state(dev_id))
+
+        if not force_off:
+            for dev_id in self.off_lights_dev_ids:
+                if dev_id not in self.exclude_from_lock_dev_ids:
+                    self._target_brightness_lock_comparison.append(
+                        off_light_state(dev_id)
+                    )
         self._debug_log(
             f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
         )
@@ -513,22 +518,28 @@ class Zone:
     @locked.setter
     def locked(self, value: bool) -> None:
         """
-        Sets the locked state for the zone. If setting to True, updates the lock expiration time 
-        and schedules a background event to process the lock expiration. If setting to False, cancels any 
+        Sets the locked state for the zone. If setting to True, updates the lock expiration time
+        and schedules a background event to process the lock expiration. If setting to False, cancels any
         pending lock timers and unlocks the zone.
-    
+
         Args:
             value (bool): The desired locked state.
         """
         if value:
-            new_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_duration)
+            new_expiration = datetime.datetime.now() + datetime.timedelta(
+                minutes=self.lock_duration
+            )
             self.lock_expiration = new_expiration
-            self.logger.info(f"Zone '{self._name}' locked until {self.lock_expiration_str}")
+            self.logger.info(
+                f"Zone '{self._name}' locked until {self.lock_expiration_str}"
+            )
         else:
             if self._lock_timer is not None:
                 self._lock_timer.cancel()
                 self._lock_timer = None
-            self._lock_expiration = datetime.datetime.now() - datetime.timedelta(minutes=1)
+            self._lock_expiration = datetime.datetime.now() - datetime.timedelta(
+                minutes=1
+            )
             self.logger.info(f"Zone '{self._name}' unlocked")
 
     @property
@@ -544,11 +555,14 @@ class Zone:
     @lock_expiration.setter
     def lock_expiration(self, value: Union[str, datetime.datetime]) -> None:
         if isinstance(value, str):
-            self._lock_expiration = datetime.datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+            self._lock_expiration = datetime.datetime.strptime(
+                value, "%Y-%m-%d %H:%M:%S"
+            )
         else:
             self._lock_expiration = value
         # Schedule a background event to process the expiration of the lock.
         import threading
+
         now = datetime.datetime.now()
         delay = (self._lock_expiration - now).total_seconds()
         if delay > 0:
@@ -790,12 +804,18 @@ class Zone:
         Otherwise, unlocks the zone.
         """
         if self.extend_lock_when_active and self.has_presence_detected():
-            new_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_extension_duration)
+            new_expiration = datetime.datetime.now() + datetime.timedelta(
+                minutes=self.lock_extension_duration
+            )
             self.lock_expiration = new_expiration
-            self.logger.info(f"Lock extended for zone '{self._name}' until {self.lock_expiration_str}")
+            self.logger.info(
+                f"Lock extended for zone '{self._name}' until {self.lock_expiration_str}"
+            )
         else:
             self.locked = False
-            self.logger.info(f"Lock expired for zone '{self._name}' and zone is now unlocked")
+            self.logger.info(
+                f"Lock expired for zone '{self._name}' and zone is now unlocked"
+            )
 
     def has_variable(self, var_id: int) -> bool:
         """
