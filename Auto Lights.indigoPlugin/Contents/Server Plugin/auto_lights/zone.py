@@ -325,11 +325,21 @@ class Zone:
         return self._target_brightness
 
     @staticmethod
-    def _normalize_dev_target_brightness(dev, brightness_value) -> Union[int, bool]:
+    def _normalize_dev_target_brightness(
+        dev_id, brightness_value=None
+    ) -> Union[int, bool]:
         """
         Determine the correct brightness setting for the given device
         based on the input brightness_value.
         """
+        dev = indigo.devices[dev_id]
+
+        if brightness_value is None:
+            if isinstance(dev, indigo.DimmerDevice):
+                brightness_value = dev.brightness
+            else:
+                brightness_value = dev.onState
+
         # For dimmer devices:
         if isinstance(dev, indigo.DimmerDevice):
             # If numeric, cap it at 100; otherwise, allow bool/other to pass through
@@ -348,55 +358,37 @@ class Zone:
     def target_brightness(self, value: Union[list, int, bool]) -> None:
         # Reset internal state lists.
         self._target_brightness = []
-        self._target_brightness_lock_comparison = []
-        force_off = False
-
-        def normalize(dev_id, val):
-            return self._normalize_dev_target_brightness(indigo.devices[dev_id], val)
-
-        def off_light_state(dev_id):
-            dev = indigo.devices[dev_id]
-            if isinstance(dev, indigo.DimmerDevice):
-                return dev.brightness
-            elif isinstance(dev, indigo.RelayDevice):
-                return dev.onState
-            elif "brightness" in dev.states:
-                return int(dev.states["brightness"])
-            return False
 
         if isinstance(value, list):
-            if len(value) != len(self.on_lights_dev_ids):
-                raise ValueError(
-                    "Length of brightness list must match the total number of devices."
-                )
-            for idx, val in enumerate(value):
-                dev_id = self.on_lights_dev_ids[idx]
-                bright = normalize(dev_id, val)
-                self._target_brightness.append(bright)
-                if dev_id not in self.exclude_from_lock_dev_ids:
-                    self._target_brightness_lock_comparison.append(bright)
+            for value_item in value:
+                for dev_id in self.on_lights_dev_ids:
+                    if value_item[0] == dev_id:
+                        bright = (
+                            dev_id,
+                            self._normalize_dev_target_brightness(
+                                dev_id, value_item[1]
+                            ),
+                        )
+
+                        self._target_brightness.append(bright)
         else:
             force_off = (isinstance(value, bool) and not value) or value == 0
-            lights_dev_ids = (
-                self.on_lights_dev_ids + self.off_lights_dev_ids
-                if force_off
-                else self.on_lights_dev_ids
-            )
+            if force_off:
+                lights_dev_ids = self.on_lights_dev_ids + self.off_lights_dev_ids
+            else:
+                lights_dev_ids = self.on_lights_dev_ids
+
             for dev_id in lights_dev_ids:
-                bright = normalize(dev_id, value)
+                bright = (dev_id, self._normalize_dev_target_brightness(dev_id, value))
+
                 self._target_brightness.append(bright)
-                if dev_id not in self.exclude_from_lock_dev_ids:
-                    self._target_brightness_lock_comparison.append(bright)
+
             if not force_off:
                 for dev_id in self.off_lights_dev_ids:
-                    self._target_brightness.append(off_light_state(dev_id))
+                    bright = (dev_id, self._normalize_dev_target_brightness(dev_id))
 
-        if not force_off:
-            for dev_id in self.off_lights_dev_ids:
-                if dev_id not in self.exclude_from_lock_dev_ids:
-                    self._target_brightness_lock_comparison.append(
-                        off_light_state(dev_id)
-                    )
+                    self._target_brightness.append(bright)
+
         self._debug_log(
             f"Set target_brightness to {self._target_brightness} with lock comparison {self._target_brightness_lock_comparison}"
         )
