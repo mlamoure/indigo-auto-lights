@@ -298,22 +298,6 @@ def save_config(config_data):
         json.dump(config_data, f, indent=2)
 
 
-def auto_backup_config():
-    import shutil, glob
-
-    auto_backup_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups"
-    )
-    os.makedirs(auto_backup_dir, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    backup_file = os.path.join(auto_backup_dir, f"auto_backup_{timestamp}.json")
-    config_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
-    )
-    shutil.copy2(config_path, backup_file)
-    backups = sorted(glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")))
-    if len(backups) > 25:
-        os.remove(backups[0])
 
 
 @app.route("/plugin_config", methods=["GET", "POST"])
@@ -323,7 +307,6 @@ def plugin_config():
     PluginFormClass = generate_form_class_from_schema(plugin_schema)
     plugin_form = PluginFormClass(data=config_data.get("plugin_config", {}))
     if request.method == "POST":
-        auto_backup_config()
         updated_config = {
             field_name: field.data
             for field_name, field in plugin_form._fields.items()
@@ -368,7 +351,6 @@ def zones():
     zones = config_data.get("zones", [])
     zones_forms = [ZonesFormClass(data=zone) for zone in zones]
     if request.method == "POST":
-        auto_backup_config()
         updated_zones = []
         for zone_form in zones_forms:
             zone_data = {
@@ -491,7 +473,6 @@ def lighting_period_config(period_id):
         delattr(LightingPeriodFormClass, "id")
     lighting_period_form = LightingPeriodFormClass(data=period)
     if request.method == "POST":
-        auto_backup_config()
         period_data = {
             field_name: field.data
             for field_name, field in lighting_period_form._fields.items()
