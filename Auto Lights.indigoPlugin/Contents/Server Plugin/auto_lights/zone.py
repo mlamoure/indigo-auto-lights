@@ -81,6 +81,7 @@ class Zone:
         self._unlock_when_no_presence = True
 
         self._lock_expiration = None
+        self._lock_timer = None
         self._config = config
 
         self._last_changed_by = "none"
@@ -538,11 +539,18 @@ class Zone:
     @lock_expiration.setter
     def lock_expiration(self, value: Union[str, datetime.datetime]) -> None:
         if isinstance(value, str):
-            self._lock_expiration = datetime.datetime.strptime(
-                value, "%Y-%m-%d %H:%M:%S"
-            )
+            self._lock_expiration = datetime.datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
         else:
             self._lock_expiration = value
+        # Schedule a background event to process the expiration of the lock.
+        import threading
+        now = datetime.datetime.now()
+        delay = (self._lock_expiration - now).total_seconds()
+        if delay > 0:
+            if self._lock_timer:
+                self._lock_timer.cancel()
+            self._lock_timer = threading.Timer(delay, self.process_expired_lock)
+            self._lock_timer.start()
 
     @property
     def target_brightness_all_off(self) -> bool:
@@ -768,6 +776,21 @@ class Zone:
             result = ""
 
         return result
+
+    def process_expired_lock(self) -> None:
+        """
+        Processes the expiration of the zone lock. If the zone is still locked,
+        and extend_lock_when_active is True and presence is detected,
+        extends the lock expiration by lock_extension_duration minutes.
+        Otherwise, unlocks the zone.
+        """
+        if self.extend_lock_when_active and self.has_presence_detected():
+            new_expiration = datetime.datetime.now() + datetime.timedelta(minutes=self.lock_extension_duration)
+            self.lock_expiration = new_expiration
+            self.logger.info(f"Lock extended for zone '{self._name}' until {self.lock_expiration_str}")
+        else:
+            self.locked = False
+            self.logger.info(f"Lock expired for zone '{self._name}' and zone is now unlocked")
 
     def has_variable(self, var_id: int) -> bool:
         """
