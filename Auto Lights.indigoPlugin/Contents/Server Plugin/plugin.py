@@ -137,9 +137,22 @@ class Plugin(indigo.PluginBase):
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
             and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
         ):
-            self.logger.info(
-                f"Starting the configuration web server... Visit http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
-            )
+            if self._web_config_bind_ip == "0.0.0.0":
+                try:
+                    external_ip = requests.get("https://api.ipify.org").text
+                except Exception:
+                    external_ip = "external_ip"
+                self.logger.info(
+                    f"Starting the configuration web server... Visit http://localhost:{self._web_config_bind_port} (local access) or http://{external_ip}:{self._web_config_bind_port} (external access)"
+                )
+            elif self._web_config_bind_ip == "127.0.0.1":
+                self.logger.info(
+                    f"Starting the configuration web server... Visit http://127.0.0.1:{self._web_config_bind_port} or http://localhost:{self._web_config_bind_port} (local access only)"
+                )
+            else:
+                self.logger.info(
+                    f"Starting the configuration web server... Visit http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
+                )
             self._web_server_thread = threading.Thread(
                 target=run_flask_app,
                 args=(self._web_config_bind_ip, self._web_config_bind_port),
