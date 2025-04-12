@@ -708,14 +708,13 @@ class Zone:
                 self._send_to_indigo(dev_id, 0)
 
         for idx, dev_id in enumerate(self.on_lights_dev_ids):
-            try:
-                dev_target = self.target_brightness[idx]
-            except IndexError:
-                indigo.server.log(
-                    f"Warning: Missing target brightness for device with ID {dev_id}"
-                )
-                continue
-            self._send_to_indigo(dev_id, dev_target)
+            dev_target = None
+            for target_brightness in self.target_brightness:
+                if target_brightness["dev_id"] == dev_id:
+                    dev_target = target_brightness["target_brightness"]
+
+            if dev_target is not None:
+                self._send_to_indigo(dev_id, dev_target)
 
     def write_debug_output(self, config) -> str:
         """
