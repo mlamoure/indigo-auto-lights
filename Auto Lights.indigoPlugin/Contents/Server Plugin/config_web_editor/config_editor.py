@@ -40,18 +40,51 @@ class WebConfigEditor:
         if os.path.exists(self.config_file):
             os.makedirs(self.backup_dir, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            backup_file = os.path.join(
-                self.backup_dir, f"manual_backup_{timestamp}.json"
-            )
+            backup_file = os.path.join(self.backup_dir, f"manual_backup_{timestamp}.json")
             shutil.copy2(self.config_file, backup_file)
-            backups = sorted(
-                glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json"))
-            )
+            backups = sorted(glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json")))
             while len(backups) > 20:
                 os.remove(backups[0])
                 backups.pop(0)
         with open(self.config_file, "w") as f:
             json.dump(config_data, f, indent=2)
+
+    def create_manual_backup(self):
+        if os.path.exists(self.config_file):
+            os.makedirs(self.backup_dir, exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            backup_file = os.path.join(self.backup_dir, f"manual_backup_{timestamp}.json")
+            shutil.copy2(self.config_file, backup_file)
+            backups = sorted(glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json")))
+            while len(backups) > 20:
+                os.remove(backups[0])
+                backups.pop(0)
+
+    def list_manual_backups(self):
+        return [os.path.basename(p) for p in glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json"))]
+
+    def list_auto_backups(self):
+        return sorted(glob.glob(os.path.join(self.auto_backup_dir, "auto_backup_*.json")), reverse=True)
+
+    def restore_backup(self, backup_type, backup_file):
+        if backup_type == "manual":
+            backup_path = os.path.join(self.backup_dir, backup_file)
+        else:
+            backup_path = os.path.join(self.auto_backup_dir, backup_file)
+        if os.path.exists(backup_path):
+            shutil.copy2(backup_path, self.config_file)
+            return True
+        return False
+
+    def delete_backup(self, backup_type, backup_file):
+        if backup_type == "manual":
+            backup_path = os.path.join(self.backup_dir, backup_file)
+        else:
+            backup_path = os.path.join(self.auto_backup_dir, backup_file)
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+            return True
+        return False
 
     def refresh_indigo_caches(self):
         while True:

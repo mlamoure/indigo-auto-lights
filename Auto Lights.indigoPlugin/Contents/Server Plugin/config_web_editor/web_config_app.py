@@ -637,64 +637,38 @@ def config_backup():
     GET: Lists available manual and automatic backups.
     POST: Handles creation, restoration, or deletion of selected backups.
     """
-    import shutil, glob
-
-    config_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
-    manual_backup_dir = os.path.join(config_dir, "backups")
-    auto_backup_dir = os.path.join(config_dir, "auto_backups")
-    os.makedirs(manual_backup_dir, exist_ok=True)
-    os.makedirs(auto_backup_dir, exist_ok=True)
+    config_editor = current_app.config["config_editor"]
 
     if request.method == "POST":
         action = request.form.get("action")
         backup_type = request.form.get("backup_type")
         backup_file = request.form.get("backup_file")
-        config_path = os.path.join(config_dir, "auto_lights_conf.json")
 
         if action == "create_manual":
-            dest = os.path.join(
-                manual_backup_dir,
-                f"manual_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.json",
-            )
-            shutil.copy2(config_path, dest)
+            config_editor.create_manual_backup()
             flash("Manual backup created.")
 
         elif action == "restore":
-            if backup_file:
-                src = os.path.join(
-                    manual_backup_dir if backup_type == "manual" else auto_backup_dir,
-                    backup_file,
-                )
-                shutil.copy2(src, config_path)
+            if backup_file and config_editor.restore_backup(backup_type, backup_file):
                 flash("Backup restored.")
+            else:
+                flash("Error restoring backup.")
 
         elif action == "delete":
-            if backup_file:
-                path_to_delete = os.path.join(
-                    manual_backup_dir if backup_type == "manual" else auto_backup_dir,
-                    backup_file,
-                )
-                if os.path.exists(path_to_delete):
-                    os.remove(path_to_delete)
-                    flash("Backup deleted.")
+            if backup_file and config_editor.delete_backup(backup_type, backup_file):
+                flash("Backup deleted.")
+            else:
+                flash("Error deleting backup.")
 
         return redirect(url_for("config_backup"))
 
-    manual_backups = [
-        os.path.basename(p)
-        for p in glob.glob(os.path.join(manual_backup_dir, "*.json"))
-    ]
-    auto_backups_files = sorted(
-        glob.glob(os.path.join(auto_backup_dir, "auto_backup_*.json")), reverse=True
-    )
+    manual_backups = config_editor.list_manual_backups()
+    auto_backups_files = config_editor.list_auto_backups()
     auto_backups = []
     for ab in auto_backups_files:
-        desc = "Automatic backup"
-        auto_backups.append({"filename": os.path.basename(ab), "description": desc})
+        auto_backups.append({"filename": os.path.basename(ab), "description": "Automatic backup"})
 
-    return render_template(
-        "config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups
-    )
+    return render_template("config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups)
 
 
 @app.route("/shutdown", methods=["POST"])
