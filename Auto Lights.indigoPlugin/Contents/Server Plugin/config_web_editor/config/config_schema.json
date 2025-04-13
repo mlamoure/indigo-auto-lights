@@ -40,21 +40,21 @@
                 "title": "Variable ID",
                 "tooltip": "Identifier for the variable."
               },
+              "comparison_type": {
+                "type": "string",
+                "enum": [
+                  "is TRUE (bool)",
+                  "is FALSE (bool)",
+                  "is equal to (str, lower())",
+                  "is not equal to (str, lower())"
+                ],
+                "title": "Comparison Type",
+                "tooltip": "Select the comparison type for the variable."
+              },
               "var_value": {
                 "type": "string",
                 "title": "Variable Value",
                 "tooltip": "Value for the variable."
-              },
-              "comparison_type": {
-                "type": "string",
-                "enum": [
-                  "is TRUE",
-                  "is FALSE",
-                  "is equal to",
-                  "is not equal to"
-                ],
-                "title": "Comparison Type",
-                "tooltip": "Select the comparison type for the variable."
               }
             },
             "required": [
