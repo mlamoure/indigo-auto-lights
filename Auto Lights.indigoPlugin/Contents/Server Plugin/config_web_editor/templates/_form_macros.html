@@ -28,6 +28,10 @@
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-comparison_type" onchange="toggleVarValue(this)">
                   <option value="" {% if not entry.get('comparison_type', '') %}selected="selected"{% endif %}>Select Comparison Type</option>
+                  <option value="is TRUE (bool)" {% if entry.get('comparison_type', '') == "is TRUE (bool)" %}selected="selected"{% endif %}>is TRUE (bool)</option>
+                  <option value="is FALSE (bool)" {% if entry.get('comparison_type', '') == "is FALSE (bool)" %}selected="selected"{% endif %}>is FALSE (bool)</option>
+                  <option value="is equal to (str, lower())" {% if entry.get('comparison_type', '') == "is equal to (str, lower())" %}selected="selected"{% endif %}>is equal to (str, lower())</option>
+                  <option value="is not equal to (str, lower())" {% if entry.get('comparison_type', '') == "is not equal to (str, lower())" %}selected="selected"{% endif %}>is not equal to (str, lower())</option>
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
@@ -70,10 +74,10 @@
                 cmpSelect.name = 'global_behavior_variables-' + rowCount + '-comparison_type';
                 var options = [
                   {value:"", text:"Select Comparison Type"},
-                  {value:"is TRUE", text:"is TRUE"},
-                  {value:"is FALSE", text:"is FALSE"},
-                  {value:"is equal to", text:"is equal to"},
-                  {value:"is not equal to", text:"is not equal to"}
+                  {value:"is TRUE (bool)", text:"is TRUE (bool)"},
+                  {value:"is FALSE (bool)", text:"is FALSE (bool)"},
+                  {value:"is equal to (str, lower())", text:"is equal to (str, lower())"},
+                  {value:"is not equal to (str, lower())", text:"is not equal to (str, lower())"}
                 ];
                 options.forEach(function(opt){
                   var option = document.createElement('option');
