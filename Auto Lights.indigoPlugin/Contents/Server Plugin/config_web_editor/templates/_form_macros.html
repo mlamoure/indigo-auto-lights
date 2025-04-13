@@ -198,37 +198,37 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    document.querySelectorAll('.create-new-var-btn').forEach(function(btn){
-       // Remove disabled attribute if still present
-       btn.removeAttribute('disabled');
-       btn.addEventListener('click', function(){
-            var fieldName = this.getAttribute('data-field-name');
-            var varName = prompt("Enter the new variable name:");
-            if (!varName) {
-                return;
-            }
-            // Use server-rendered environment variables
-            var apiUrl = "{{ os.environ['INDIGO_API_URL'] }}";
-            var apiKey = "{{ os.environ['INDIGO_API_KEY'] }}";
-            fetch(apiUrl + '/message/com.vtmikel.autolights/create_variable', {
-               method: 'POST',
-               headers: {
-                 "Authorization": 'Bearer ' + apiKey,
-                 "Content-Type": "application/json"
-               },
-               body: JSON.stringify({ var_name: varName })
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert("Variable created with ID: " + data.var_id);
-                // Optionally, trigger a refresh of the variable list here.
-            })
-            .catch(err => {
-                console.error("Error creating variable", err);
-                alert("Error creating variable");
-            });
-       });
-    });
+  document.querySelectorAll('.create-new-var-btn').forEach(function(btn){
+     btn.removeAttribute('disabled');
+     btn.addEventListener('click', function(){
+          var fieldName = this.getAttribute('data-field-name');
+          var varName = prompt("Enter the new variable name:");
+          if (!varName) return;
+          
+          // Post the new variable creation request to the local web app endpoint
+          fetch("/create_new_variable", {
+             method: 'POST',
+             headers: {
+               "Content-Type": "application/json"
+             },
+             body: JSON.stringify({ var_name: varName })
+          })
+          .then(response => {
+              if (!response.ok) {
+                 throw new Error("Request failed with status " + response.status);
+              }
+              return response.json();
+          })
+          .then(data => {
+              alert("Variable created with ID: " + data.var_id);
+              // Optionally, refresh the variable list here.
+          })
+          .catch(err => {
+              console.error("Error creating variable", err);
+              alert("Error creating variable");
+          });
+     });
+  });
 });
 </script>
 <script>
