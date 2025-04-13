@@ -295,7 +295,7 @@
             "type": "integer",
             "default": -1,
             "title": "Limit Brightness",
-            "tooltip": "Brightness will be set to a maximum of this value for any dimmers during this period."
+            "tooltip": "Brightness will be set to a maximum of this value for any dimmers during this period.  Null or -1 to disable."
           }
         },
         "required": [
