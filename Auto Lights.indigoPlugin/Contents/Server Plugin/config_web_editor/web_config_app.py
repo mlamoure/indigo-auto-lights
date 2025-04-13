@@ -5,7 +5,6 @@ All functions and major code blocks are documented for clarity and PEP8 complian
 """
 
 import glob
-
 # --- Standard library imports (alphabetical) ---
 import json
 import os
@@ -29,7 +28,6 @@ from wtforms import (
 from wtforms.validators import DataRequired
 
 from .config_editor import WebConfigEditor
-
 # --- Local imports ---
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
@@ -712,7 +710,10 @@ def shutdown():
 
 
 def run_flask_app(
-    host: str = "127.0.0.1", port: int = 9500, debug: bool = False, config_file: str = None
+    host: str = "127.0.0.1",
+    port: int = 9500,
+    debug: bool = False,
+    config_file: str = None,
 ) -> None:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     if config_file is None:
@@ -720,7 +721,7 @@ def run_flask_app(
         config_file = os.path.join(config_dir, "auto_lights_conf.json")
     else:
         config_dir = os.path.dirname(os.path.abspath(config_file))
-    schema_file = os.path.join(config_dir, "config_schema.json")
+    schema_file = os.path.join(current_dir, "config/config_schema.json")
     backup_dir = os.path.join(config_dir, "backups")
     auto_backup_dir = os.path.join(config_dir, "auto_backups")
     config_editor = WebConfigEditor(

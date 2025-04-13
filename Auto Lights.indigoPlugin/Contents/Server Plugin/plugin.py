@@ -162,7 +162,12 @@ class Plugin(indigo.PluginBase):
             )
             self._web_server_thread = threading.Thread(
                 target=run_flask_app,
-                args=(self._web_config_bind_ip, self._web_config_bind_port, False, self._config_file_str),
+                args=(
+                    self._web_config_bind_ip,
+                    self._web_config_bind_port,
+                    False,
+                    self._config_file_str,
+                ),
                 daemon=True,
             )
             self._web_server_thread.start()
@@ -222,7 +227,7 @@ class Plugin(indigo.PluginBase):
         return menu_items
 
     def _init_config_and_agent(self: indigo.PluginBase):
-        confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
+        confg_file_empty_str = "config_web_editor/config/auto_lights_conf_empty.json"
         config_dir = os.path.dirname(self._config_file_str)
         if not os.path.exists(config_dir):
             os.makedirs(config_dir, exist_ok=True)
