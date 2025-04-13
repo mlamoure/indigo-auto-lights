@@ -4,7 +4,6 @@ It provides routes for editing plugin configuration, zones, lighting periods, an
 All functions and major code blocks are documented for clarity and PEP8 compliance.
 """
 
-import glob
 # --- Standard library imports (alphabetical) ---
 import json
 import os
@@ -15,7 +14,16 @@ from datetime import datetime
 
 # --- Third-party imports ---
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, current_app, send_file
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    current_app,
+    send_file,
+)
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -259,37 +267,6 @@ def generate_form_class_from_schema(schema):
             csrf = False
 
     return type("DynamicFormNoCSRF", (DynamicFormNoCSRF,), attrs)
-
-
-def save_config(config_data):
-    """
-    Saves the auto lights configuration to the JSON file. Before saving,
-    creates a timestamped backup if an existing config is found, and prunes
-    older backups beyond 20.
-
-    Args:
-        config_data (dict): The configuration to be saved.
-    """
-    config_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
-    )
-    if os.path.exists(config_path):
-        backup_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "config", "auto_backups"
-        )
-        os.makedirs(backup_dir, exist_ok=True)
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        backup_file = os.path.join(backup_dir, f"auto_backup_{timestamp}.json")
-
-        shutil.copy2(config_path, backup_file)
-
-        backups = sorted(glob.glob(os.path.join(backup_dir, "auto_backup_*.json")))
-        while len(backups) > 20:
-            os.remove(backups[0])
-            backups.pop(0)
-
-    with open(config_path, "w") as f:
-        json.dump(config_data, f, indent=2)
 
 
 @app.route("/plugin_config", methods=["GET", "POST"])
@@ -659,9 +636,13 @@ def config_backup():
                 if backup_type == "manual":
                     backup_path = os.path.join(config_editor.backup_dir, backup_file)
                 else:
-                    backup_path = os.path.join(config_editor.auto_backup_dir, backup_file)
+                    backup_path = os.path.join(
+                        config_editor.auto_backup_dir, backup_file
+                    )
                 if os.path.exists(backup_path):
-                    return send_file(backup_path, as_attachment=True, download_name=backup_file)
+                    return send_file(
+                        backup_path, as_attachment=True, download_name=backup_file
+                    )
                 else:
                     flash("Backup file not found.")
             else:
@@ -679,9 +660,13 @@ def config_backup():
     auto_backups_files = config_editor.list_auto_backups()
     auto_backups = []
     for ab in auto_backups_files:
-        auto_backups.append({"filename": os.path.basename(ab), "description": "Automatic backup"})
+        auto_backups.append(
+            {"filename": os.path.basename(ab), "description": "Automatic backup"}
+        )
 
-    return render_template("config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups)
+    return render_template(
+        "config_backup.html", manual_backups=manual_backups, auto_backups=auto_backups
+    )
 
 
 @app.route("/shutdown", methods=["POST"])
@@ -695,13 +680,19 @@ def shutdown():
     shutdown_func()
     return "Server shutting down..."
 
+
 @app.route("/download_config", methods=["GET"])
 def download_config():
     """
     Route to download the current configuration file.
     """
     config_editor = current_app.config["config_editor"]
-    return send_file(config_editor.config_file, as_attachment=True, download_name="auto_lights_conf.json")
+    return send_file(
+        config_editor.config_file,
+        as_attachment=True,
+        download_name="auto_lights_conf.json",
+    )
+
 
 @app.route("/upload_config", methods=["POST"])
 def upload_config():
@@ -748,7 +739,9 @@ def run_flask_app(
         config_file, schema_file, backup_dir, auto_backup_dir
     )
     app.config["config_editor"] = config_editor
-    app.jinja_env.globals["get_cached_indigo_variables"] = config_editor.get_cached_indigo_variables
+    app.jinja_env.globals["get_cached_indigo_variables"] = (
+        config_editor.get_cached_indigo_variables
+    )
     try:
         # Initialize caches via config_editor
         config_editor.get_cached_indigo_devices()
