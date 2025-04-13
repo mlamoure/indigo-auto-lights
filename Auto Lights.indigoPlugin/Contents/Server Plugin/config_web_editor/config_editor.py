@@ -11,7 +11,7 @@ from .tools.indigo_api_tools import (
     indigo_get_all_house_devices,
     indigo_get_all_house_variables,
 )
-from .web_config_app import app
+from flask import current_app
 
 
 class WebConfigEditor:
@@ -61,11 +61,11 @@ class WebConfigEditor:
                 with self._cache_lock:
                     self._indigo_devices_cache["data"] = new_devices
                     self._indigo_variables_cache["data"] = new_variables
-                with app.app_context():
-                    app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
+                with current_app.app_context():
+                    current_app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
             except Exception as e:
-                with app.app_context():
-                    app.logger.error(f"Error refreshing caches: {e}")
+                with current_app.app_context():
+                    current_app.logger.error(f"Error refreshing caches: {e}")
             time.sleep(900)  # 15 minutes
 
     def start_cache_refresher(self):
