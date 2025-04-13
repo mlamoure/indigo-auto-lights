@@ -66,20 +66,11 @@ class AutoLightsAgent(AutoLightsBase):
 
         action_reason = ""
 
-        # Check global behavior variables
-        for behavior_var in self._config.global_behavior_variables:
-            var_id = behavior_var.get("var_id")
-            var_value = behavior_var.get("var_value")
-
-            if var_id and var_value:
-                try:
-                    current_value = str(indigo.variables[var_id].value)
-                    if current_value.lower() == var_value.lower():
-                        zone.target_brightness = 0
-                        action_reason = f"global behavior variable {indigo.variables[var_id].name} matches value '{var_value}'"
-                        break
-                except (KeyError, ValueError):
-                    self._debug_log(f"Invalid global behavior variable ID: {var_id}")
+        # Check global behavior variables using has_global_lights_off
+        lights_off, reason = self._config.has_global_lights_off()
+        if lights_off:
+            zone.target_brightness = 0
+            action_reason = reason
 
         # Next, look to the target_brightness
         if not action_reason and zone.current_lighting_period is not None:
