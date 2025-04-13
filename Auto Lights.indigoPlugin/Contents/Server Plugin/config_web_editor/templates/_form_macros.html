@@ -182,7 +182,7 @@
       <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}</label>
       <div style="display:inline-block;">
         {{ field() }}
-        <button type="button" class="create-new-var-btn" data-field-name="{{ field.name }}" disabled>Create New Variable</button>
+        <button type="button" class="create-new-var-btn" data-field-name="{{ field.name }}">Create New Variable</button>
         <button type="button" class="refresh-var-list-btn" data-field-name="{{ field.name }}">Refresh Variable List</button>
       </div>
       <div class="tooltip-info" style="display:none;"></div>
@@ -195,6 +195,42 @@
     </div>
   {% endif %}
 {% endmacro %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.create-new-var-btn').forEach(function(btn){
+       // Remove disabled attribute if still present
+       btn.removeAttribute('disabled');
+       btn.addEventListener('click', function(){
+            var fieldName = this.getAttribute('data-field-name');
+            var varName = prompt("Enter the new variable name:");
+            if (!varName) {
+                return;
+            }
+            // Use server-rendered environment variables
+            var apiUrl = "{{ os.environ['INDIGO_API_URL'] }}";
+            var apiKey = "{{ os.environ['INDIGO_API_KEY'] }}";
+            fetch(apiUrl + '/message/com.vtmikel.autolights/create_variable', {
+               method: 'POST',
+               headers: {
+                 "Authorization": 'Bearer ' + apiKey,
+                 "Content-Type": "application/json"
+               },
+               body: JSON.stringify({ var_name: varName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert("Variable created with ID: " + data.var_id);
+                // Optionally, trigger a refresh of the variable list here.
+            })
+            .catch(err => {
+                console.error("Error creating variable", err);
+                alert("Error creating variable");
+            });
+       });
+    });
+});
+</script>
 <script>
 window.toggleVarValue = function(selectElem) {
   var row = selectElem.closest('tr');
