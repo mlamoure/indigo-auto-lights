@@ -26,7 +26,7 @@
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
-                <select name="global_behavior_variables-{{ idx }}-comparison_type">
+                <select name="global_behavior_variables-{{ idx }}-comparison_type" onchange="toggleVarValue(this)">
                   <option value="" {% if not entry.get('comparison_type', '') %}selected="selected"{% endif %}>Select Comparison Type</option>
                   <option value="is TRUE" {% if entry.get('comparison_type', '') == 'is TRUE' %}selected="selected"{% endif %}>is TRUE</option>
                   <option value="is FALSE" {% if entry.get('comparison_type', '') == 'is FALSE' %}selected="selected"{% endif %}>is FALSE</option>
@@ -194,6 +194,15 @@
     </div>
   {% endif %}
 {% endmacro %}
+<script>
+window.toggleVarValue = function(selectElem) {
+  var row = selectElem.closest('tr');
+  if (!row) return;
+  var input = row.querySelector("input[name$='-var_value']");
+  if (!input) return;
+  input.disabled = (selectElem.value !== "is equal to");
+};
+</script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
