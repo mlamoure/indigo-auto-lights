@@ -28,11 +28,6 @@
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-comparison_type" onchange="toggleVarValue(this)">
                   <option value="" {% if not entry.get('comparison_type', '') %}selected="selected"{% endif %}>Select Comparison Type</option>
-                  {% set cmp_enum = ["is TRUE (bool)", "is FALSE (bool)", "is equal to (str, lower())", "is not equal to (str, lower())"] %}
-                  {% for option in cmp_enum %}
-                      {% set display_option = option.split(' (')[0] %}
-                      <option value="{{ option }}" {% if entry.get('comparison_type', '') == option %}selected="selected"{% endif %}>{{ display_option }}</option>
-                  {% endfor %}
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
