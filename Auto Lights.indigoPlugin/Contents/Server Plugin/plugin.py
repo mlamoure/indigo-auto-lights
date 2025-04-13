@@ -57,7 +57,10 @@ class Plugin(indigo.PluginBase):
         self.indigo_log_handler.setLevel(self.logLevel)
         self.plugin_file_handler.setLevel(self.logLevel)
 
-        self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
+        # self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
+        self._config_file_str = self.plugin_file_handler.baseFilename.replace(
+            "Logs", "Preferences"
+        ).replace("/plugin.log", "/config/auto_lights_conf.json")
 
     def startup(self: indigo.PluginBase) -> None:
         """
@@ -151,7 +154,9 @@ class Plugin(indigo.PluginBase):
                     "NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
                 )
             else:
-                urls.append(f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}")
+                urls.append(
+                    f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
+                )
             self.logger.info(
                 f"Starting the configuration web server... Visit {' or '.join(urls)}"
             )
