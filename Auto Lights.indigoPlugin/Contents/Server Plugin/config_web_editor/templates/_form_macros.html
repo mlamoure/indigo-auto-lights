@@ -11,6 +11,7 @@
             <tr>
               <th style="border:1px solid #ccc; padding:4px;">Variable</th>
               <th style="border:1px solid #ccc; padding:4px;">Value</th>
+              <th style="border:1px solid #ccc; padding:4px;">Comparison Type</th>
               <th style="border:1px solid #ccc; padding:4px;">Action</th>
             </tr>
           </thead>
@@ -26,6 +27,14 @@
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value | default('') }}">
+              </td>
+              <td style="border:1px solid #ccc; padding:4px;">
+                <select name="global_behavior_variables-{{ idx }}-comparison_type">
+                  <option value="is TRUE" {% if entry.get('comparison_type', '') == 'is TRUE' %}selected{% endif %}>is TRUE</option>
+                  <option value="is FALSE" {% if entry.get('comparison_type', '') == 'is FALSE' %}selected{% endif %}>is FALSE</option>
+                  <option value="is equal to" {% if entry.get('comparison_type', '') == 'is equal to' %}selected{% endif %}>is equal to</option>
+                  <option value="is not equal to" {% if entry.get('comparison_type', '') == 'is not equal to' %}selected{% endif %}>is not equal to</option>
+                </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <button type="button" class="remove-row">Remove</button>
@@ -67,6 +76,26 @@
                 valCell.style.border = "1px solid #ccc";
                 valCell.style.padding = "4px";
               
+                // Create cell for comparison type
+                var cmpCell = document.createElement('td');
+                var cmpSelect = document.createElement('select');
+                cmpSelect.name = 'global_behavior_variables-' + rowCount + '-comparison_type';
+                var options = [
+                  {value:"is TRUE", text:"is TRUE"},
+                  {value:"is FALSE", text:"is FALSE"},
+                  {value:"is equal to", text:"is equal to"},
+                  {value:"is not equal to", text:"is not equal to"}
+                ];
+                options.forEach(function(opt){
+                  var option = document.createElement('option');
+                  option.value = opt.value;
+                  option.text = opt.text;
+                  cmpSelect.appendChild(option);
+                });
+                cmpCell.appendChild(cmpSelect);
+                cmpCell.style.border = "1px solid #ccc";
+                cmpCell.style.padding = "4px";
+              
                 // Create cell for remove action
                 var actCell = document.createElement('td');
                 var removeButton = document.createElement('button');
@@ -82,6 +111,7 @@
               
                 row.appendChild(varCell);
                 row.appendChild(valCell);
+                row.appendChild(cmpCell);
                 row.appendChild(actCell);
                 tableBody.appendChild(row);
               });
