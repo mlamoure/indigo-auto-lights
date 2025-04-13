@@ -30,11 +30,11 @@
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-comparison_type">
-                  <option value="" {% if not entry.get('comparison_type', '') %}selected{% endif %}>Select Comparison Type</option>
-                  <option value="is TRUE" {% if entry.get('comparison_type', '') == 'is TRUE' %}selected{% endif %}>is TRUE</option>
-                  <option value="is FALSE" {% if entry.get('comparison_type', '') == 'is FALSE' %}selected{% endif %}>is FALSE</option>
-                  <option value="is equal to" {% if entry.get('comparison_type', '') == 'is equal to' %}selected{% endif %}>is equal to</option>
-                  <option value="is not equal to" {% if entry.get('comparison_type', '') == 'is not equal to' %}selected{% endif %}>is not equal to</option>
+                  <option value="" {% if not entry.get('comparison_type', '') %}selected="selected"{% endif %}>Select Comparison Type</option>
+                  <option value="is TRUE" {% if entry.get('comparison_type', '') == 'is TRUE' %}selected="selected"{% endif %}>is TRUE</option>
+                  <option value="is FALSE" {% if entry.get('comparison_type', '') == 'is FALSE' %}selected="selected"{% endif %}>is FALSE</option>
+                  <option value="is equal to" {% if entry.get('comparison_type', '') == 'is equal to' %}selected="selected"{% endif %}>is equal to</option>
+                  <option value="is not equal to" {% if entry.get('comparison_type', '') == 'is not equal to' %}selected="selected"{% endif %}>is not equal to</option>
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
