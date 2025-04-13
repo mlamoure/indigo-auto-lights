@@ -36,6 +36,7 @@ from .tools.indigo_api_tools import (
     indigo_get_house_devices,
     indigo_create_new_variable,
 )
+from .config_editor import ConfigEditor
 
 # Load environment variables if needed
 load_dotenv()
@@ -160,7 +161,8 @@ def create_field(field_name, field_schema):
 
     # Example of variable-specific drop-down for Indigo variables
     if field_name.endswith("_var_id") and field_schema.get("x-drop-down"):
-        options = get_cached_indigo_variables()
+        from flask import current_app
+        options = current_app.config["config_editor"].get_cached_indigo_variables()
         choices = [(opt["id"], opt["name"]) for opt in options]
         if not required:
             choices.insert(0, (-1, "None Selected"))
@@ -174,7 +176,8 @@ def create_field(field_name, field_schema):
 
     # Example of multi-select for device IDs
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
-        options = get_cached_indigo_devices()
+        from flask import current_app
+        options = current_app.config["config_editor"].get_cached_indigo_devices()
         if allowed_types:
             options = [
                 dev
@@ -325,21 +328,6 @@ def generate_form_class_from_schema(schema):
     return type("DynamicFormNoCSRF", (DynamicFormNoCSRF,), attrs)
 
 
-def load_config():
-    """
-    Loads the auto lights configuration from the JSON file.
-
-    Returns:
-        dict: The configuration dictionary, or a default dict if unavailable.
-    """
-    config_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "config", "auto_lights_conf.json"
-    )
-    try:
-        with open(config_path) as f:
-            return json.load(f)
-    except Exception:
-        return {"plugin_config": {}, "zones": []}
 
 
 def save_config(config_data):
