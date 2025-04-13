@@ -1,12 +1,12 @@
+import json
 import logging
 import os
 import shutil
 import socket
 import threading
+from datetime import datetime
 
 import requests
-import json
-from datetime import datetime
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
@@ -267,7 +267,7 @@ class Plugin(indigo.PluginBase):
             "prefs": self.pluginPrefs,
         }
         if props_dict.get("incoming_request_method", "GET") == "POST":
-            post_params = dict(props_dict["body_params"])
+            post_params = dict(props_dict["request_body"])
             var_name = post_params.get("var_name", None)
             if not var_name:
                 context = {"error": "var_name must be provided"}

@@ -2,7 +2,6 @@
 # search only, but reside here as they rely on common functions with the LLM tools.
 import json
 import os
-import time
 from typing import List
 
 import requests
@@ -191,18 +190,13 @@ def indigo_create_new_variable(var_name):
     to the INDIGO_API_URL environment variable.
     Expects a payload containing "var_name" and returns the new variable's ID.
     """
-    import requests
-    endpoint = os.getenv("INDIGO_API_URL") + "/message/com.vtmikel.autolights/create_variable"
-    headers = {
-        "Authorization": f'Bearer {os.environ["INDIGO_API_KEY"]}',
-        "Content-Type": "application/json",
-    }
+
+    endpoint = (
+        os.getenv("INDIGO_API_URL") + "/message/com.vtmikel.autolights/create_variable"
+    )
     payload = {"var_name": var_name}
-    try:
-        response = requests.post(endpoint, headers=headers, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        return data.get("var_id", int(time.time()))
-    except Exception as e:
-        print(f"Error creating new variable: {e}")
-        return int(time.time())
+
+    response = indigo_api_call(endpoint, "POST", payload, filter_keys=None)
+    var_id = response["var_id"]
+
+    return var_id
