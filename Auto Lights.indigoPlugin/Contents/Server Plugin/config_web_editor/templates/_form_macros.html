@@ -201,7 +201,7 @@ window.toggleVarValue = function(selectElem) {
   if (!row) return;
   var input = row.querySelector("input[name$='-var_value']");
   if (!input) return;
-  if (selectElem.value && selectElem.value.toLowerCase().indexOf("str") !== -1) {
+  if (selectElem.value && selectElem.value.toLowerCase().includes("str")) {
     input.disabled = false;
   } else {
     input.disabled = true;
