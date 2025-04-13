@@ -165,7 +165,7 @@ class Plugin(indigo.PluginBase):
                 args=(
                     self._web_config_bind_ip,
                     self._web_config_bind_port,
-                    False,
+                    True,
                     self._config_file_str,
                 ),
                 daemon=True,
