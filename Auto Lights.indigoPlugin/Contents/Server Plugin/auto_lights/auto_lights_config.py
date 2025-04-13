@@ -187,7 +187,7 @@ class AutoLightsConfig(AutoLightsBase):
                     if lc_current != lc_var_value:
                         return True, f"Variable {var_name} does not equal '{var_value}'"
                 elif comp_type == "is TRUE (bool)":
-                    if bool(current_value):
+                    if str(current_value).lower() in ["true", "1"]:
                         return True, f"Variable {var_name} evaluated as True"
                 elif comp_type == "is FALSE (bool)":
                     if not bool(current_value):
