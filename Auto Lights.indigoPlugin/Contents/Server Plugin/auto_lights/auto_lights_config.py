@@ -155,3 +155,18 @@ class AutoLightsConfig(AutoLightsBase):
     @property
     def zones(self) -> List[Zone]:
         return self._zones
+
+    def has_variable(self, var_id: int) -> bool:
+        """
+        Iterate through fields with _var_id or _var_ids in the config and return True if a match is found.
+        """
+        for key, value in self.__dict__.items():
+            if key.endswith("_var_id") and value == var_id:
+                return True
+            if key.endswith("_var_ids") and isinstance(value, list) and var_id in value:
+                return True
+        # Additionally check global behavior variables if present.
+        for behavior in self._global_behavior_variables:
+            if behavior.get("var_id") == var_id:
+                return True
+        return False
