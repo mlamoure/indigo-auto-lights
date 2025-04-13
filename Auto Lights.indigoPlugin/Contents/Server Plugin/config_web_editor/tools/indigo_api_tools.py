@@ -196,7 +196,7 @@ def indigo_create_new_variable(var_name):
     )
     payload = {"var_name": var_name}
 
-    response = indigo_api_call(endpoint, "POST", payload, filter_keys=None)
+    response = indigo_api_call(endpoint, "POST", filter_keys=None, message_json=payload)
     var_id = response["var_id"]
 
     return var_id
