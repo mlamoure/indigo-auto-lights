@@ -33,15 +33,15 @@
                       <option value="{{ option }}" {% if entry.get('comparison_type', '') == option %}selected="selected"{% endif %}>{{ option }}</option>
                     {% endfor %}
                   {% else %}
-                    <option value="is TRUE" {% if entry.get('comparison_type', '') == 'is TRUE' %}selected="selected"{% endif %}>is TRUE</option>
-                    <option value="is FALSE" {% if entry.get('comparison_type', '') == 'is FALSE' %}selected="selected"{% endif %}>is FALSE</option>
-                    <option value="is equal to" {% if entry.get('comparison_type', '') == 'is equal to' %}selected="selected"{% endif %}>is equal to</option>
-                    <option value="is not equal to" {% if entry.get('comparison_type', '') == 'is not equal to' %}selected="selected"{% endif %}>is not equal to</option>
+                    <option value="is TRUE (bool)" {% if entry.get('comparison_type', '') == 'is TRUE (bool)' %}selected="selected"{% endif %}>is TRUE</option>
+                    <option value="is FALSE (bool)" {% if entry.get('comparison_type', '') == 'is FALSE (bool)' %}selected="selected"{% endif %}>is FALSE</option>
+                    <option value="is equal to (str, lower())" {% if entry.get('comparison_type', '') == 'is equal to (str, lower())' %}selected="selected"{% endif %}>is equal to</option>
+                    <option value="is not equal to (str, lower())" {% if entry.get('comparison_type', '') == 'is not equal to (str, lower())' %}selected="selected"{% endif %}>is not equal to</option>
                   {% endif %}
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
-                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value | default('') }}" {% if entry.get('comparison_type', '') != 'is equal to' %}disabled="disabled"{% endif %}>
+                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.get('var_value', '') }}" {% if "equal to" not in entry.get('comparison_type', '') %}disabled="disabled"{% endif %}>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <button type="button" class="remove-row">Remove</button>
