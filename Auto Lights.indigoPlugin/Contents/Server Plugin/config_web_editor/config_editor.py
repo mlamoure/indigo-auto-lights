@@ -9,7 +9,10 @@ from datetime import datetime
 
 from flask import current_app
 
-from .tools.indigo_api_tools import indigo_get_all_house_devices, indigo_get_all_house_variables
+from .tools.indigo_api_tools import (
+    indigo_get_all_house_devices,
+    indigo_get_all_house_variables,
+)
 
 
 class WebConfigEditor:
@@ -38,9 +41,13 @@ class WebConfigEditor:
         if os.path.exists(self.config_file):
             os.makedirs(self.backup_dir, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            backup_file = os.path.join(self.backup_dir, f"manual_backup_{timestamp}.json")
+            backup_file = os.path.join(
+                self.backup_dir, f"manual_backup_{timestamp}.json"
+            )
             shutil.copy2(self.config_file, backup_file)
-            backups = sorted(glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json")))
+            backups = sorted(
+                glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json"))
+            )
             while len(backups) > 20:
                 os.remove(backups[0])
                 backups.pop(0)
