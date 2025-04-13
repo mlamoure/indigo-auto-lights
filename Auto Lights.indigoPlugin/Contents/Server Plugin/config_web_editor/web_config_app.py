@@ -737,7 +737,7 @@ def run_flask_app(
         app.logger.error(f"Error initializing caches: {e}")
 
     config_editor.start_cache_refresher()
-    app.run(host=host, port=port, debug=debug)
+    app.run(host=host, port=port, debug=debug, use_reloader=False)
 
 
 # JSON schema loaded at module level, so it can be referenced by multiple routes
