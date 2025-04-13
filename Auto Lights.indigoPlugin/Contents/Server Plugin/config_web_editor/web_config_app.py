@@ -48,14 +48,6 @@ app.config["SECRET_KEY"] = SECRET_KEY
 app.jinja_env.globals.update(enumerate=enumerate)
 
 # Lock for synchronizing access to caches
-_cache_lock = threading.Lock()
-
-# Set refresh interval (default: 15 minutes)
-REFRESH_INTERVAL_SECONDS = 900  # 15 minutes
-
-# Global caches for devices and variables
-_indigo_devices_cache = {"data": None}
-_indigo_variables_cache = {"data": None}
 
 
 def refresh_indigo_caches():
@@ -778,24 +770,23 @@ def shutdown():
 def run_flask_app(
     host: str = "127.0.0.1", port: int = 9500, debug: bool = False
 ) -> None:
-    """
-    Starts the Flask application, initializes caches, and begins the background refresher.
-    Args:
-        host (str): Host address to listen on.
-        port (int): Port number.
-        debug (bool): Whether to run Flask in debug mode.
-    """
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_dir = os.path.join(current_dir, "config")
+    config_file = os.path.join(config_dir, "auto_lights_conf.json")
+    schema_file = os.path.join(config_dir, "config_schema.json")
+    backup_dir = os.path.join(config_dir, "backups")
+    auto_backup_dir = os.path.join(config_dir, "auto_backups")
+    config_editor = ConfigEditor(config_file, schema_file, backup_dir, auto_backup_dir)
+    app.config["config_editor"] = config_editor
     try:
-        new_devices = indigo_get_all_house_devices()
-        new_variables = indigo_get_all_house_variables()
-        with _cache_lock:
-            _indigo_devices_cache["data"] = new_devices
-            _indigo_variables_cache["data"] = new_variables
-        app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
+        # Initialize caches via config_editor
+        config_editor.get_cached_indigo_devices()
+        config_editor.get_cached_indigo_variables()
+        app.logger.info(f"[{datetime.now()}] Indigo caches initialized")
     except Exception as e:
-        app.logger.error(f"Error refreshing caches: {e}")
+        app.logger.error(f"Error initializing caches: {e}")
 
-    start_cache_refresher()
+    config_editor.start_cache_refresher()
     app.run(host=host, port=port, debug=debug)
 
 
