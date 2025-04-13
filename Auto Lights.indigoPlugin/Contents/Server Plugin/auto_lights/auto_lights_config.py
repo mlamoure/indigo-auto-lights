@@ -160,3 +160,37 @@ class AutoLightsConfig(AutoLightsBase):
             if behavior.get("var_id") == var_id:
                 return True
         return False
+
+    def has_global_lights_off(self) -> bool:
+        """
+        Check global behavior variables to determine if global lights should be turned off.
+        Evaluates each variable based on its 'comparison_type'. Returns True if any condition is met.
+        """
+        import indigo
+        for behavior in self._global_behavior_variables:
+            var_id = behavior.get("var_id")
+            var_value = behavior.get("var_value")
+            comp_type = behavior.get("comparison_type")
+            try:
+                current_value = indigo.variables[var_id].value
+            except Exception:
+                continue
+            if comp_type:
+                lc_current = str(current_value).lower()
+                lc_var_value = str(var_value).lower()
+                if comp_type == "is equal to (str, lower())":
+                    if lc_current == lc_var_value:
+                        return True
+                elif comp_type == "is not equal to (str, lower())":
+                    if lc_current != lc_var_value:
+                        return True
+                elif comp_type == "is TRUE (bool)":
+                    if bool(current_value):
+                        return True
+                elif comp_type == "is FALSE (bool)":
+                    if not bool(current_value):
+                        return True
+            else:
+                if str(current_value).lower() == str(var_value).lower():
+                    return True
+        return False
