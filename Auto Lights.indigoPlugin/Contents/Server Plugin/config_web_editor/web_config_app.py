@@ -51,6 +51,7 @@ app = Flask(__name__)
 SECRET_KEY = secrets.token_hex(16)
 app.config["SECRET_KEY"] = SECRET_KEY
 app.jinja_env.globals.update(enumerate=enumerate)
+app.jinja_env.globals['os'] = os
 
 # Lock for synchronizing access to caches
 
