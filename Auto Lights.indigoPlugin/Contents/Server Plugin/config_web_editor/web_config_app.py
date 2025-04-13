@@ -10,8 +10,6 @@ import json
 import os
 import secrets
 import shutil
-import threading
-import time
 from collections import OrderedDict
 from datetime import datetime
 
@@ -29,14 +27,13 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
+from .config_editor import ConfigEditor
 # --- Local imports ---
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
-    indigo_get_all_house_devices,
     indigo_get_house_devices,
     indigo_create_new_variable,
 )
-from .config_editor import ConfigEditor
 
 # Load environment variables if needed
 load_dotenv()
@@ -50,19 +47,11 @@ app.jinja_env.globals.update(enumerate=enumerate)
 # Lock for synchronizing access to caches
 
 
-
-
-
-
-
-
-
-
-
-
 def load_config():
     from flask import current_app
+
     return current_app.config["config_editor"].load_config()
+
 
 def get_lighting_period_choices():
     """
@@ -107,6 +96,7 @@ def create_field(field_name, field_schema):
     # Example of variable-specific drop-down for Indigo variables
     if field_name.endswith("_var_id") and field_schema.get("x-drop-down"):
         from flask import current_app
+
         options = current_app.config["config_editor"].get_cached_indigo_variables()
         choices = [(opt["id"], opt["name"]) for opt in options]
         if not required:
@@ -122,6 +112,7 @@ def create_field(field_name, field_schema):
     # Example of multi-select for device IDs
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
         from flask import current_app
+
         options = current_app.config["config_editor"].get_cached_indigo_devices()
         if allowed_types:
             options = [
@@ -271,8 +262,6 @@ def generate_form_class_from_schema(schema):
             csrf = False
 
     return type("DynamicFormNoCSRF", (DynamicFormNoCSRF,), attrs)
-
-
 
 
 def save_config(config_data):
