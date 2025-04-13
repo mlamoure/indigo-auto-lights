@@ -15,7 +15,7 @@ from datetime import datetime
 
 # --- Third-party imports ---
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, current_app
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -27,7 +27,7 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired
 
-from .config_editor import ConfigEditor
+from .config_editor import WebConfigEditor
 # --- Local imports ---
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
@@ -48,7 +48,6 @@ app.jinja_env.globals.update(enumerate=enumerate)
 
 
 def load_config():
-    from flask import current_app
 
     return current_app.config["config_editor"].load_config()
 
@@ -95,7 +94,6 @@ def create_field(field_name, field_schema):
 
     # Example of variable-specific drop-down for Indigo variables
     if field_name.endswith("_var_id") and field_schema.get("x-drop-down"):
-        from flask import current_app
 
         options = current_app.config["config_editor"].get_cached_indigo_variables()
         choices = [(opt["id"], opt["name"]) for opt in options]
@@ -111,7 +109,6 @@ def create_field(field_name, field_schema):
 
     # Example of multi-select for device IDs
     elif field_name.endswith("_dev_ids") and field_schema.get("x-drop-down"):
-        from flask import current_app
 
         options = current_app.config["config_editor"].get_cached_indigo_devices()
         if allowed_types:
@@ -132,7 +129,7 @@ def create_field(field_name, field_schema):
 
     # Single select for device IDs
     elif field_name.endswith("_dev_id") and field_schema.get("x-drop-down"):
-        options = get_cached_indigo_devices()
+        options = current_app.config["config_editor"].get_cached_indigo_devices()
         if allowed_types:
             options = [
                 dev
@@ -446,7 +443,10 @@ def zone_config(zone_id):
         on_lights = zone.get("device_settings", {}).get("on_lights_dev_ids", [])
         off_lights = zone.get("device_settings", {}).get("off_lights_dev_ids", [])
         union_ids = set(on_lights) | set(off_lights)
-        devices = {dev["id"]: dev["name"] for dev in get_cached_indigo_devices()}
+        devices = {
+            dev["id"]: dev["name"]
+            for dev in current_app.config["config_editor"].get_cached_indigo_devices()
+        }
         choices = [(i, devices.get(i, str(i))) for i in union_ids]
         zone_form.advanced_settings.exclude_from_lock_dev_ids.choices = choices
     except Exception:
@@ -718,7 +718,9 @@ def run_flask_app(
     schema_file = os.path.join(config_dir, "config_schema.json")
     backup_dir = os.path.join(config_dir, "backups")
     auto_backup_dir = os.path.join(config_dir, "auto_backups")
-    config_editor = ConfigEditor(config_file, schema_file, backup_dir, auto_backup_dir)
+    config_editor = WebConfigEditor(
+        config_file, schema_file, backup_dir, auto_backup_dir
+    )
     app.config["config_editor"] = config_editor
     try:
         # Initialize caches via config_editor

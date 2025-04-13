@@ -1,18 +1,18 @@
+import glob
 import json
 import os
+import shutil
 import threading
 import time
-import glob
-import shutil
 from collections import OrderedDict
 from datetime import datetime
 
 from flask import current_app
-from dotenv import load_dotenv
 
 from .tools.indigo_api_tools import indigo_get_all_house_devices, indigo_get_all_house_variables
 
-class ConfigEditor:
+
+class WebConfigEditor:
     def __init__(self, config_file, schema_file, backup_dir, auto_backup_dir):
         self.config_file = config_file
         self.schema_file = schema_file
