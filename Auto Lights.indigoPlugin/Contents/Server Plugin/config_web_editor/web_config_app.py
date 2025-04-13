@@ -51,7 +51,7 @@ app = Flask(__name__)
 SECRET_KEY = secrets.token_hex(16)
 app.config["SECRET_KEY"] = SECRET_KEY
 app.jinja_env.globals.update(enumerate=enumerate)
-app.jinja_env.globals['os'] = os
+app.jinja_env.globals["os"] = os
 
 # Lock for synchronizing access to caches
 
@@ -297,7 +297,9 @@ def plugin_config():
                 if len(parts) >= 3:
                     index = parts[1]
                     var_id_value = request.form.get(key)
-                    comparison_type_value = request.form.get(f"global_behavior_variables-{index}-comparison_type", "")
+                    comparison_type_value = request.form.get(
+                        f"global_behavior_variables-{index}-comparison_type", ""
+                    )
                     var_value_value = request.form.get(
                         f"global_behavior_variables-{index}-var_value", ""
                     )
@@ -384,7 +386,9 @@ def lighting_periods():
         return redirect(url_for("lighting_periods"))
 
     return render_template(
-        "lighting_periods.html", lighting_periods_forms=lighting_periods_forms, zones=config_data.get("zones", [])
+        "lighting_periods.html",
+        lighting_periods_forms=lighting_periods_forms,
+        zones=config_data.get("zones", []),
     )
 
 
@@ -556,7 +560,11 @@ def create_new_variable():
     # Refresh indigo variables cache
     current_app.config["config_editor"]._indigo_variables_cache["data"] = None
     refreshed = current_app.config["config_editor"].get_cached_indigo_variables()
-    return {"var_id": new_var_id, "var_name": var_name, "schema_property": schema_property}
+    return {
+        "var_id": new_var_id,
+        "var_name": var_name,
+        "schema_property": schema_property,
+    }
 
 
 @app.route("/zone/delete/<zone_id>")
@@ -731,7 +739,7 @@ def upload_config():
 def run_flask_app(
     host: str = "127.0.0.1",
     port: int = 9500,
-    debug: bool = False,
+    debug: bool = True,
     config_file: str = None,
 ) -> None:
     current_dir = os.path.dirname(os.path.abspath(__file__))
