@@ -222,13 +222,16 @@ class Plugin(indigo.PluginBase):
         return menu_items
 
     def _init_config_and_agent(self: indigo.PluginBase):
-        config_dir = os.path.dirname(self.plugin_file_handler.baseFilename.replace("Logs", "Preferences"))
-        self._config_file_str = os.path.join(config_dir, "config", "auto_lights_conf.json")
-        os.makedirs(os.path.dirname(self._config_file_str), exist_ok=True)
-        from config_web_editor.auto_lights_web_config import AutoLightsWebConfig
-        self._config_manager = AutoLightsWebConfig(self._config_file_str)
-        config_data = self._config_manager.load_config()
-        config = AutoLightsConfig(config_data)
+        confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
+        config_dir = os.path.dirname(self._config_file_str)
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir, exist_ok=True)
+        if not os.path.exists(self._config_file_str):
+            shutil.copyfile(confg_file_empty_str, self._config_file_str)
+        conf_path = os.path.abspath(self._config_file_str)
+        self._config_path = conf_path
+        self._config_mtime = os.path.getmtime(conf_path)
+        config = AutoLightsConfig(conf_path)
         self._agent = AutoLightsAgent(config)
         self._agent.process_all_zones()
 
