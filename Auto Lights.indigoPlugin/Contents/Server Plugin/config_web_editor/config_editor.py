@@ -7,12 +7,11 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 
-from flask import current_app
-
 from .tools.indigo_api_tools import (
     indigo_get_all_house_devices,
     indigo_get_all_house_variables,
 )
+from .web_config_app import app
 
 
 class WebConfigEditor:
@@ -55,7 +54,6 @@ class WebConfigEditor:
             json.dump(config_data, f, indent=2)
 
     def refresh_indigo_caches(self):
-        from config_web_editor.web_config_app import app
         while True:
             try:
                 new_devices = indigo_get_all_house_devices()
