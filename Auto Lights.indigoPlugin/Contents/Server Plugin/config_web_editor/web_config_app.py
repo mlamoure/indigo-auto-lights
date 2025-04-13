@@ -50,66 +50,19 @@ app.jinja_env.globals.update(enumerate=enumerate)
 # Lock for synchronizing access to caches
 
 
-def refresh_indigo_caches():
-    """
-    Periodically refreshes the caches for Indigo devices and variables.
-    Runs indefinitely, sleeping for REFRESH_INTERVAL_SECONDS between refreshes.
-    """
-    while True:
-        try:
-            new_devices = indigo_get_all_house_devices()
-            new_variables = indigo_get_all_house_variables()
-            with _cache_lock:
-                _indigo_devices_cache["data"] = new_devices
-                _indigo_variables_cache["data"] = new_variables
-            app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
-        except Exception as e:
-            app.logger.error(f"Error refreshing caches: {e}")
-        time.sleep(REFRESH_INTERVAL_SECONDS)
 
 
-def start_cache_refresher():
-    """
-    Starts a daemon thread that periodically refreshes Indigo caches.
-    """
-    thread = threading.Thread(target=refresh_indigo_caches, daemon=True)
-    thread.start()
 
 
-def get_cached_indigo_variables():
-    """
-    Retrieves the Indigo variables from cache (or refreshes them if not available).
-    """
-    with _cache_lock:
-        if _indigo_variables_cache["data"] is None:
-            try:
-                new_variables = indigo_get_all_house_variables()
-                _indigo_variables_cache["data"] = new_variables
-                app.logger.info(f"[{datetime.now()}] Indigo variables cache refreshed")
-            except Exception as e:
-                app.logger.error(f"Error refreshing variables cache: {e}")
-        return _indigo_variables_cache["data"]
 
 
-def get_cached_indigo_devices():
-    """
-    Retrieves the Indigo devices from cache (or refreshes them if not available).
-    """
-    with _cache_lock:
-        if _indigo_devices_cache["data"] is None:
-            try:
-                new_devices = indigo_get_all_house_devices()
-                _indigo_devices_cache["data"] = new_devices
-                app.logger.info(
-                    f"[{datetime.now()}] Indigo devices cache manually refreshed"
-                )
-            except Exception as e:
-                app.logger.error(f"Error manually refreshing devices cache: {e}")
-        return _indigo_devices_cache["data"]
 
 
-app.jinja_env.globals.update(get_cached_indigo_variables=get_cached_indigo_variables)
 
+
+def load_config():
+    from flask import current_app
+    return current_app.config["config_editor"].load_config()
 
 def get_lighting_period_choices():
     """
