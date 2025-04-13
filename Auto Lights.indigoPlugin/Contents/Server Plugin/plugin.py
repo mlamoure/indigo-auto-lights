@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 import threading
-from socket import socket
+import socket
 
 import requests
 
