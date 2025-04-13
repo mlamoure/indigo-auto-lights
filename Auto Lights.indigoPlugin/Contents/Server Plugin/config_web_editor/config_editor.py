@@ -38,11 +38,11 @@ class WebConfigEditor:
 
     def save_config(self, config_data):
         if os.path.exists(self.config_file):
-            os.makedirs(self.backup_dir, exist_ok=True)
+            os.makedirs(self.auto_backup_dir, exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            backup_file = os.path.join(self.backup_dir, f"manual_backup_{timestamp}.json")
+            backup_file = os.path.join(self.auto_backup_dir, f"auto_backup_{timestamp}.json")
             shutil.copy2(self.config_file, backup_file)
-            backups = sorted(glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json")))
+            backups = sorted(glob.glob(os.path.join(self.auto_backup_dir, "auto_backup_*.json")))
             while len(backups) > 20:
                 os.remove(backups[0])
                 backups.pop(0)
