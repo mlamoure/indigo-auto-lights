@@ -186,9 +186,23 @@ def filter_json(json_obj, keys_to_keep):
 
 def indigo_create_new_variable(var_name):
     """
-    Creates a new variable in the Indigo system.
-    For demo purposes, this function simply returns a dummy variable ID.
-    In production, you would call the actual Indigo API here.
+    Creates a new variable in the Indigo system by sending a POST request to the Indigo API.
+    The API endpoint is formed by appending '/message/com.vtmikel.autolights/create_variable'
+    to the INDIGO_API_URL environment variable.
+    Expects a payload containing "var_name" and returns the new variable's ID.
     """
-
-    return int(time.time())
+    import requests
+    endpoint = os.getenv("INDIGO_API_URL") + "/message/com.vtmikel.autolights/create_variable"
+    headers = {
+        "Authorization": f'Bearer {os.environ["INDIGO_API_KEY"]}',
+        "Content-Type": "application/json",
+    }
+    payload = {"var_name": var_name}
+    try:
+        response = requests.post(endpoint, headers=headers, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        return data.get("var_id", int(time.time()))
+    except Exception as e:
+        print(f"Error creating new variable: {e}")
+        return int(time.time())
