@@ -550,9 +550,13 @@ def create_new_variable():
     Returns the new variable's ID and name as JSON.
     """
     data = request.get_json()
-    var_name = data.get("name", "")
+    var_name = data.get("var_name", "")
+    schema_property = data.get("schema_property", "")
     new_var_id = indigo_create_new_variable(var_name)
-    return {"var_id": new_var_id, "var_name": var_name}
+    # Refresh indigo variables cache
+    current_app.config["config_editor"]._indigo_variables_cache["data"] = None
+    refreshed = current_app.config["config_editor"].get_cached_indigo_variables()
+    return {"var_id": new_var_id, "var_name": var_name, "schema_property": schema_property}
 
 
 @app.route("/zone/delete/<zone_id>")
