@@ -793,6 +793,8 @@ class Zone(AutoLightsBase):
                 pct_delta = math.ceil(
                     (1 - (self.luminance / self.minimum_luminance)) * 100
                 )
+                if self.current_lighting_period.limit_brightness is not None:
+                    pct_delta = min(pct_delta, self.current_lighting_period.limit_brightness)
                 self._debug_log(
                     f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
                 )
