@@ -33,6 +33,7 @@ class LightingPeriod(AutoLightsBase):
         self._from_time = from_time
         self._to_time = to_time
         self._mode = mode
+        self._limit_brightness = None
         self._lock_duration = None
         self._id = None
 
@@ -83,6 +84,16 @@ class LightingPeriod(AutoLightsBase):
     @property
     def has_lock_duration_override(self) -> bool:
         return self.lock_duration != -1
+
+    @property
+    def limit_brightness(self) -> int:
+        if self._limit_brightness is None or self._limit_brightness == -1:
+            return None
+        return self._limit_brightness
+
+    @limit_brightness.setter
+    def limit_brightness(self, value: int) -> None:
+        self._limit_brightness = value
 
     @classmethod
     def from_config_dict(cls, cfg: dict):
