@@ -654,6 +654,19 @@ def config_backup():
             else:
                 flash("Error restoring backup.")
 
+        elif action == "download":
+            if backup_file:
+                if backup_type == "manual":
+                    backup_path = os.path.join(config_editor.backup_dir, backup_file)
+                else:
+                    backup_path = os.path.join(config_editor.auto_backup_dir, backup_file)
+                if os.path.exists(backup_path):
+                    return send_file(backup_path, as_attachment=True, download_name=backup_file)
+                else:
+                    flash("Backup file not found.")
+            else:
+                flash("No backup file specified.")
+
         elif action == "delete":
             if backup_file and config_editor.delete_backup(backup_type, backup_file):
                 flash("Backup deleted.")
