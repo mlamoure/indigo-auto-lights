@@ -223,6 +223,9 @@ class Plugin(indigo.PluginBase):
 
     def _init_config_and_agent(self: indigo.PluginBase):
         confg_file_empty_str = "config_web_editor/config/auto_lights_empty_conf.json"
+        config_dir = os.path.dirname(self._config_file_str)
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir, exist_ok=True)
         if not os.path.exists(self._config_file_str):
             shutil.copyfile(confg_file_empty_str, self._config_file_str)
         conf_path = os.path.abspath(self._config_file_str)
