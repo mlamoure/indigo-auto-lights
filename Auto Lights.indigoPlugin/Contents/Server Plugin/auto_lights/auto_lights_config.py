@@ -161,10 +161,12 @@ class AutoLightsConfig(AutoLightsBase):
                 return True
         return False
 
-    def has_global_lights_off(self) -> bool:
+    def has_global_lights_off(self) -> tuple[bool, str]:
         """
         Check global behavior variables to determine if global lights should be turned off.
-        Evaluates each variable based on its 'comparison_type'. Returns True if any condition is met.
+        Returns a tuple where the first element indicates whether lights should be off,
+        and the second element is a descriptive reason.
+        Evaluates each variable based on its 'comparison_type'.
         """
         for behavior in self._global_behavior_variables:
             var_id = behavior.get("var_id")
@@ -172,6 +174,7 @@ class AutoLightsConfig(AutoLightsBase):
             comp_type = behavior.get("comparison_type")
             try:
                 current_value = indigo.variables[var_id].value
+                var_name = indigo.variables[var_id].name
             except Exception:
                 continue
             if comp_type:
@@ -179,17 +182,17 @@ class AutoLightsConfig(AutoLightsBase):
                 lc_var_value = str(var_value).lower()
                 if comp_type == "is equal to (str, lower())":
                     if lc_current == lc_var_value:
-                        return True
+                        return True, f"Variable {var_name} equals expected value '{var_value}'"
                 elif comp_type == "is not equal to (str, lower())":
                     if lc_current != lc_var_value:
-                        return True
+                        return True, f"Variable {var_name} does not equal '{var_value}'"
                 elif comp_type == "is TRUE (bool)":
                     if bool(current_value):
-                        return True
+                        return True, f"Variable {var_name} evaluated as True"
                 elif comp_type == "is FALSE (bool)":
                     if not bool(current_value):
-                        return True
+                        return True, f"Variable {var_name} evaluated as False"
             else:
                 if str(current_value).lower() == str(var_value).lower():
-                    return True
-        return False
+                    return True, f"Variable {var_name} equals (default string comparison) '{var_value}'"
+        return False, "No global behavior variables triggered global lights off."
