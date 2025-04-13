@@ -311,7 +311,7 @@ def plugin_config():
         updated_config["global_behavior_variables"] = global_vars
 
         config_data["plugin_config"] = updated_config
-        save_config(config_data)
+        current_app.config["config_editor"].save_config(config_data)
         flash("Plugin configuration saved.")
         return redirect(url_for("plugin_config"))
 
@@ -342,7 +342,7 @@ def zones():
             }
             updated_zones.append(zone_data)
         config_data["zones"] = updated_zones
-        save_config(config_data)
+        current_app.config["config_editor"].save_config(config_data)
         flash("Zones updated.")
         return redirect(url_for("zones"))
 
@@ -375,7 +375,7 @@ def lighting_periods():
             }
             updated_periods.append(period_data)
         config_data["lighting_periods"] = updated_periods
-        save_config(config_data)
+        current_app.config["config_editor"].save_config(config_data)
         flash("Lighting periods updated.")
         return redirect(url_for("lighting_periods"))
 
@@ -438,13 +438,13 @@ def zone_config(zone_id):
         if is_new:
             zones_data.append(zone_data)
             config_data["zones"] = zones_data
-            save_config(config_data)
+            current_app.config["config_editor"].save_config(config_data)
             flash("New zone created successfully.")
             return redirect(url_for("zones"))
         else:
             zones_data[index] = zone_data
             config_data["zones"] = zones_data
-            save_config(config_data)
+            current_app.config["config_editor"].save_config(config_data)
             flash("Zone updated.")
             return redirect(url_for("zone_config", zone_id=zone_id))
 
@@ -497,14 +497,14 @@ def lighting_period_config(period_id):
             period_data["id"] = new_id
             lighting_periods_data.append(period_data)
             config_data["lighting_periods"] = lighting_periods_data
-            save_config(config_data)
+            current_app.config["config_editor"].save_config(config_data)
             flash("New lighting period created successfully.")
             return redirect(url_for("lighting_periods"))
         else:
             period_data["id"] = period.get("id")
             lighting_periods_data[index] = period_data
             config_data["lighting_periods"] = lighting_periods_data
-            save_config(config_data)
+            current_app.config["config_editor"].save_config(config_data)
             flash("Lighting period updated.")
             return redirect(url_for("lighting_period_config", period_id=period_id))
 
