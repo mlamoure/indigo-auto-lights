@@ -169,16 +169,21 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Process a variable change event.
 
-        For each zone in the agent:
-          - Call zone.has_variable(new_var.id)
-            - If True, then return self.process_zone(zone)
-          - return False
+        If the global configuration has the variable (via has_variable),
+        then process all zones. Otherwise, for each zone,
+        check if the zone has the variable and process it.
 
         Returns:
-            List[Zone]: List of Zone's processed
+            List[Zone]: List of Zone's processed.
         """
-
         processed = []
+        if self._config.has_variable(orig_var.id):
+            self.logger.debug(
+                f"Global config has variable: {indigo.variables[orig_var.id].name}; running process_all_zones"
+            )
+            self.process_all_zones()
+            return processed
+
         for zone in self._config.zones:
             if zone.has_variable(orig_var.id):
                 self.logger.debug(
@@ -186,7 +191,6 @@ class AutoLightsAgent(AutoLightsBase):
                 )
                 if self.process_zone(zone):
                     processed.append(zone)
-
         return processed
 
     def get_zones(self) -> List[Zone]:
