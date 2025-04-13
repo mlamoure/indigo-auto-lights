@@ -101,10 +101,11 @@
               
                 // Add event listener to toggle enable/disable for value input based on comparison selection
                 cmpSelect.addEventListener('change', function(){
-                  if(this.value === "is equal to") {
+                  if(this.value.toLowerCase().includes("str")) {
                     input.disabled = false;
                   } else {
                     input.disabled = true;
+                    input.value = "";
                   }
                 });
               
