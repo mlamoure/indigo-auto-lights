@@ -296,6 +296,7 @@ def plugin_config():
                 if len(parts) >= 3:
                     index = parts[1]
                     var_id_value = request.form.get(key)
+                    comparison_type_value = request.form.get(f"global_behavior_variables-{index}-comparison_type", "")
                     var_value_value = request.form.get(
                         f"global_behavior_variables-{index}-var_value", ""
                     )
@@ -306,6 +307,7 @@ def plugin_config():
                     global_vars.append(
                         {
                             "var_id": var_id_int,
+                            "comparison_type": comparison_type_value,
                             "var_value": var_value_value,
                         }
                     )
