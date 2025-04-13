@@ -28,16 +28,11 @@
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-comparison_type" onchange="toggleVarValue(this)">
                   <option value="" {% if not entry.get('comparison_type', '') %}selected="selected"{% endif %}>Select Comparison Type</option>
-                  {% if field.enum %}
-                    {% for option in field.enum %}
-                      <option value="{{ option }}" {% if entry.get('comparison_type', '') == option %}selected="selected"{% endif %}>{{ option }}</option>
-                    {% endfor %}
-                  {% else %}
-                    <option value="is TRUE (bool)" {% if entry.get('comparison_type', '') == 'is TRUE (bool)' %}selected="selected"{% endif %}>is TRUE</option>
-                    <option value="is FALSE (bool)" {% if entry.get('comparison_type', '') == 'is FALSE (bool)' %}selected="selected"{% endif %}>is FALSE</option>
-                    <option value="is equal to (str, lower())" {% if entry.get('comparison_type', '') == 'is equal to (str, lower())' %}selected="selected"{% endif %}>is equal to</option>
-                    <option value="is not equal to (str, lower())" {% if entry.get('comparison_type', '') == 'is not equal to (str, lower())' %}selected="selected"{% endif %}>is not equal to</option>
-                  {% endif %}
+                  {% set cmp_enum = ["is TRUE (bool)", "is FALSE (bool)", "is equal to (str, lower())", "is not equal to (str, lower())"] %}
+                  {% for option in cmp_enum %}
+                      {% set display_option = option.split(' (')[0] %}
+                      <option value="{{ option }}" {% if entry.get('comparison_type', '') == option %}selected="selected"{% endif %}>{{ display_option }}</option>
+                  {% endfor %}
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
