@@ -566,7 +566,7 @@ def zone_delete(zone_id):
         else:
             del zones_data[index]
             config_data["zones"] = zones_data
-            save_config(config_data)
+            current_app.config["config_editor"].save_config(config_data)
             flash("Zone deleted.")
     except Exception as e:
         flash("Error deleting zone: " + str(e))
