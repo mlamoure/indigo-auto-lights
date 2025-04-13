@@ -383,7 +383,7 @@ def lighting_periods():
         return redirect(url_for("lighting_periods"))
 
     return render_template(
-        "lighting_periods.html", lighting_periods_forms=lighting_periods_forms
+        "lighting_periods.html", lighting_periods_forms=lighting_periods_forms, zones=config_data.get("zones", [])
     )
 
 
