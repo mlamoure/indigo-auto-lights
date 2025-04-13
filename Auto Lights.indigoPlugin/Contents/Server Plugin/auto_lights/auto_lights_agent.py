@@ -182,7 +182,7 @@ class AutoLightsAgent(AutoLightsBase):
                 f"Global config has variable: {indigo.variables[orig_var.id].name}; running process_all_zones"
             )
             self.process_all_zones()
-            return processed
+            return self._config.zones
 
         for zone in self._config.zones:
             if zone.has_variable(orig_var.id):
