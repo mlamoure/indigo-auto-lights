@@ -15,7 +15,7 @@ from datetime import datetime
 
 # --- Third-party imports ---
 from dotenv import load_dotenv
-from flask import Flask, render_template, request, redirect, url_for, flash, current_app
+from flask import Flask, render_template, request, redirect, url_for, flash, current_app, send_file
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -707,6 +707,39 @@ def shutdown():
         raise RuntimeError("Not running with the Werkzeug Server")
     shutdown_func()
     return "Server shutting down..."
+
+@app.route("/download_config", methods=["GET"])
+def download_config():
+    """
+    Route to download the current configuration file.
+    """
+    config_editor = current_app.config["config_editor"]
+    return send_file(config_editor.config_file, as_attachment=True, download_name="auto_lights_conf.json")
+
+@app.route("/upload_config", methods=["POST"])
+def upload_config():
+    """
+    Route to upload a new configuration file.
+    Before overwriting, the current config is backed up.
+    """
+    if "config_file_upload" not in request.files:
+        flash("No file part in the request.")
+        return redirect(url_for("config_backup"))
+    file = request.files["config_file_upload"]
+    if file.filename == "":
+        flash("No file selected for uploading.")
+        return redirect(url_for("config_backup"))
+    config_editor = current_app.config["config_editor"]
+    config_path = config_editor.config_file
+    if os.path.exists(config_path):
+        backup_dir = os.path.join(os.path.dirname(config_path), "auto_backups")
+        os.makedirs(backup_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        backup_file = os.path.join(backup_dir, f"auto_backup_{timestamp}.json")
+        shutil.copy2(config_path, backup_file)
+    file.save(config_path)
+    flash("Configuration file uploaded and current config backed up.")
+    return redirect(url_for("config_backup"))
 
 
 def run_flask_app(

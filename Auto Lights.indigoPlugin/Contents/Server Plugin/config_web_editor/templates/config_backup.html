@@ -10,6 +10,15 @@
 {% include "header_common.html" %}
 <div id="container">
     <div id="content">
+        <div style="margin-bottom: 20px;">
+            <form method="GET" action="/download_config" style="display:inline-block; margin-right: 20px;">
+                <button type="submit" class="btn">Download Current Config</button>
+            </form>
+            <form method="POST" action="/upload_config" enctype="multipart/form-data" style="display:inline-block;">
+                <input type="file" name="config_file_upload" accept=".json" style="display:inline-block;"/>
+                <button type="submit" class="btn">Upload Config</button>
+            </form>
+        </div>
         <button id="create-manual-backup" class="btn">Create Manual
             Backup
         </button>
