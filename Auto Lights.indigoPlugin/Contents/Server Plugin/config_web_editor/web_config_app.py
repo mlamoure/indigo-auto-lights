@@ -728,6 +728,7 @@ def run_flask_app(
         config_file, schema_file, backup_dir, auto_backup_dir
     )
     app.config["config_editor"] = config_editor
+    app.jinja_env.globals["get_cached_indigo_variables"] = config_editor.get_cached_indigo_variables
     try:
         # Initialize caches via config_editor
         config_editor.get_cached_indigo_devices()
