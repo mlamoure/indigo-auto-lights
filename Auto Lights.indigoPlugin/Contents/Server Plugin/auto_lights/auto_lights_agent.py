@@ -67,13 +67,13 @@ class AutoLightsAgent(AutoLightsBase):
         action_reason = ""
 
         # Check global behavior variables using has_global_lights_off
-        lights_off, reason = self._config.has_global_lights_off()
-        if lights_off:
+        global_lights_off, reason = self._config.has_global_lights_off()
+        if global_lights_off:
             zone.target_brightness = 0
             action_reason = reason
 
         # Next, look to the target_brightness
-        if not action_reason and zone.current_lighting_period is not None:
+        if not global_lights_off and zone.current_lighting_period is not None:
             action_reason = zone.calculate_target_brightness()
 
         ################################################################
