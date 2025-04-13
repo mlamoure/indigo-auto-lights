@@ -1,8 +1,8 @@
 import datetime
 import logging
-from typing import List, Union, Optional, TYPE_CHECKING
-
 import math
+import threading
+from typing import List, Union, Optional, TYPE_CHECKING
 
 from .auto_lights_base import AutoLightsBase
 
@@ -554,6 +554,16 @@ class Zone(AutoLightsBase):
                 minutes=self.lock_duration
             )
             self.lock_expiration = new_expiration
+
+            # Schedule a background event to process the expiration of the lock.
+            now = datetime.datetime.now()
+            delay = (self._lock_expiration - now).total_seconds()
+            if delay > 0:
+                if self._lock_timer:
+                    self._lock_timer.cancel()
+                self._lock_timer = threading.Timer(delay, self.process_expired_lock)
+                self._lock_timer.start()
+
             self.logger.info(
                 f"Zone '{self._name}' locked until {self.lock_expiration_str}"
             )
@@ -584,16 +594,6 @@ class Zone(AutoLightsBase):
             )
         else:
             self._lock_expiration = value
-        # Schedule a background event to process the expiration of the lock.
-        import threading
-
-        now = datetime.datetime.now()
-        delay = (self._lock_expiration - now).total_seconds()
-        if delay > 0:
-            if self._lock_timer:
-                self._lock_timer.cancel()
-            self._lock_timer = threading.Timer(delay, self.process_expired_lock)
-            self._lock_timer.start()
 
     @property
     def target_brightness_all_off(self) -> bool:
@@ -690,7 +690,8 @@ class Zone(AutoLightsBase):
         target_dict = {
             item["dev_id"]: item["brightness"]
             for item in self.target_brightness
-            if not exclude_lock_devices or item["dev_id"] not in self.exclude_from_lock_dev_ids
+            if not exclude_lock_devices
+            or item["dev_id"] not in self.exclude_from_lock_dev_ids
         }
         self._debug_log(
             f"current_lights_status = {current_dict}, target_brightness = {target_dict}"
@@ -790,10 +791,14 @@ class Zone(AutoLightsBase):
             # Case 2: Dimmer adjustment is enabled.
             else:
                 # Compute percentage delta relative to sensor luminance and minimum luminance.
-                raw_delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+                raw_delta = math.ceil(
+                    (1 - (self.luminance / self.minimum_luminance)) * 100
+                )
                 pct_delta = raw_delta
                 if self.current_lighting_period.limit_brightness is not None:
-                    pct_delta = min(raw_delta, self.current_lighting_period.limit_brightness)
+                    pct_delta = min(
+                        raw_delta, self.current_lighting_period.limit_brightness
+                    )
                 self._debug_log(
                     f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, raw_delta={raw_delta}, pct_delta after limit={pct_delta}"
                 )
