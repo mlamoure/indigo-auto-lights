@@ -1,8 +1,8 @@
 import logging
 import os
 import shutil
-import threading
 import socket
+import threading
 
 import requests
 
@@ -249,3 +249,51 @@ class Plugin(indigo.PluginBase):
         self: indigo.PluginBase, action, dev, caller_waiting_for_result
     ):
         self._agent.reset_locks()
+
+    def create_variable(self, action, dev=None, caller_waiting_for_result=None):
+        """
+        :param action: action.props contains all the information passed from the web server
+        :param dev: unused
+        :param caller_waiting_for_result: always True
+        :return: a dict that contains the status, the Content-Type header, and the contents of the specified file.
+        """
+        self.logger.debug("Handling variable creation request")
+        props_dict = dict(action.props)
+        reply = indigo.Dict()
+        context = {
+            "date_string": str(datetime.now()),  # Used in the config.html template
+            "prefs": self.pluginPrefs,
+        }
+        if props_dict.get("incoming_request_method", "GET") == "POST":
+            post_params = dict(props_dict["body_params"])
+            if "operation" in post_params:
+                if post_params["operation"] == "add":
+                    key = post_params.get("key", None)
+                    val = post_params.get("value", None)
+                    if not key or not val:
+                        context["error"] = (
+                            "the key and value must not be empty to add them to the plugin config"
+                        )
+                    else:
+                        self.pluginPrefs[key] = val
+                else:
+                    context["error"] = "'add' is the only valid operation for this form"
+            else:
+                for key, val in post_params.items():
+                    if val == "delete":
+                        try:
+                            del self.pluginPrefs[key]
+                        except:
+                            # probably a stale browser trying to delete a key that's already gone, just ignore it
+                            pass
+            indigo.server.savePluginPrefs()
+        try:
+            template = self.templates.get_template("config.html")
+            reply["status"] = 200
+            reply["headers"] = indigo.Dict({"Content-Type": "text/html"})
+            reply["content"] = template.render(context)
+        except Exception as exc:
+            # some error happened
+            self.logger.error(f"some error occurred: {exc}")
+            reply["status"] = 500
+        return reply
