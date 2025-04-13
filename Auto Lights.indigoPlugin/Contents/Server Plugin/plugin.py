@@ -267,7 +267,7 @@ class Plugin(indigo.PluginBase):
             "prefs": self.pluginPrefs,
         }
         if props_dict.get("incoming_request_method", "GET") == "POST":
-            post_params = dict(props_dict["request_body"])
+            post_params = json.loads(props_dict["request_body"])
             var_name = post_params.get("var_name", None)
             if not var_name:
                 context = {"error": "var_name must be provided"}
