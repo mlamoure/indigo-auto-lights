@@ -216,6 +216,7 @@ def create_field(field_name, field_schema):
             choices=choices,
             validators=validators,
         )
+        field.enum = enum_values
 
     # Default to basic string field
     else:
