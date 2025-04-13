@@ -15,4 +15,8 @@
             </Field>
         </ConfigUI>
     </Action>
+    <Action id="create_variable" uiPath="hidden">
+        <Name>create a new indigo variable</Name>
+        <CallbackMethod>create_variable</CallbackMethod>
+    </Action>
 </Actions>
