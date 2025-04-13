@@ -4,10 +4,12 @@ It provides routes for editing plugin configuration, zones, lighting periods, an
 All functions and major code blocks are documented for clarity and PEP8 compliance.
 """
 
+import glob
 # --- Standard library imports (alphabetical) ---
 import json
 import os
 import secrets
+import shutil
 import threading
 import time
 from collections import OrderedDict
@@ -360,11 +362,7 @@ def save_config(config_data):
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         backup_file = os.path.join(backup_dir, f"auto_backup_{timestamp}.json")
 
-        import shutil
-
         shutil.copy2(config_path, backup_file)
-
-        import glob
 
         backups = sorted(glob.glob(os.path.join(backup_dir, "auto_backup_*.json")))
         while len(backups) > 20:
