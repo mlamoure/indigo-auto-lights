@@ -712,11 +712,14 @@ def shutdown():
 
 
 def run_flask_app(
-    host: str = "127.0.0.1", port: int = 9500, debug: bool = False
+    host: str = "127.0.0.1", port: int = 9500, debug: bool = False, config_file: str = None
 ) -> None:
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    config_dir = os.path.join(current_dir, "config")
-    config_file = os.path.join(config_dir, "auto_lights_conf.json")
+    if config_file is None:
+        config_dir = os.path.join(current_dir, "config")
+        config_file = os.path.join(config_dir, "auto_lights_conf.json")
+    else:
+        config_dir = os.path.dirname(os.path.abspath(config_file))
     schema_file = os.path.join(config_dir, "config_schema.json")
     backup_dir = os.path.join(config_dir, "backups")
     auto_backup_dir = os.path.join(config_dir, "auto_backups")

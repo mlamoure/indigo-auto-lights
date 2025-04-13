@@ -162,7 +162,7 @@ class Plugin(indigo.PluginBase):
             )
             self._web_server_thread = threading.Thread(
                 target=run_flask_app,
-                args=(self._web_config_bind_ip, self._web_config_bind_port),
+                args=(self._web_config_bind_ip, self._web_config_bind_port, False, self._config_file_str),
                 daemon=True,
             )
             self._web_server_thread.start()
