@@ -290,6 +290,12 @@
             "default": -1,
             "title": "Override Lock Duration",
             "tooltip": "If desired different from the default, specify the lock duration in seconds for the lighting period."
+          },
+          "limit_brightness": {
+            "type": "integer",
+            "default": -1,
+            "title": "Limit Brightness",
+            "tooltip": "Brightness will be set to a maximum of this value for any dimmers during this period."
           }
         },
         "required": [
