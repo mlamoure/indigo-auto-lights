@@ -55,6 +55,7 @@ class WebConfigEditor:
             json.dump(config_data, f, indent=2)
 
     def refresh_indigo_caches(self):
+        from config_web_editor.web_config_app import app
         while True:
             try:
                 new_devices = indigo_get_all_house_devices()
@@ -62,9 +63,11 @@ class WebConfigEditor:
                 with self._cache_lock:
                     self._indigo_devices_cache["data"] = new_devices
                     self._indigo_variables_cache["data"] = new_variables
-                current_app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
+                with app.app_context():
+                    app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
             except Exception as e:
-                current_app.logger.error(f"Error refreshing caches: {e}")
+                with app.app_context():
+                    app.logger.error(f"Error refreshing caches: {e}")
             time.sleep(900)  # 15 minutes
 
     def start_cache_refresher(self):
