@@ -10,8 +10,8 @@
           <thead>
             <tr>
               <th style="border:1px solid #ccc; padding:4px;">Variable</th>
-              <th style="border:1px solid #ccc; padding:4px;">Value</th>
               <th style="border:1px solid #ccc; padding:4px;">Comparison Type</th>
+              <th style="border:1px solid #ccc; padding:4px;">Value</th>
               <th style="border:1px solid #ccc; padding:4px;">Action</th>
             </tr>
           </thead>
@@ -26,9 +26,6 @@
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
-                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value | default('') }}">
-              </td>
-              <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-comparison_type">
                   <option value="" {% if not entry.get('comparison_type', '') %}selected="selected"{% endif %}>Select Comparison Type</option>
                   <option value="is TRUE" {% if entry.get('comparison_type', '') == 'is TRUE' %}selected="selected"{% endif %}>is TRUE</option>
@@ -36,6 +33,9 @@
                   <option value="is equal to" {% if entry.get('comparison_type', '') == 'is equal to' %}selected="selected"{% endif %}>is equal to</option>
                   <option value="is not equal to" {% if entry.get('comparison_type', '') == 'is not equal to' %}selected="selected"{% endif %}>is not equal to</option>
                 </select>
+              </td>
+              <td style="border:1px solid #ccc; padding:4px;">
+                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value | default('') }}" {% if entry.get('comparison_type', '') != 'is equal to' %}disabled="disabled"{% endif %}>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <button type="button" class="remove-row">Remove</button>
@@ -68,20 +68,12 @@
                 varCell.style.border = "1px solid #ccc";
                 varCell.style.padding = "4px";
               
-                // Create cell for value input field
-                var valCell = document.createElement('td');
-                var input = document.createElement('input');
-                input.type = 'text';
-                input.name = 'global_behavior_variables-' + rowCount + '-var_value';
-                valCell.appendChild(input);
-                valCell.style.border = "1px solid #ccc";
-                valCell.style.padding = "4px";
-              
                 // Create cell for comparison type
                 var cmpCell = document.createElement('td');
                 var cmpSelect = document.createElement('select');
                 cmpSelect.name = 'global_behavior_variables-' + rowCount + '-comparison_type';
                 var options = [
+                  {value:"", text:"Select Comparison Type"},
                   {value:"is TRUE", text:"is TRUE"},
                   {value:"is FALSE", text:"is FALSE"},
                   {value:"is equal to", text:"is equal to"},
@@ -97,6 +89,25 @@
                 cmpCell.style.border = "1px solid #ccc";
                 cmpCell.style.padding = "4px";
               
+                // Create cell for value input field
+                var valCell = document.createElement('td');
+                var input = document.createElement('input');
+                input.type = 'text';
+                input.name = 'global_behavior_variables-' + rowCount + '-var_value';
+                input.disabled = true;
+                valCell.appendChild(input);
+                valCell.style.border = "1px solid #ccc";
+                valCell.style.padding = "4px";
+              
+                // Add event listener to toggle enable/disable for value input based on comparison selection
+                cmpSelect.addEventListener('change', function(){
+                  if(this.value === "is equal to") {
+                    input.disabled = false;
+                  } else {
+                    input.disabled = true;
+                  }
+                });
+              
                 // Create cell for remove action
                 var actCell = document.createElement('td');
                 var removeButton = document.createElement('button');
@@ -111,8 +122,8 @@
                 actCell.style.padding = "4px";
               
                 row.appendChild(varCell);
-                row.appendChild(valCell);
                 row.appendChild(cmpCell);
+                row.appendChild(valCell);
                 row.appendChild(actCell);
                 tableBody.appendChild(row);
               });
