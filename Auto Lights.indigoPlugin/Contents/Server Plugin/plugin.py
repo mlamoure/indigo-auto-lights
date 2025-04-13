@@ -5,6 +5,7 @@ import socket
 import threading
 
 import requests
+import json
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
@@ -266,27 +267,16 @@ class Plugin(indigo.PluginBase):
         }
         if props_dict.get("incoming_request_method", "GET") == "POST":
             post_params = dict(props_dict["body_params"])
-            if "operation" in post_params:
-                if post_params["operation"] == "add":
-                    key = post_params.get("key", None)
-                    val = post_params.get("value", None)
-                    if not key or not val:
-                        context["error"] = (
-                            "the key and value must not be empty to add them to the plugin config"
-                        )
-                    else:
-                        self.pluginPrefs[key] = val
-                else:
-                    context["error"] = "'add' is the only valid operation for this form"
+            var_name = post_params.get("var_name", None)
+            if not var_name:
+                context = {"error": "var_name must be provided"}
             else:
-                for key, val in post_params.items():
-                    if val == "delete":
-                        try:
-                            del self.pluginPrefs[key]
-                        except:
-                            # probably a stale browser trying to delete a key that's already gone, just ignore it
-                            pass
-            indigo.server.savePluginPrefs()
+                newVar = indigo.variable.create(var_name, "default value")
+                context = {"var_id": newVar.id}
+            reply["status"] = 200
+            reply["headers"] = indigo.Dict({"Content-Type": "application/json"})
+            reply["content"] = json.dumps(context)
+            return reply
         try:
             template = self.templates.get_template("config.html")
             reply["status"] = 200
