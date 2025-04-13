@@ -18,6 +18,7 @@
               <th>Mode</th>
               <th>From Time</th>
               <th>To Time</th>
+              <th>Linked Zones</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -29,6 +30,13 @@
                 <td>{{ period.mode.data }}</td>
                 <td>{{ period.from_time_hour.data }}:{{ "%02d"|format(period.from_time_minute.data) }}</td>
                 <td>{{ period.to_time_hour.data }}:{{ "%02d"|format(period.to_time_minute.data) }}</td>
+                <td>
+                  {% for idx, zone in enumerate(zones) %}
+                    {% if period.id.data in zone.lighting_period_ids %}
+                      <a href="/zone/{{ idx }}">{{ zone.name }}</a>{% if not loop.last %}, {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                </td>
                 <td>
                   <a class="btn" href="/lighting_period/{{ loop.index0 }}">Edit</a> 
                   <button type="button" class="btn" onclick="confirmDelete({{ loop.index0 }})">Delete</button>
