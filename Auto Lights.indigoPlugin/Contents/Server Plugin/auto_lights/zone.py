@@ -790,18 +790,18 @@ class Zone(AutoLightsBase):
             # Case 2: Dimmer adjustment is enabled.
             else:
                 # Compute percentage delta relative to sensor luminance and minimum luminance.
-                pct_delta = math.ceil(
-                    (1 - (self.luminance / self.minimum_luminance)) * 100
-                )
+                raw_delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+                pct_delta = raw_delta
                 if self.current_lighting_period.limit_brightness is not None:
-                    pct_delta = min(pct_delta, self.current_lighting_period.limit_brightness)
+                    pct_delta = min(raw_delta, self.current_lighting_period.limit_brightness)
                 self._debug_log(
-                    f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, pct_delta={pct_delta}"
+                    f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, raw_delta={raw_delta}, pct_delta after limit={pct_delta}"
                 )
                 self.target_brightness = pct_delta
                 self._debug_log(
                     f"Calculated target brightness: {self.target_brightness}"
                 )
+                action_reason += f" (pct_delta computed as ceil((1 - (luminance/minimum_luminance)) * 100){', capped to ' + str(self.current_lighting_period.limit_brightness) if self.current_lighting_period.limit_brightness is not None else ''})"
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
             action_reason = "presence is not detected"
