@@ -10,18 +10,19 @@
 {% include "header_common.html" %}
 <div id="container">
     <div id="content">
-        <div style="margin-bottom: 20px;">
-            <form method="GET" action="/download_config" style="display:inline-block; margin-right: 20px;">
+        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 20px;">
+            <form method="GET" action="/download_config" style="display:inline-block;">
                 <button type="submit" class="btn">Download Current Config</button>
+            </form>
+            <form method="POST" action="/config_backup" style="display:inline-block;">
+                <input type="hidden" name="action" value="create_manual">
+                <button type="submit" class="btn">Create Manual Backup</button>
             </form>
             <form method="POST" action="/upload_config" enctype="multipart/form-data" style="display:inline-block;">
                 <input type="file" name="config_file_upload" accept=".json" style="display:inline-block;"/>
                 <button type="submit" class="btn">Upload Config</button>
             </form>
         </div>
-        <button id="create-manual-backup" class="btn">Create Manual
-            Backup
-        </button>
         <h3>Manual Backups</h3>
         <table class="zones-table">
             <thead>
@@ -60,6 +61,7 @@
             {% endfor %}
             </tbody>
         </table>
+        <p style="font-style: italic; margin-bottom: 10px;">Automatic backups are taken after every configuration change and the system retains the last 20 backups.</p>
         <h3>Automatic Backups</h3>
         <table class="zones-table">
             <thead>
@@ -93,6 +95,7 @@
                         <input type="hidden" name="backup_type" value="auto">
                         <input type="hidden" name="backup_file" value="{{ backup.filename }}">
                         <button type="submit" name="action" value="restore" class="btn">Restore</button>
+                        <button type="submit" name="action" value="download" class="btn">Download</button>
                         <button type="submit" name="action" value="delete" class="btn">Delete</button>
                     </form>
                 </td>
