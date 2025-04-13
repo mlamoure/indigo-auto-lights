@@ -190,7 +190,7 @@ class AutoLightsConfig(AutoLightsBase):
                     if str(current_value).lower() in ["true", "1"]:
                         return True, f"Variable {var_name} evaluated as True"
                 elif comp_type == "is FALSE (bool)":
-                    if not bool(current_value):
+                    if str(current_value).lower() in ["false", "0"]:
                         return True, f"Variable {var_name} evaluated as False"
             else:
                 if str(current_value).lower() == str(var_value).lower():
