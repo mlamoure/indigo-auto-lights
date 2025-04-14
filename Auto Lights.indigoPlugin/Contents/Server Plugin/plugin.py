@@ -44,21 +44,26 @@ class Plugin(indigo.PluginBase):
         self._agent = None
         self._web_server_thread = None
 
+        # Set environment variables for Indigo API configuration.
         os.environ["INDIGO_API_URL"] = plugin_prefs.get(
             "indigo_api_url", "https://myreflector.indigodomo.net"
         )
         os.environ["INDIGO_API_KEY"] = plugin_prefs.get(
             "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
         )
+
+        # Retrieve web server binding settings from plugin preferences.
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
 
+        # Configure logging levels based on plugin preferences.
         self.logLevel = int(plugin_prefs.get("log_level", logging.INFO))
         self.logger.debug(f"{self.logLevel=}")
         self.indigo_log_handler.setLevel(self.logLevel)
         self.plugin_file_handler.setLevel(self.logLevel)
 
+        # Determine configuration file path based on plugin log file location.
         # self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
         self._config_file_str = self.plugin_file_handler.baseFilename.replace(
             "Logs", "Preferences"
@@ -72,11 +77,14 @@ class Plugin(indigo.PluginBase):
         """
         self.logger.debug("startup called")
 
+        # Subscribe to changes for devices and variables.
         indigo.devices.subscribeToChanges()
         indigo.variables.subscribeToChanges()
 
+        # Start the configuration web server if not disabled.
         if not self._disable_web_server:
             self.start_configuration_web_server()
+        # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
 
     def shutdown(self: indigo.PluginBase) -> None:
@@ -90,12 +98,11 @@ class Plugin(indigo.PluginBase):
     def runConcurrentThread(self: indigo.PluginBase):
         try:
             while True:
+                # Check for changes in the configuration file and reload if it has been modified.
                 if os.path.exists(self._config_file_str):
                     current_mtime = os.path.getmtime(self._config_file_str)
                     if current_mtime != self._config_mtime:
-                        self.logger.debug(
-                            "Config file modified, reloading configuration."
-                        )
+                        self.logger.debug("Config file modified, reloading configuration.")
                         self._init_config_and_agent()
                 self.sleep(5)
         except self.StopThread:
@@ -139,11 +146,13 @@ class Plugin(indigo.PluginBase):
         if self._web_server_thread is not None:
             self.stop_configuration_web_server()
 
+        # Check if custom Indigo API configuration has been provided.
         if (
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
             and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
         ):
             urls = []
+            # Determine the appropriate URLs based on the bind IP.
             if self._web_config_bind_ip == "0.0.0.0":
                 hostname = socket.gethostname()
                 local_ip = socket.gethostbyname(hostname)
@@ -162,6 +171,7 @@ class Plugin(indigo.PluginBase):
             self.logger.info(
                 f"Starting the configuration web server... Visit {' or '.join(urls)}"
             )
+            # Start the Flask-based configuration web server in a daemon thread.
             self._web_server_thread = threading.Thread(
                 target=run_flask_app,
                 args=(
@@ -194,7 +204,12 @@ class Plugin(indigo.PluginBase):
             self.logger.info("Configuration web server is not running.")
 
     def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
+        """
+        Called when the preferences configuration UI is closed.
+        Updates environment variables, configuration, and logging levels.
+        """
         if not user_cancelled:
+            # Update environment variables based on user preferences.
             os.environ["INDIGO_API_URL"] = values_dict.get(
                 "indigo_api_url", "https://myreflector.indigodomo.net"
             )
@@ -208,11 +223,13 @@ class Plugin(indigo.PluginBase):
 
             self._disable_web_server = values_dict.get("disable_web_server")
 
+            # Restart or stop the configuration web server based on new settings.
             if self._disable_web_server:
                 self.stop_configuration_web_server()
             else:
                 self.start_configuration_web_server()
 
+            # Update logging configuration.
             self.logLevel = int(values_dict.get("log_level", logging.INFO))
             self.logger.debug(f"{self.logLevel=}")
             self.indigo_log_handler.setLevel(self.logLevel)
