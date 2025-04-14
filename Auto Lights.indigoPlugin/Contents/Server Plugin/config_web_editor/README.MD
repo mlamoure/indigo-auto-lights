@@ -97,6 +97,8 @@ manually adjust a light, so you keep control for as long as needed.
 
 ## Locks {#zones-locks}
 
+> **NOTE:** Locks do not persist plugin re-starts
+
 * There are Indigo Actions to reset a lock for any given Zone, or all Zones.
 
 # Todo
