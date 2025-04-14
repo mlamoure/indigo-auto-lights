@@ -554,7 +554,7 @@ def create_new_variable():
     Returns the new variable's ID and name as JSON.
     """
     data = request.get_json(force=True)
-    var_name = data.get("var_name", "")
+    var_name = data.get("name", "")
     schema_property = data.get("schema_property", "")
     new_var_id = indigo_create_new_variable(var_name)
     # Refresh indigo variables cache
