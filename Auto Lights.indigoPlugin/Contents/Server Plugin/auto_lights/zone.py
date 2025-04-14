@@ -314,20 +314,7 @@ class Zone(AutoLightsBase):
     @property
     def target_brightness(self) -> List[dict]:
         """Get the target brightness for zone devices."""
-        raw_delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
-        target_dict = {}
-        for dev_id in self.on_lights_dev_ids:
-            if self.has_dev_lighting_mapping_exclusion(dev_id, self.current_lighting_period):
-                self._debug_log(f"DEBUG: Device {dev_id} excluded for period {self.current_lighting_period.id}.")
-                continue
-            pct_delta = raw_delta
-            if self.current_lighting_period.limit_brightness is not None:
-                pct_delta = min(raw_delta, self.current_lighting_period.limit_brightness)
-            target_dict[dev_id] = pct_delta
-            self._debug_log(f"DEBUG: Device {dev_id}: raw_delta={raw_delta}, final brightness={pct_delta}")
-        self.target_brightness = [{"dev_id": k, "brightness": v} for k, v in target_dict.items()]
-        action_reason += " (device-specific exclusions applied)"
-        return action_reason
+        return self._target_brightness
 
     @staticmethod
     def _normalize_dev_target_brightness(
