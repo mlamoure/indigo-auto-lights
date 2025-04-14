@@ -130,6 +130,12 @@ class Zone(AutoLightsBase):
                 self.perform_confirm = bs["perform_confirm"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
+            if "device_period_map" in cfg:
+                self._device_period_map = cfg["device_period_map"]
+            else:
+                self._device_period_map = {}
+                for dev_id in self._on_lights_dev_ids:
+                    self._device_period_map[str(dev_id)] = {str(period.id): True for period in self.lighting_periods}
 
     # (4) Properties
     @property
@@ -813,6 +819,18 @@ class Zone(AutoLightsBase):
             self.target_brightness = 0
 
         return action_reason
+
+    @property
+    def device_period_map(self) -> dict:
+        return self._device_period_map
+
+    @device_period_map.setter
+    def device_period_map(self, value: dict) -> None:
+        self._device_period_map = value
+
+    def has_dev_lighting_mapping_exclusion(self, dev_id: int, lighting_period: LightingPeriod) -> bool:
+        device_map = self.device_period_map.get(str(dev_id), {})
+        return device_map.get(str(lighting_period.id), True) is False
 
     def has_device(self, dev_id: int) -> str:
         """

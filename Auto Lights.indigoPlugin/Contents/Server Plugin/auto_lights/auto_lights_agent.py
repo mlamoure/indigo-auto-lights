@@ -75,6 +75,7 @@ class AutoLightsAgent(AutoLightsBase):
         # Next, look to the target_brightness
         if not global_lights_off and zone.current_lighting_period is not None:
             action_reason = zone.calculate_target_brightness()
+            self.logger.debug(f"AutoLightsAgent: Zone '{zone.name}' brightness update: {action_reason}. Target brightness: {zone.target_brightness}")
 
         ################################################################
         # Save and write log

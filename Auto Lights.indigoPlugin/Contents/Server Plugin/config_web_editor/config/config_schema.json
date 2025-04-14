@@ -217,6 +217,20 @@
                 "tooltip": "These devices will not be used to trigger a lock for the zone."
               }
             }
+          },
+          "device_period_map": {
+            "type": "object",
+            "title": "Device to Lighting Period Mappings",
+            "tooltip": "Maps on_lights devices to the selected lighting periods. For each device (by numeric ID), choose via checkboxes which lighting periods apply. A checked box (true) means the device is included. Defaults are all true. Unchecking indicates exclusion. When devices or lighting periods are removed, the mapping will be purged accordingly.",
+            "patternProperties": {
+              "^[0-9]+$": {
+                "type": "object",
+                "patternProperties": {
+                  "^[0-9]+$": { "type": "boolean" }
+                }
+              }
+            },
+            "default": {}
           }
         },
         "required": [
