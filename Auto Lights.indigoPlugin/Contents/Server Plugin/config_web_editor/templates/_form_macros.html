@@ -142,7 +142,7 @@
       <legend>{{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}</legend>
       {% if field.name == 'minimum_luminance_settings' %}
         <div class="static-label">
-          <strong>Current Luminance for this zone: </strong><span id="current-luminance-value">loading...</span>
+          <strong>Current Luminance for this zone (based on selected Luminance device(s)): </strong><span id="current-luminance-value">loading...</span>
         </div>
       {% endif %}
       {% for subfield in field.form if subfield.name not in ['csrf_token', 'submit'] %}
