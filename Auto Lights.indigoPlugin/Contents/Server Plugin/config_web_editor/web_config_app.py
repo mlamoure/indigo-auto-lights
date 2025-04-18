@@ -733,7 +733,7 @@ class DevicePeriodMapWidget:
         self.lighting_periods = lighting_periods
 
     def __call__(self, field, **kwargs):
-        html = ['<table class="device-period-map"><thead><tr><th>Device</th>']
+        html = ['<table class="zones-table device-period-map"><thead><tr><th>Device</th>']
         for period in self.lighting_periods:
             html.append(f'<th>{period["name"]}</th>')
         html.append('</tr></thead><tbody>')
