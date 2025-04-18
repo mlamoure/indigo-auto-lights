@@ -743,7 +743,7 @@ class DevicePeriodMapWidget:
                 checked = ''
                 dev_id_str = str(dev["id"])
                 period_id_str = str(period["id"])
-                if field.data and field.data.get(dev_id_str, {}).get(period_id_str, True):
+                if field.data.get(dev_id_str, {}).get(period_id_str, True):
                     checked = 'checked'
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
                 html.append(f'<td><input type="checkbox" name="{name}" value="true" {checked}></td>')
