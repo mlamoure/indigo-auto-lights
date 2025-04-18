@@ -845,7 +845,6 @@ class DevicePeriodMapField(Field):
             self.data = mapping
         else:
             self.data = data or {}
-```
 
 Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/web_config_app.py
 ```python
