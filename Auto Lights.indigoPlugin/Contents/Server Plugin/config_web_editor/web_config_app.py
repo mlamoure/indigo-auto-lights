@@ -771,7 +771,7 @@ class DevicePeriodMapField(Field):
         # This method may not be called as expected; instead, override `process` method or handle in form processing.
         pass
 
-    def process(self, formdata, data=None):
+    def process(self, formdata, obj=None, data=None, extra_filters=None):
         # Override to parse formdata manually
         if formdata:
             mapping = {}
