@@ -119,7 +119,7 @@ class AutoLightsAgent(AutoLightsBase):
                     continue
 
                 self._debug_log(
-                    f"Zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
+                    f"Change from {orig_dev.name}; zone property: {device_prop}"
                 )
 
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
