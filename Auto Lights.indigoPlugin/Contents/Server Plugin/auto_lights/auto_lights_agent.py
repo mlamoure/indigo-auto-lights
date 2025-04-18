@@ -224,10 +224,19 @@ class AutoLightsAgent(AutoLightsBase):
         Otherwise, schedule process_expired_lock again at the new lock_expiration.
         """
         if not unlocked_zone.locked:
+            # Cancel and remove any existing timer for this zone
+            if unlocked_zone.name in self._timers:
+                self._timers[unlocked_zone.name].cancel()
+                del self._timers[unlocked_zone.name]
             self.process_zone(unlocked_zone)
         else:
             # zone still locked; schedule next check at new expiration
             now = datetime.datetime.now()
             delay = (unlocked_zone.lock_expiration - now).total_seconds()
             if delay > 0:
-                threading.Timer(delay, self.process_expired_lock, args=[unlocked_zone]).start()
+                # Cancel any existing timer for this zone
+                if unlocked_zone.name in self._timers:
+                    self._timers[unlocked_zone.name].cancel()
+                timer = threading.Timer(delay, self.process_expired_lock, args=[unlocked_zone])
+                self._timers[unlocked_zone.name] = timer
+                timer.start()
