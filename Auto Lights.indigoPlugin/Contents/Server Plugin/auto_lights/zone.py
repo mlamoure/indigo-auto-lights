@@ -1,6 +1,5 @@
 import datetime
 import logging
-import math
 import threading
 from typing import List, Union, Optional, TYPE_CHECKING
 
@@ -774,33 +773,23 @@ class Zone(AutoLightsBase):
                 "Presence is detected for a On and Off Zone, the zone is dark"
             )
 
-            # Case 1: Dimmer adjustment is not enabled.
-            if not self.adjust_brightness:
-                self.target_brightness = 100
-                self._debug_log(
-                    f"Calculated target brightness (no dimmer adjustment): {self.target_brightness}"
-                )
-                return action_reason
+            # create an empty list claled new_target_brightness of dict items that will follow { 'dev_id': xxx, 'target_brightness': y }
+            # Iterate over all lights in on_lights_dev_ids
 
-            # Case 2: Dimmer adjustment is enabled.
-            else:
-                # Compute percentage delta relative to sensor luminance and minimum luminance.
-                raw_delta = math.ceil(
-                    (1 - (self.luminance / self.minimum_luminance)) * 100
-                )
-                pct_delta = raw_delta
-                if self.current_lighting_period.limit_brightness is not None:
-                    pct_delta = min(
-                        raw_delta, self.current_lighting_period.limit_brightness
-                    )
-                self._debug_log(
-                    f"Calculating target brightness: luminance={self.luminance}, minimum_luminance={self.minimum_luminance}, raw_delta={raw_delta}, pct_delta after limit={pct_delta}"
-                )
-                self.target_brightness = pct_delta
-                self._debug_log(
-                    f"Calculated target brightness: {self.target_brightness}"
-                )
-                action_reason += f" (pct_delta computed as ceil((1 - (luminance/minimum_luminance)) * 100){', capped to ' + str(self.current_lighting_period.limit_brightness) if self.current_lighting_period.limit_brightness is not None else ''})"
+            # if the light is enabled for the zone (in device_period_map)
+
+            # if adjust_brightness is false
+            # append a new item to the target_brightness list for the device, brightness of 100
+            # if adjust_brightness is true
+            # delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+
+            # if limit_brightness is not None
+            # modify the delta calcuation to min(delta, limit_brightness)
+
+            # append a new item to target_brightness for the device.  Brihtness of delta
+
+            # set the target_brightness to the new_target_brightness List[dict]
+
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
             action_reason = "presence is not detected"
