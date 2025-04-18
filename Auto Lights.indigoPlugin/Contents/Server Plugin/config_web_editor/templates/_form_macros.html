@@ -141,7 +141,7 @@
     <fieldset class="group-box">
       <legend>{{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}</legend>
       {% if field.name == 'minimum_luminance_settings' %}
-        <div class="static-label">
+        <div class="static-label" style="text-align: center;">
           <strong>Current Luminance for this zone (based on selected Luminance device(s)): </strong><span id="current-luminance-value">loading...</span>
         </div>
       {% endif %}
