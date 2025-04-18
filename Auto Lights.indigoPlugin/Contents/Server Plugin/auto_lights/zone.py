@@ -759,6 +759,12 @@ class Zone(AutoLightsBase):
         action_reason = ""
 
         self._debug_log(f"calculate_target_brightness called")
+        mode = self.current_lighting_period.mode if self.current_lighting_period else None
+        presence_detected = self.has_presence_detected()
+        dark_condition = self.is_dark()
+        self._debug_log(f"Current lighting period mode: {mode}")
+        self._debug_log(f"Presence detected: {presence_detected}")
+        self._debug_log(f"Is dark: {dark_condition}")
 
         if self.current_lighting_period is None:
             self._debug_log(f"no lighting periods available")
@@ -776,8 +782,11 @@ class Zone(AutoLightsBase):
 
             new_target_brightness = []
             for dev_id in self.on_lights_dev_ids:
+                self._debug_log(f"Processing device {dev_id}")
                 # Skip devices excluded from this lighting period
-                if not self.has_dev_lighting_mapping_exclusion(dev_id, self.current_lighting_period):
+                is_excluded = self.has_dev_lighting_mapping_exclusion(dev_id, self.current_lighting_period)
+                self._debug_log(f"Device {dev_id} excluded: {is_excluded}")
+                if not is_excluded:
                     if not self.adjust_brightness:
                         brightness = 100
                     else:
@@ -789,12 +798,16 @@ class Zone(AutoLightsBase):
                         brightness = delta
                     new_target_brightness.append({"dev_id": dev_id, "brightness": brightness})
             self.target_brightness = new_target_brightness
+            self._debug_log(f"Target brightness list set: {new_target_brightness}")
 
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
+            self._debug_log("No presence detected, setting all lights off")
             action_reason = "presence is not detected"
             self.target_brightness = 0
+            self._debug_log("Target brightness set to off (0)")
 
+        self._debug_log(f"calculate_target_brightness result: {action_reason}")
         return action_reason
 
     @property
