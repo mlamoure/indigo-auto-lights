@@ -846,9 +846,6 @@ class DevicePeriodMapField(Field):
         else:
             self.data = data or {}
 
-Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/web_config_app.py
-```python
-<<<<<<< SEARCH
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):
     """
@@ -891,6 +888,19 @@ def zone_config(zone_id):
         }
         choices = [(i, devices.get(i, str(i))) for i in union_ids]
         zone_form.advanced_settings.exclude_from_lock_dev_ids.choices = choices
+    except Exception:
+        pass
+
+    # Set devices and lighting periods for the custom device_period_map field
+    try:
+        devices_list = current_app.config["config_editor"].get_cached_indigo_devices()
+        lighting_periods_list = config_data.get("lighting_periods", [])
+        if hasattr(zone_form, "device_period_map"):
+            zone_form.device_period_map.devices = devices_list
+            zone_form.device_period_map.lighting_periods = lighting_periods_list
+            zone_form.device_period_map.widget = DevicePeriodMapWidget(
+                devices_list, lighting_periods_list
+            )
     except Exception:
         pass
 
