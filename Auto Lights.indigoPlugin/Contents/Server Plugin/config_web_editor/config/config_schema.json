@@ -174,7 +174,7 @@
               "adjust_brightness": {
                 "type": "boolean",
                 "title": "Adjust Dimmer Brightness",
-                "tooltip": "Auto Lights will adjust the brightness of dimmer devices periodically based on the luminance of the zone, and the defined minimum luminance.",
+                "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.",
                 "default": true
               },
               "lock_duration": {
