@@ -202,6 +202,7 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Reset locks for zones. If zone_name is provided, only reset that zone's lock; otherwise, reset locks for all zones.
         """
+        self._debug_log(f"[AutoLightsAgent.reset_locks] Called with zone_name={zone_name}")
         if zone_name:
             for zone in self._config.zones:
                 if zone.name == zone_name:
@@ -223,6 +224,7 @@ class AutoLightsAgent(AutoLightsBase):
         Called when a zone's lock expiration triggers. If the zone is no longer locked, process the zone.
         Otherwise, schedule process_expired_lock again at the new lock_expiration.
         """
+        self._debug_log(f"[AutoLightsAgent.process_expired_lock] Called for zone '{unlocked_zone.name}', locked={unlocked_zone.locked}")
         if not unlocked_zone.locked:
             # Cancel and remove any existing timer for this zone
             if unlocked_zone.name in self._timers:
