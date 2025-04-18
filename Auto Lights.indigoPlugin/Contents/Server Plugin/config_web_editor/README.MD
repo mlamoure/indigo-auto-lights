@@ -108,9 +108,7 @@ conversion
 may have introduced issues. The following improvements are planned:
 
 - [ ] Add validation to the forms for required items
-- [ ] Remove any on/off light from the list of off lights
 - [ ] Enhance documentation and tool tips
-- [ ] Test locking functionality and lock resets
 - [ ] Improve formatting of info.log() in the Indigo event log
 - [ ] Support special rules for a Zone or a Lighting Period
 - [ ] Clarify plugin setup for using a reflector versus a local address for the Indigo web server

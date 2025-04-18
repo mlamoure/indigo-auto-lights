@@ -1,5 +1,5 @@
-import threading
 import datetime
+import threading
 from typing import List
 
 from .auto_lights_base import AutoLightsBase
@@ -50,9 +50,7 @@ class AutoLightsAgent(AutoLightsBase):
             if not zone.has_presence_detected() and zone.unlock_when_no_presence:
                 zone.reset_lock("no longer presence in zone")
             else:
-                self._debug_log(
-                    f"[AutoLightsAgent.process_zone] Zone '{zone.name}': zone is locked until {zone.lock_expiration}"
-                )
+                self._debug_log(f"Zone is locked until {zone.lock_expiration}")
                 zone.check_in()
                 return False
 
@@ -78,7 +76,9 @@ class AutoLightsAgent(AutoLightsBase):
         # Next, look to the target_brightness
         if not global_lights_off and zone.current_lighting_period is not None:
             action_reason = zone.calculate_target_brightness()
-            self.logger.debug(f"AutoLightsAgent: Zone '{zone.name}' brightness update: {action_reason}. Target brightness: {zone.target_brightness}")
+            self.logger.debug(
+                f"AutoLightsAgent: Zone '{zone.name}' brightness update: {action_reason}. Target brightness: {zone.target_brightness}"
+            )
 
         ################################################################
         # Save and write log
@@ -97,9 +97,7 @@ class AutoLightsAgent(AutoLightsBase):
             zone.save_brightness_changes()
 
         else:
-            self._debug_log(
-                f"[AutoLightsAgent.process_zone] Zone '{zone.name}': no changes to make, checked in"
-            )
+            self._debug_log(f"no changes to make, checked in")
 
         zone.check_in()
         return True
@@ -127,7 +125,7 @@ class AutoLightsAgent(AutoLightsBase):
                     continue
 
                 self._debug_log(
-                    f"[AutoLightsAgent.process_device_change] has_device: zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
+                    f"Zone {zone.name}; change from {orig_dev.name}; zone property: {device_prop}"
                 )
 
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
@@ -146,12 +144,18 @@ class AutoLightsAgent(AutoLightsBase):
                         )
                     processed.append(zone)
                     # Schedule processing of expired lock after expiration + 2 seconds
-                    delay = (zone.lock_expiration + datetime.timedelta(seconds=2) - datetime.datetime.now()).total_seconds()
+                    delay = (
+                        zone.lock_expiration
+                        + datetime.timedelta(seconds=2)
+                        - datetime.datetime.now()
+                    ).total_seconds()
                     if delay > 0:
                         # Cancel any existing timer for this zone
                         if zone.name in self._timers:
                             self._timers[zone.name].cancel()
-                        timer = threading.Timer(delay, self.process_expired_lock, args=[zone])
+                        timer = threading.Timer(
+                            delay, self.process_expired_lock, args=[zone]
+                        )
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
@@ -239,6 +243,8 @@ class AutoLightsAgent(AutoLightsBase):
                 # Cancel any existing timer for this zone
                 if unlocked_zone.name in self._timers:
                     self._timers[unlocked_zone.name].cancel()
-                timer = threading.Timer(delay, self.process_expired_lock, args=[unlocked_zone])
+                timer = threading.Timer(
+                    delay, self.process_expired_lock, args=[unlocked_zone]
+                )
                 self._timers[unlocked_zone.name] = timer
                 timer.start()
