@@ -209,6 +209,13 @@ class AutoLightsAgent(AutoLightsBase):
     def process_expired_lock(self, unlocked_zone: Zone) -> None:
         """
         Called when a zone's lock expiration triggers. If the zone is no longer locked, process the zone.
+        Otherwise, schedule process_expired_lock again at the new lock_expiration.
         """
         if not unlocked_zone.locked:
             self.process_zone(unlocked_zone)
+        else:
+            # zone still locked; schedule next check at new expiration
+            now = datetime.datetime.now()
+            delay = (unlocked_zone.lock_expiration - now).total_seconds()
+            if delay > 0:
+                threading.Timer(delay, self.process_expired_lock, args=[unlocked_zone]).start()
