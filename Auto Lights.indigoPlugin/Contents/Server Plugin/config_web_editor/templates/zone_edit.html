@@ -142,7 +142,7 @@ function moveRight(fieldName) {
       option.selected = true;
     }
   }
-  if (fieldName === "luminance_dev_ids") {
+  if (fieldName.endsWith("luminance_dev_ids")) {
       updateLuminanceValue();
   }
 }
@@ -156,7 +156,7 @@ function moveLeft(fieldName) {
       option.selected = false;
     }
   }
-  if (fieldName === "luminance_dev_ids") {
+  if (fieldName.endsWith("luminance_dev_ids")) {
       updateLuminanceValue();
   }
 }
@@ -164,7 +164,7 @@ function moveLeft(fieldName) {
 <script>
 function updateLuminanceValue() {
     var wrapper = document.getElementById("min-lum-wrapper");
-    var selected = document.getElementById("luminance_dev_ids_selected");
+    var selected = document.querySelector('[id$="luminance_dev_ids_selected"]');
     if (wrapper) {
         wrapper.style.display = (selected && selected.options.length > 0) ? "block" : "none";
     }
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   updateLuminanceValue();
-  var selected = document.getElementById("luminance_dev_ids_selected");
+  var selected = document.querySelector('[id$="luminance_dev_ids_selected"]');
   var deviceIds = [];
   if (selected) {
     for (var i = 0; i < selected.options.length; i++) {
