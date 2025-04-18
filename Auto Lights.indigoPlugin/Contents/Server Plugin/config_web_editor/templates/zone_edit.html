@@ -15,11 +15,13 @@
   {{ zone_form.hidden_tag() }}
   {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map', 'minimum_luminance_settings'] %}
   {{ render_field(field) }}
+  {% if field.name == 'device_settings' %}
+    <div id="min-lum-wrapper" style="display:none;">
+      {{ render_field(zone_form.minimum_luminance_settings) }}
+    </div>
+  {% endif %}
   {% endfor %}
   {{ render_field(zone_form.device_period_map) }}
-  <div id="min-lum-wrapper" style="display:none;">
-    {{ render_field(zone_form.minimum_luminance_settings) }}
-  </div>
   <div>
     <input type="submit" value="Save" class="btn">
     <button type="button" class="btn" onclick="window.location.href='/zones'">Cancel</button>
