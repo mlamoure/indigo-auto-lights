@@ -141,7 +141,6 @@
             },
             "required": [
               "on_lights_dev_ids",
-              "luminance_dev_ids",
               "presence_dev_ids"
             ]
           },
