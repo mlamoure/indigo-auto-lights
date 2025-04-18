@@ -258,6 +258,12 @@ def generate_form_class_from_schema(schema):
             required_fields = []
         subschema_is_required = prop in required_fields
 
+        # special case for device_period_map
+        if prop == "device_period_map":
+            subschema["required"] = subschema_is_required
+            attrs[prop] = create_field(prop, subschema)
+            continue
+
         if subschema.get("type") == "object":
             # If the property is itself an object, create a subform
             nested_required = subschema.get("required", [])
