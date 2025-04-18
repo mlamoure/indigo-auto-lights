@@ -35,7 +35,7 @@ from wtforms import (
     Field,
 )
 from wtforms.validators import DataRequired
-from wtforms.widgets import HTMLString
+from markupsafe import Markup
 
 from .config_editor import WebConfigEditor
 
@@ -808,7 +808,7 @@ class DevicePeriodMapWidget:
                 html.append(f'<td><input type="checkbox" name="{name}" value="true" {checked}></td>')
             html.append('</tr>')
         html.append('</tbody></table>')
-        return HTMLString(''.join(html))
+        return Markup(''.join(html))
 
 
 class DevicePeriodMapField(Field):
