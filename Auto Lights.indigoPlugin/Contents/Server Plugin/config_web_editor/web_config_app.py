@@ -832,6 +832,17 @@ def zone_config(zone_id):
     except Exception:
         pass
 
+    # Filter off_lights_dev_ids to exclude on_lights_dev_ids
+    try:
+        on_ids = set(zone_form.on_lights_dev_ids.data or [])
+        zone_form.off_lights_dev_ids.choices = [
+            (value, label)
+            for (value, label) in zone_form.off_lights_dev_ids.choices
+            if value not in on_ids
+        ]
+    except Exception:
+        pass
+
     # Set devices and lighting periods for the custom device_period_map field
     try:
         devices_list = current_app.config["config_editor"].get_cached_indigo_devices()
