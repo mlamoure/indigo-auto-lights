@@ -1,3 +1,5 @@
+import threading
+import datetime
 from typing import List
 
 from .auto_lights_base import AutoLightsBase
@@ -142,6 +144,10 @@ class AutoLightsAgent(AutoLightsBase):
                             f"    lock_extension_duration: {zone.lock_extension_duration} minutes"
                         )
                     processed.append(zone)
+                    # Schedule processing of expired lock after expiration + 2 seconds
+                    delay = (zone.lock_expiration + datetime.timedelta(seconds=2) - datetime.datetime.now()).total_seconds()
+                    if delay > 0:
+                        threading.Timer(delay, self.process_expired_lock, args=[zone]).start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if self.process_zone(zone):
                     processed.append(zone)
@@ -199,3 +205,10 @@ class AutoLightsAgent(AutoLightsBase):
         else:
             for zone in self._config.zones:
                 zone.reset_lock("manual reset")
+
+    def process_expired_lock(self, unlocked_zone: Zone) -> None:
+        """
+        Called when a zone's lock expiration triggers. If the zone is no longer locked, process the zone.
+        """
+        if not unlocked_zone.locked:
+            self.process_zone(unlocked_zone)
