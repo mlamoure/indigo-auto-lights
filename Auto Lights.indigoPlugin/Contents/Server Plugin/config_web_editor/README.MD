@@ -107,7 +107,6 @@ Originally built as a script before becoming a plugin in 2025, Auto Lights has b
 conversion
 may have introduced issues. The following improvements are planned:
 
-- [ ] Make luminance devices and minimum luminance levels optional
 - [ ] Add validation to the forms for required items
 - [ ] Remove any on/off light from the list of off lights
 - [ ] Enhance documentation and tool tips

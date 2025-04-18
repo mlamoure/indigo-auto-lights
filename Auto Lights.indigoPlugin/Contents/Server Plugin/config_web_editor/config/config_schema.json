@@ -116,7 +116,7 @@
                 "x-drop-down": true,
                 "x-include-device-classes": "indigo.DimmerDevice",
                 "title": "Off Lights for this Zone",
-                "tooltip": "List of device IDs that turn lights off in the zone.  Note: On/Off lights to DOT need to be added to this list."
+                "tooltip": "List of device IDs that turn lights off in the zone.  Note: Devices already added to the On/Off lights to DOT need to be added to this list."
               },
               "luminance_dev_ids": {
                 "type": "array",
