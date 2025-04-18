@@ -32,13 +32,11 @@ class AutoLightsAgent(AutoLightsBase):
             return False
 
         self._debug_log(
-            f"[AutoLightsAgent.process_zone] Zone '{zone.name}': processing: enabled={zone.enabled}, current_lights_status={zone.current_lights_status}"
+            f"Processing: enabled={zone.enabled}, current_lights_status={zone.current_lights_status}"
         )
 
         if not zone.enabled:
-            self._debug_log(
-                f"[AutoLightsAgent.process_zone] Zone '{zone.name}': auto lights is disabled for this zone."
-            )
+            self._debug_log(f"Zone is disabled")
             return False
 
         zone.check_out()
@@ -46,13 +44,9 @@ class AutoLightsAgent(AutoLightsBase):
         # Lock logic
         ################################################################
         if zone.lock_enabled and zone.locked:
-
-            if not zone.has_presence_detected() and zone.unlock_when_no_presence:
-                zone.reset_lock("no longer presence in zone")
-            else:
-                self._debug_log(f"Zone is locked until {zone.lock_expiration}")
-                zone.check_in()
-                return False
+            self._debug_log(f"Zone is locked until {zone.lock_expiration}")
+            zone.check_in()
+            return False
 
         ################################################################
         # Period logic
