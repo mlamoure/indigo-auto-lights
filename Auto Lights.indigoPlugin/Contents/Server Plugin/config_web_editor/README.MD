@@ -109,8 +109,6 @@ may have introduced issues. The following improvements are planned:
 
 - [ ] Add validation to the forms for required items
 - [ ] Enhance documentation and tool tips
-- [ ] Improve formatting of info.log() in the Indigo event log
-- [ ] Support special rules for a Zone or a Lighting Period
 - [ ] Clarify plugin setup for using a reflector versus a local address for the Indigo web server
 - [ ] Fix the web server shutdown
 
