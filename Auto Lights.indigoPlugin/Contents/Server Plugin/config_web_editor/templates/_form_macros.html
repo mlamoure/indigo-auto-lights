@@ -150,8 +150,15 @@
       {% endfor %}
     </fieldset>
   {% elif field.name == 'device_period_map' %}
-    <fieldset class="group-box">
-      <legend>{{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}</legend>
+    <fieldset class="group-box form-field">
+      <legend
+        class="tooltip-label"
+        data-tooltip="{{ field.description }}"
+        style="cursor: pointer;"
+      >
+        {{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}
+      </legend>
+      <div class="tooltip-info" style="display:none;"></div>
       {{ field() }}
     </fieldset>
   {% elif field.name.endswith('_dev_ids') or field.name == 'lighting_period_ids' %}
@@ -249,6 +256,22 @@ window.toggleVarValue = function(selectElem) {
     input.value = "";
   }
 };
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('fieldset.group-box legend.tooltip-label').forEach(function(label){
+    label.addEventListener('click', function(){
+      var info = label.closest('fieldset').querySelector('.tooltip-info');
+      if (!info) return;
+      if (info.style.display === 'block') {
+        info.style.display = 'none';
+      } else {
+        info.textContent = label.getAttribute('data-tooltip');
+        info.style.display = 'block';
+      }
+    });
+  });
+});
 </script>
 
 {% macro save_overlay() %}
