@@ -221,12 +221,14 @@
           "device_period_map": {
             "type": "object",
             "title": "Device to Lighting Period Mappings",
-            "tooltip": "Maps on_lights devices to the selected lighting periods. For each device (by numeric ID), choose via checkboxes which lighting periods apply. A checked box (true) means the device is included. Defaults are all true. Unchecking indicates exclusion. When devices or lighting periods are removed, the mapping will be purged accordingly.",
+            "tooltip": "Maps On / Off Lights to your lighting periods.  A checked box (true) means the device is included for that Lighting Period. Unchecking indicates exclusion.",
             "patternProperties": {
               "^[0-9]+$": {
                 "type": "object",
                 "patternProperties": {
-                  "^[0-9]+$": { "type": "boolean" }
+                  "^[0-9]+$": {
+                    "type": "boolean"
+                  }
                 }
               }
             },
