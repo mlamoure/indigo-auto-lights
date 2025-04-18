@@ -208,12 +208,14 @@ class AutoLightsAgent(AutoLightsBase):
             for zone in self._config.zones:
                 if zone.name == zone_name:
                     zone.reset_lock("manual reset")
+                    self.process_zone(zone)
                     if zone.name in self._timers:
                         self._timers[zone.name].cancel()
                         del self._timers[zone.name]
         else:
             for zone in self._config.zones:
                 zone.reset_lock("manual reset")
+                self.process_zone(zone)
                 if zone.name in self._timers:
                     self._timers[zone.name].cancel()
                     del self._timers[zone.name]
