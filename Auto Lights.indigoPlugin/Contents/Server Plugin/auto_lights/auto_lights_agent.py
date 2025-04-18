@@ -16,6 +16,7 @@ class AutoLightsAgent(AutoLightsBase):
     def __init__(self, config: AutoLightsConfig) -> None:
         super().__init__()
         self._config = config
+        self._timers = {}
 
     def process_zone(self, zone: Zone) -> bool:
         """
@@ -147,7 +148,12 @@ class AutoLightsAgent(AutoLightsBase):
                     # Schedule processing of expired lock after expiration + 2 seconds
                     delay = (zone.lock_expiration + datetime.timedelta(seconds=2) - datetime.datetime.now()).total_seconds()
                     if delay > 0:
-                        threading.Timer(delay, self.process_expired_lock, args=[zone]).start()
+                        # Cancel any existing timer for this zone
+                        if zone.name in self._timers:
+                            self._timers[zone.name].cancel()
+                        timer = threading.Timer(delay, self.process_expired_lock, args=[zone])
+                        self._timers[zone.name] = timer
+                        timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if self.process_zone(zone):
                     processed.append(zone)
@@ -202,9 +208,15 @@ class AutoLightsAgent(AutoLightsBase):
             for zone in self._config.zones:
                 if zone.name == zone_name:
                     zone.reset_lock("manual reset")
+                    if zone.name in self._timers:
+                        self._timers[zone.name].cancel()
+                        del self._timers[zone.name]
         else:
             for zone in self._config.zones:
                 zone.reset_lock("manual reset")
+                if zone.name in self._timers:
+                    self._timers[zone.name].cancel()
+                    del self._timers[zone.name]
 
     def process_expired_lock(self, unlocked_zone: Zone) -> None:
         """
