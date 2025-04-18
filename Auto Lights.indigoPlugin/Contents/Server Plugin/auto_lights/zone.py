@@ -1,6 +1,7 @@
 import datetime
 import logging
 import threading
+import math
 from typing import List, Union, Optional, TYPE_CHECKING
 
 from .auto_lights_base import AutoLightsBase
@@ -773,22 +774,21 @@ class Zone(AutoLightsBase):
                 "Presence is detected for a On and Off Zone, the zone is dark"
             )
 
-            # create an empty list claled new_target_brightness of dict items that will follow { 'dev_id': xxx, 'target_brightness': y }
-            # Iterate over all lights in on_lights_dev_ids
-
-            # if the light is enabled for the zone (in device_period_map)
-
-            # if adjust_brightness is false
-            # append a new item to the target_brightness list for the device, brightness of 100
-            # if adjust_brightness is true
-            # delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
-
-            # if limit_brightness is not None
-            # modify the delta calcuation to min(delta, limit_brightness)
-
-            # append a new item to target_brightness for the device.  Brihtness of delta
-
-            # set the target_brightness to the new_target_brightness List[dict]
+            new_target_brightness = []
+            for dev_id in self.on_lights_dev_ids:
+                # Skip devices excluded from this lighting period
+                if not self.has_dev_lighting_mapping_exclusion(dev_id, self.current_lighting_period):
+                    if not self.adjust_brightness:
+                        brightness = 100
+                    else:
+                        # Calculate brightness based on luminance
+                        delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+                        # Apply limit_brightness override if set
+                        if self.current_lighting_period.limit_brightness is not None and self.current_lighting_period.limit_brightness >= 0:
+                            delta = min(delta, self.current_lighting_period.limit_brightness)
+                        brightness = delta
+                    new_target_brightness.append({"dev_id": dev_id, "brightness": brightness})
+            self.target_brightness = new_target_brightness
 
         # If no presence detected, record action reason.
         elif not self.has_presence_detected():
