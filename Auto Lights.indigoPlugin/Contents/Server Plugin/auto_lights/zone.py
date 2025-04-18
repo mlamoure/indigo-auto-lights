@@ -135,7 +135,9 @@ class Zone(AutoLightsBase):
             else:
                 self._device_period_map = {}
                 for dev_id in self._on_lights_dev_ids:
-                    self._device_period_map[str(dev_id)] = {str(period.id): True for period in self.lighting_periods}
+                    self._device_period_map[str(dev_id)] = {
+                        str(period.id): True for period in self.lighting_periods
+                    }
 
     # (4) Properties
     @property
@@ -772,7 +774,7 @@ class Zone(AutoLightsBase):
                 "Presence is detected for a On and Off Zone, the zone is dark"
             )
 
-            # Case 1: No dimmer adjustment is enabled.
+            # Case 1: Dimmer adjustment is not enabled.
             if not self.adjust_brightness:
                 self.target_brightness = 100
                 self._debug_log(
@@ -814,7 +816,9 @@ class Zone(AutoLightsBase):
     def device_period_map(self, value: dict) -> None:
         self._device_period_map = value
 
-    def has_dev_lighting_mapping_exclusion(self, dev_id: int, lighting_period: LightingPeriod) -> bool:
+    def has_dev_lighting_mapping_exclusion(
+        self, dev_id: int, lighting_period: LightingPeriod
+    ) -> bool:
         device_map = self.device_period_map.get(str(dev_id), {})
         return device_map.get(str(lighting_period.id), True) is False
 
