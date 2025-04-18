@@ -32,8 +32,10 @@ from wtforms import (
     BooleanField,
     SelectField,
     SelectMultipleField,
+    Field,
 )
 from wtforms.validators import DataRequired
+from wtforms.widgets import HTMLString
 
 from .config_editor import WebConfigEditor
 
@@ -101,6 +103,12 @@ def create_field(field_name, field_schema):
         }
 
     field_type = field_schema.get("type")
+
+    # Custom field for device_period_map
+    if field_name == "device_period_map":
+        # We will set devices and lighting_periods later when creating the form instance
+        field = DevicePeriodMapField(label=label_text, description=tooltip_text)
+        return field
 
     # Example of variable-specific drop-down for Indigo variables
     if field_name.endswith("_var_id") and field_schema.get("x-drop-down"):
@@ -776,3 +784,134 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 schema_path = os.path.join(current_dir, "config", "config_schema.json")
 with open(schema_path) as f:
     config_schema = json.load(f, object_pairs_hook=OrderedDict)
+
+
+class DevicePeriodMapWidget:
+    def __init__(self, devices, lighting_periods):
+        self.devices = devices
+        self.lighting_periods = lighting_periods
+
+    def __call__(self, field, **kwargs):
+        html = ['<table class="device-period-map"><thead><tr><th>Device</th>']
+        for period in self.lighting_periods:
+            html.append(f'<th>{period["name"]}</th>')
+        html.append('</tr></thead><tbody>')
+        for dev in self.devices:
+            html.append(f'<tr><td>{dev["name"]}</td>')
+            for period in self.lighting_periods:
+                checked = ''
+                dev_id_str = str(dev["id"])
+                period_id_str = str(period["id"])
+                if field.data and field.data.get(dev_id_str, {}).get(period_id_str, True):
+                    checked = 'checked'
+                name = f'device_period_map-{dev["id"]}-{period["id"]}'
+                html.append(f'<td><input type="checkbox" name="{name}" value="true" {checked}></td>')
+            html.append('</tr>')
+        html.append('</tbody></table>')
+        return HTMLString(''.join(html))
+
+
+class DevicePeriodMapField(Field):
+    widget = None  # Will be set dynamically
+
+    def __init__(self, label='', validators=None, devices=None, lighting_periods=None, **kwargs):
+        super().__init__(label, validators, **kwargs)
+        self.devices = devices or []
+        self.lighting_periods = lighting_periods or []
+        self.widget = DevicePeriodMapWidget(self.devices, self.lighting_periods)
+
+    def _value(self):
+        # Return the current data or empty dict
+        return self.data or {}
+
+    def process_formdata(self, valuelist):
+        # valuelist is a list of values for this field, but since we have multiple checkboxes with different names,
+        # we need to parse from the formdata manually.
+        # This method may not be called as expected; instead, override `process` method or handle in form processing.
+        pass
+
+    def process(self, formdata, data=None):
+        # Override to parse formdata manually
+        if formdata:
+            mapping = {}
+            for key in formdata:
+                if key.startswith('device_period_map-'):
+                    parts = key.split('-')
+                    if len(parts) == 3:
+                        dev_id, period_id = parts[1], parts[2]
+                        if dev_id not in mapping:
+                            mapping[dev_id] = {}
+                        mapping[dev_id][period_id] = True
+            self.data = mapping
+        else:
+            self.data = data or {}
+```
+
+Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/web_config_app.py
+```python
+<<<<<<< SEARCH
+@app.route("/zone/<zone_id>", methods=["GET", "POST"])
+def zone_config(zone_id):
+    """
+    Route for viewing, updating, or creating a single zone.
+    GET: Displays a form for the specified zone (or a new one if zone_id = 'new').
+    POST: Updates or creates the zone in the configuration, then saves.
+    """
+    config_data = load_config()
+    zones_data = config_data.get("zones", [])
+
+    if zone_id == "new":
+        zone_schema = config_schema["properties"]["zones"]["items"]
+        defaults = {}
+        for field, subschema in zone_schema.get("properties", {}).items():
+            if "default" in subschema:
+                defaults[field] = subschema["default"]
+        zone = defaults
+        is_new = True
+    else:
+        index = int(zone_id)
+        if index < 0 or index >= len(zones_data):
+            flash("Invalid zone index.")
+            return redirect(url_for("zones"))
+        zone = zones_data[index]
+        is_new = False
+
+    ZonesFormClass = generate_form_class_from_schema(
+        config_schema["properties"]["zones"]["items"]
+    )
+    zone_form = ZonesFormClass(data=zone)
+
+    # Attempt to update choices for exclude_from_lock_dev_ids
+    try:
+        on_lights = zone.get("device_settings", {}).get("on_lights_dev_ids", [])
+        off_lights = zone.get("device_settings", {}).get("off_lights_dev_ids", [])
+        union_ids = set(on_lights) | set(off_lights)
+        devices = {
+            dev["id"]: dev["name"]
+            for dev in current_app.config["config_editor"].get_cached_indigo_devices()
+        }
+        choices = [(i, devices.get(i, str(i))) for i in union_ids]
+        zone_form.advanced_settings.exclude_from_lock_dev_ids.choices = choices
+    except Exception:
+        pass
+
+    if request.method == "POST":
+        zone_data = {
+            field_name: field.data
+            for field_name, field in zone_form._fields.items()
+            if field_name != "submit"
+        }
+        if is_new:
+            zones_data.append(zone_data)
+            config_data["zones"] = zones_data
+            current_app.config["config_editor"].save_config(config_data)
+            flash("New zone created successfully.")
+            return redirect(url_for("zones"))
+        else:
+            zones_data[index] = zone_data
+            config_data["zones"] = zones_data
+            current_app.config["config_editor"].save_config(config_data)
+            flash("Zone updated.")
+            return redirect(url_for("zone_config", zone_id=zone_id))
+
+    return render_template("zone_edit.html", zone_form=zone_form, index=zone_id)

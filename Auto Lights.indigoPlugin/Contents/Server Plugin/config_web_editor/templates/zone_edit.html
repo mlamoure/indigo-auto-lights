@@ -13,34 +13,10 @@
 {% from "_form_macros.html" import render_field, save_overlay %}
 <form method="POST" id="zone-config-form" class="edit-form">
   {{ zone_form.hidden_tag() }}
-  {% for field in zone_form if field.name not in ['submit', 'csrf_token'] %}
+  {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map'] %}
   {{ render_field(field) }}
   {% endfor %}
-  <fieldset>
-    <legend>Device to Lighting Period Mappings</legend>
-    <table id="device-period-map">
-      <thead>
-        <tr>
-          <th>Device</th>
-          {% for period in zone_form.lighting_period_ids.choices %}
-            <th>{{ period[1] }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for dev in on_lights_devices %}
-          <tr>
-            <td>{{ dev.name }}</td>
-            {% for period in zone_form.lighting_period_ids.choices %}
-              <td>
-                <input type="checkbox" name="device_period_map-{{ dev.id }}-{{ period[0] }}" value="true" checked>
-              </td>
-            {% endfor %}
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </fieldset>
+  {{ render_field(zone_form.device_period_map) }}
   <div>
     <input type="submit" value="Save" class="btn">
     <button type="button" class="btn" onclick="window.location.href='/zones'">Cancel</button>
