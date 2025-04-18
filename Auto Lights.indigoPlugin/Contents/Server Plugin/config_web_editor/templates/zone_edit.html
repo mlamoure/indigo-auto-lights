@@ -184,7 +184,7 @@ function moveLeft(fieldName) {
 </script>
 <script>
 function updateLuminanceValue() {
-    var selected = document.querySelector("[id$='-luminance_dev_ids_selected']");
+    var selected = document.getElementById("luminance_dev_ids_selected");
     if (!selected) return;
     var deviceIds = [];
     for (var i = 0; i < selected.options.length; i++) {
@@ -222,6 +222,29 @@ document.addEventListener('DOMContentLoaded', function() {
        useVarCheckbox.addEventListener('change', updateFields);
        updateFields();
     }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var selected = document.getElementById("luminance_dev_ids_selected");
+  var deviceIds = [];
+  if (selected) {
+    for (var i = 0; i < selected.options.length; i++) {
+      deviceIds.push(parseInt(selected.options[i].value));
+    }
+  }
+  fetch("/get_luminance_value", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({device_ids: deviceIds})
+  })
+  .then(response => response.json())
+  .then(data => {
+    document.getElementById("current-luminance-value").textContent = data.average.toFixed(2);
+  })
+  .catch(err => {
+    document.getElementById("current-luminance-value").textContent = "Error";
+  });
 });
 </script>
 </div>
