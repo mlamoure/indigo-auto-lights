@@ -13,10 +13,13 @@
 {% from "_form_macros.html" import render_field, save_overlay %}
 <form method="POST" id="zone-config-form" class="edit-form">
   {{ zone_form.hidden_tag() }}
-  {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map'] %}
+  {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map', 'minimum_luminance_settings'] %}
   {{ render_field(field) }}
   {% endfor %}
   {{ render_field(zone_form.device_period_map) }}
+  <div id="min-lum-wrapper" style="display:none;">
+    {{ render_field(zone_form.minimum_luminance_settings) }}
+  </div>
   <div>
     <input type="submit" value="Save" class="btn">
     <button type="button" class="btn" onclick="window.location.href='/zones'">Cancel</button>
@@ -160,7 +163,11 @@ function moveLeft(fieldName) {
 </script>
 <script>
 function updateLuminanceValue() {
+    var wrapper = document.getElementById("min-lum-wrapper");
     var selected = document.getElementById("luminance_dev_ids_selected");
+    if (wrapper) {
+        wrapper.style.display = (selected && selected.options.length > 0) ? "block" : "none";
+    }
     if (!selected) return;
     var deviceIds = [];
     for (var i = 0; i < selected.options.length; i++) {
