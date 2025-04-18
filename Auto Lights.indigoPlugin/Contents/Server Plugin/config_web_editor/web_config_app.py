@@ -835,12 +835,21 @@ def zone_config(zone_id):
     # Set devices and lighting periods for the custom device_period_map field
     try:
         devices_list = current_app.config["config_editor"].get_cached_indigo_devices()
-        lighting_periods_list = config_data.get("lighting_periods", [])
+        # Filter to only on_lights_dev_ids for this zone
+        selected_dev_ids = set(zone.get("device_settings", {}).get("on_lights_dev_ids", []))
+        filtered_devices = [dev for dev in devices_list if dev["id"] in selected_dev_ids]
+        lighting_periods_all = config_data.get("lighting_periods", [])
+        # Filter to only lighting_period_ids for this zone
+        selected_period_ids = set(zone.get("lighting_period_ids", []))
+        filtered_periods = [
+            period for period in lighting_periods_all
+            if period.get("id") in selected_period_ids
+        ]
         if hasattr(zone_form, "device_period_map"):
-            zone_form.device_period_map.devices = devices_list
-            zone_form.device_period_map.lighting_periods = lighting_periods_list
+            zone_form.device_period_map.devices = filtered_devices
+            zone_form.device_period_map.lighting_periods = filtered_periods
             zone_form.device_period_map.widget = DevicePeriodMapWidget(
-                devices_list, lighting_periods_list
+                filtered_devices, filtered_periods
             )
     except Exception:
         pass
