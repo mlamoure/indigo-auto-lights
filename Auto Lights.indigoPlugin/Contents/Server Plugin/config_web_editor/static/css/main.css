@@ -217,6 +217,7 @@ table.zones-table th {
     padding: 10px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
     border-radius: 5px;
 }
 .tab {
