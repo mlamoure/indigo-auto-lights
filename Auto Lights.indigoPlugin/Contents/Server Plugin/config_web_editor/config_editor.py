@@ -5,10 +5,9 @@ import os
 import shutil
 import threading
 import time
-from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from flask import Flask
 
@@ -27,7 +26,7 @@ class WebConfigEditor:
         schema_file: Union[str, Path],
         backup_dir: Union[str, Path],
         auto_backup_dir: Union[str, Path],
-        flask_app: Optional[Flask] = None
+        flask_app: Optional[Flask] = None,
     ) -> None:
         """
         Initialize the configuration editor.
@@ -75,7 +74,9 @@ class WebConfigEditor:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             backup = self.auto_backup_dir / f"auto_backup_{timestamp}.json"
             shutil.copy2(self.config_file, backup)
-            self._prune_backups(str(self.auto_backup_dir), keep=20, prefix="auto_backup_")
+            self._prune_backups(
+                str(self.auto_backup_dir), keep=20, prefix="auto_backup_"
+            )
 
         # Write new config
         with self.config_file.open("w") as f:
@@ -95,10 +96,16 @@ class WebConfigEditor:
             self._prune_backups(str(self.backup_dir), keep=20, prefix="manual_backup_")
 
     def list_manual_backups(self):
-        return [os.path.basename(p) for p in glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json"))]
+        return [
+            os.path.basename(p)
+            for p in glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json"))
+        ]
 
     def list_auto_backups(self):
-        return sorted(glob.glob(os.path.join(self.auto_backup_dir, "auto_backup_*.json")), reverse=True)
+        return sorted(
+            glob.glob(os.path.join(self.auto_backup_dir, "auto_backup_*.json")),
+            reverse=True,
+        )
 
     def restore_backup(self, backup_type, backup_file):
         if backup_type == "manual":
@@ -123,7 +130,9 @@ class WebConfigEditor:
             return True
         return False
 
-    def _prune_backups(self, directory: Union[str, Path], keep: int = 20, prefix: str = "backup_") -> None:
+    def _prune_backups(
+        self, directory: Union[str, Path], keep: int = 20, prefix: str = "backup_"
+    ) -> None:
         """
         Remove oldest backup files in the given directory, keeping only the newest `keep` files
         with names starting with `prefix`.
@@ -180,9 +189,7 @@ class WebConfigEditor:
                 try:
                     raw = indigo_get_all_house_devices()
                     self._indigo_devices_cache["data"] = (
-                        raw.get("devices", [])
-                        if isinstance(raw, dict)
-                        else []
+                        raw.get("devices", []) if isinstance(raw, dict) else []
                     )
                 except Exception as e:
                     logger.error(f"Cannot reach Indigo for devices: {e}")
@@ -195,9 +202,7 @@ class WebConfigEditor:
                 try:
                     raw = indigo_get_all_house_variables()
                     self._indigo_variables_cache["data"] = (
-                        raw.get("variables", [])
-                        if isinstance(raw, dict)
-                        else []
+                        raw.get("variables", []) if isinstance(raw, dict) else []
                     )
                 except Exception as e:
                     logger.error(f"Cannot reach Indigo for variables: {e}")
