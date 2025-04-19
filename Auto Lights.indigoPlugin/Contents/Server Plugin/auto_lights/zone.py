@@ -1,7 +1,7 @@
 import datetime
 import logging
-import threading
 import math
+import threading
 from typing import List, Union, Optional, TYPE_CHECKING
 
 from .auto_lights_base import AutoLightsBase
@@ -369,7 +369,7 @@ class Zone(AutoLightsBase):
                 self._target_brightness.append(
                     {
                         "dev_id": item["dev_id"],
-                        "target_brightness": self._normalize_dev_target_brightness(
+                        "brightness": self._normalize_dev_target_brightness(
                             item["dev_id"], item["brightness"]
                         ),
                     }
@@ -759,7 +759,9 @@ class Zone(AutoLightsBase):
         action_reason = ""
 
         self._debug_log(f"calculate_target_brightness called")
-        mode = self.current_lighting_period.mode if self.current_lighting_period else None
+        mode = (
+            self.current_lighting_period.mode if self.current_lighting_period else None
+        )
         presence_detected = self.has_presence_detected()
         dark_condition = self.is_dark()
         self._debug_log(f"Current lighting period mode: {mode}")
@@ -784,19 +786,30 @@ class Zone(AutoLightsBase):
             for dev_id in self.on_lights_dev_ids:
                 self._debug_log(f"Processing device {dev_id}")
                 # Skip devices excluded from this lighting period
-                is_excluded = self.has_dev_lighting_mapping_exclusion(dev_id, self.current_lighting_period)
+                is_excluded = self.has_dev_lighting_mapping_exclusion(
+                    dev_id, self.current_lighting_period
+                )
                 self._debug_log(f"Device {dev_id} excluded: {is_excluded}")
                 if not is_excluded:
                     if not self.adjust_brightness:
                         brightness = 100
                     else:
                         # Calculate brightness based on luminance
-                        delta = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+                        delta = math.ceil(
+                            (1 - (self.luminance / self.minimum_luminance)) * 100
+                        )
                         # Apply limit_brightness override if set
-                        if self.current_lighting_period.limit_brightness is not None and self.current_lighting_period.limit_brightness >= 0:
-                            delta = min(delta, self.current_lighting_period.limit_brightness)
+                        if (
+                            self.current_lighting_period.limit_brightness is not None
+                            and self.current_lighting_period.limit_brightness >= 0
+                        ):
+                            delta = min(
+                                delta, self.current_lighting_period.limit_brightness
+                            )
                         brightness = delta
-                    new_target_brightness.append({"dev_id": dev_id, "brightness": brightness})
+                    new_target_brightness.append(
+                        {"dev_id": dev_id, "brightness": brightness}
+                    )
             self.target_brightness = new_target_brightness
             self._debug_log(f"Target brightness list set: {new_target_brightness}")
 
