@@ -235,3 +235,8 @@ table.zones-table th {
     font-weight: bold;
     margin-bottom: 10px;
 }
+
+#header img {
+    height: 100px;
+    width: auto;
+}
