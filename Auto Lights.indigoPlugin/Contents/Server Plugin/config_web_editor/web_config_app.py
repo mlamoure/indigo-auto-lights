@@ -59,6 +59,26 @@ app.jinja_env.globals["os"] = os
 # Lock for synchronizing access to caches
 
 
+@app.before_request
+def ensure_indigo_up():
+    try:
+        cfg = current_app.config["config_editor"]
+        # cheap read, doesn't re-refresh caches
+        cfg.get_cached_indigo_devices()
+        cfg.get_cached_indigo_variables()
+    except Exception as e:
+        current_app.logger.error(f"Indigo unavailable: {e}")
+        return render_template("indigo_unavailable.html"), 503
+
+@app.errorhandler(Exception)
+def handle_all_editor_errors(e):
+    current_app.logger.exception("Config-editor failure")
+    return render_template(
+        "config_editor_error.html",
+        message="Sorry — something went wrong loading the configuration editor. "
+                "Check your Indigo connection and try again."
+    ), 500
+
 def load_config():
 
     return current_app.config["config_editor"].load_config()

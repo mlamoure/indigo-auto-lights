@@ -110,11 +110,29 @@ class WebConfigEditor:
     def get_cached_indigo_devices(self):
         with self._cache_lock:
             if self._indigo_devices_cache["data"] is None:
-                self._indigo_devices_cache["data"] = indigo_get_all_house_devices()
+                try:
+                    raw = indigo_get_all_house_devices()
+                    self._indigo_devices_cache["data"] = (
+                        raw.get("devices", [])
+                        if isinstance(raw, dict)
+                        else []
+                    )
+                except Exception as e:
+                    current_app.logger.error(f"Cannot reach Indigo for devices: {e}")
+                    self._indigo_devices_cache["data"] = []
             return self._indigo_devices_cache["data"]
 
     def get_cached_indigo_variables(self):
         with self._cache_lock:
             if self._indigo_variables_cache["data"] is None:
-                self._indigo_variables_cache["data"] = indigo_get_all_house_variables()
+                try:
+                    raw = indigo_get_all_house_variables()
+                    self._indigo_variables_cache["data"] = (
+                        raw.get("variables", [])
+                        if isinstance(raw, dict)
+                        else []
+                    )
+                except Exception as e:
+                    current_app.logger.error(f"Cannot reach Indigo for variables: {e}")
+                    self._indigo_variables_cache["data"] = []
             return self._indigo_variables_cache["data"]
