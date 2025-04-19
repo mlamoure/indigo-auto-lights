@@ -722,7 +722,7 @@ def run_flask_app(
     backup_dir = os.path.join(config_dir, "backups")
     auto_backup_dir = os.path.join(config_dir, "auto_backups")
     config_editor = WebConfigEditor(
-        config_file, schema_file, backup_dir, auto_backup_dir
+        config_file, schema_file, backup_dir, auto_backup_dir, flask_app=app
     )
     app.config["config_editor"] = config_editor
     app.jinja_env.globals["get_cached_indigo_variables"] = (

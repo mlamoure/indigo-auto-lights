@@ -1,33 +1,59 @@
 import glob
 import json
-import os
+import logging
 import shutil
 import threading
 import time
-from collections import OrderedDict
+from collections.abc import Mapping
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from flask import Flask
 
 from .tools.indigo_api_tools import (
     indigo_get_all_house_devices,
     indigo_get_all_house_variables,
 )
-from flask import current_app
+
+logger = logging.getLogger(__name__)
 
 
 class WebConfigEditor:
-    def __init__(self, config_file, schema_file, backup_dir, auto_backup_dir):
-        self.config_file = config_file
-        self.schema_file = schema_file
-        self.backup_dir = backup_dir
-        self.auto_backup_dir = auto_backup_dir
-        self.config_schema = self.load_schema()
-        self._cache_lock = threading.Lock()
-        self._indigo_devices_cache = {"data": None}
-        self._indigo_variables_cache = {"data": None}
+    def __init__(
+        self,
+        config_file: Union[str, Path],
+        schema_file: Union[str, Path],
+        backup_dir: Union[str, Path],
+        auto_backup_dir: Union[str, Path],
+        flask_app: Optional[Flask] = None
+    ) -> None:
+        """
+        Initialize the configuration editor.
 
-    def load_schema(self):
-        with open(self.schema_file) as f:
-            return json.load(f, object_pairs_hook=OrderedDict)
+        :param config_file: Path to the JSON config file.
+        :param schema_file: Path to the JSON schema file.
+        :param backup_dir: Directory for manual backups.
+        :param auto_backup_dir: Directory for automatic backups.
+        :param flask_app: Optional Flask app for logging in background tasks.
+        """
+        self.config_file = Path(config_file)
+        self.schema_file = Path(schema_file)
+        self.backup_dir = Path(backup_dir)
+        self.auto_backup_dir = Path(auto_backup_dir)
+        self.app = flask_app
+
+        self.config_schema: Dict[str, Any] = self.load_schema()
+        self._cache_lock = threading.Lock()
+        self._indigo_devices_cache: Dict[str, Any] = {"data": None}
+        self._indigo_variables_cache: Dict[str, Any] = {"data": None}
+
+    def load_schema(self) -> Dict[str, Any]:
+        """
+        Load and return the JSON schema as a dict.
+        """
+        with self.schema_file.open() as f:
+            return json.load(f)
 
     def load_config(self):
         try:
@@ -36,29 +62,36 @@ class WebConfigEditor:
         except Exception:
             return {"plugin_config": {}, "zones": []}
 
-    def save_config(self, config_data):
-        if os.path.exists(self.config_file):
-            os.makedirs(self.auto_backup_dir, exist_ok=True)
+    def save_config(self, config_data: Dict[str, Any]) -> None:
+        """
+        Save the configuration JSON atomically and prune old backups.
+        """
+        # Ensure auto backup directory exists
+        self.auto_backup_dir.mkdir(parents=True, exist_ok=True)
+
+        # Automatic backup
+        if self.config_file.exists():
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            backup_file = os.path.join(self.auto_backup_dir, f"auto_backup_{timestamp}.json")
-            shutil.copy2(self.config_file, backup_file)
-            backups = sorted(glob.glob(os.path.join(self.auto_backup_dir, "auto_backup_*.json")))
-            while len(backups) > 20:
-                os.remove(backups[0])
-                backups.pop(0)
-        with open(self.config_file, "w") as f:
+            backup = self.auto_backup_dir / f"auto_backup_{timestamp}.json"
+            shutil.copy2(self.config_file, backup)
+            self._prune_backups(str(self.auto_backup_dir), keep=20, prefix="auto_backup_")
+
+        # Write new config
+        with self.config_file.open("w") as f:
             json.dump(config_data, f, indent=2)
 
-    def create_manual_backup(self):
-        if os.path.exists(self.config_file):
-            os.makedirs(self.backup_dir, exist_ok=True)
+    def create_manual_backup(self) -> None:
+        """
+        Manually back up the config and prune old backups.
+        """
+        # Ensure manual backup directory exists
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
+
+        if self.config_file.exists():
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            backup_file = os.path.join(self.backup_dir, f"manual_backup_{timestamp}.json")
-            shutil.copy2(self.config_file, backup_file)
-            backups = sorted(glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json")))
-            while len(backups) > 20:
-                os.remove(backups[0])
-                backups.pop(0)
+            backup = self.backup_dir / f"manual_backup_{timestamp}.json"
+            shutil.copy2(self.config_file, backup)
+            self._prune_backups(str(self.backup_dir), keep=20, prefix="manual_backup_")
 
     def list_manual_backups(self):
         return [os.path.basename(p) for p in glob.glob(os.path.join(self.backup_dir, "manual_backup_*.json"))]
@@ -76,17 +109,36 @@ class WebConfigEditor:
             return True
         return False
 
-    def delete_backup(self, backup_type, backup_file):
+    def delete_backup(self, backup_type: str, backup_file: str) -> bool:
+        """
+        Delete a manual or automatic backup.
+        """
         if backup_type == "manual":
-            backup_path = os.path.join(self.backup_dir, backup_file)
+            backup_path = self.backup_dir / backup_file
         else:
-            backup_path = os.path.join(self.auto_backup_dir, backup_file)
-        if os.path.exists(backup_path):
-            os.remove(backup_path)
+            backup_path = self.auto_backup_dir / backup_file
+        if backup_path.exists():
+            backup_path.unlink()
             return True
         return False
 
-    def refresh_indigo_caches(self):
+    def _prune_backups(self, directory: Union[str, Path], keep: int = 20, prefix: str = "backup_") -> None:
+        """
+        Remove oldest backup files in the given directory, keeping only the newest `keep` files
+        with names starting with `prefix`.
+        """
+        dir_path = Path(directory)
+        backups = sorted(dir_path.glob(f"{prefix}*.json"))
+        for old in backups[:-keep]:
+            try:
+                old.unlink()
+            except Exception:
+                logger.warning("Could not remove old backup %s", old)
+
+    def _refresh_indigo_caches(self, interval_seconds: int) -> None:
+        """
+        Background worker to refresh Indigo device/variable caches every interval_seconds seconds.
+        """
         while True:
             try:
                 new_devices = indigo_get_all_house_devices()
@@ -94,18 +146,32 @@ class WebConfigEditor:
                 with self._cache_lock:
                     self._indigo_devices_cache["data"] = new_devices
                     self._indigo_variables_cache["data"] = new_variables
-                from config_web_editor.web_config_app import app
-                with app.app_context():
-                    app.logger.info(f"[{datetime.now()}] Indigo caches refreshed")
+                msg = f"[{datetime.now():%Y-%m-%d %H:%M}] Indigo caches refreshed"
+                if self.app:
+                    with self.app.app_context():
+                        self.app.logger.info(msg)
+                else:
+                    logger.info(msg)
             except Exception as e:
-                from config_web_editor.web_config_app import app
-                with app.app_context():
-                    app.logger.error(f"Error refreshing caches: {e}")
+                err = f"Error refreshing caches: {e}"
+                if self.app:
+                    with self.app.app_context():
+                        self.app.logger.error(err)
+                else:
+                    logger.error(err)
             time.sleep(900)  # 15 minutes
 
-    def start_cache_refresher(self):
-        thread = threading.Thread(target=self.refresh_indigo_caches, daemon=True)
+    def start_cache_refresher(self, interval_seconds: int = 900) -> threading.Thread:
+        """
+        Launch background thread refreshing Indigo caches every interval_seconds seconds.
+        """
+        thread = threading.Thread(
+            target=self._refresh_indigo_caches,
+            args=(interval_seconds,),
+            daemon=True,
+        )
         thread.start()
+        return thread
 
     def get_cached_indigo_devices(self):
         with self._cache_lock:
@@ -118,7 +184,7 @@ class WebConfigEditor:
                         else []
                     )
                 except Exception as e:
-                    current_app.logger.error(f"Cannot reach Indigo for devices: {e}")
+                    logger.error(f"Cannot reach Indigo for devices: {e}")
                     self._indigo_devices_cache["data"] = []
             return self._indigo_devices_cache["data"]
 
@@ -133,6 +199,6 @@ class WebConfigEditor:
                         else []
                     )
                 except Exception as e:
-                    current_app.logger.error(f"Cannot reach Indigo for variables: {e}")
+                    logger.error(f"Cannot reach Indigo for variables: {e}")
                     self._indigo_variables_cache["data"] = []
             return self._indigo_variables_cache["data"]
