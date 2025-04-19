@@ -1,50 +1,30 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Indigo Auto Lights - Landing Page</title>
     <link rel="stylesheet" href="/static/css/main.css">
-  </head>
-  <body>
-    <div class="container">
-      {% set page_title = "Indigo Auto Lights - Landing Page" %}
-      {% include "header_common.html" %}
-      <h1>Welcome to Indigo Auto Lights</h1>
-      <div class="button-container">
-        <div>
-          <a href="/plugin_config" class="image-button">
-            <img src="/static/images/plugin_config.jpg" alt="Plugin Config">
-          </a>
-          <div class="label">Plugin Config</div>
-        </div>
-        <div>
-          <a href="/lighting_periods" class="image-button">
-            <img src="/static/images/lighting_periods.jpg" alt="Lighting Periods">
-          </a>
-          <div class="label">Lighting Periods</div>
-        </div>
-        <div>
-          <a href="/zones" class="image-button">
-            <img src="/static/images/zones.jpg" alt="Zones">
-          </a>
-          <div class="label">Zones</div>
-        </div>
-      </div>
-    </div>
-    <div class="instructions-container" style="margin:40px auto; max-width:800px; padding:20px; background:#fff; border:1px solid #ccc; border-radius:8px;">
-      <h2>Instructions</h2>
-      <div id="instructions-content">Loading instructions...</div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-      fetch('/README.MD')
+</head>
+<body>
+<div class="container">
+    {% set page_title = "Documentation" %}
+    {% include "header_common.html" %}
+</div>
+<div class="instructions-container"
+     style="margin:40px auto; max-width:800px; padding:20px; background:#fff; border:1px solid #ccc; border-radius:8px;">
+    <h2>Instructions</h2>
+    <div id="instructions-content">Loading instructions...</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    fetch('/README.MD')
         .then(response => response.text())
         .then(text => {
-          document.getElementById('instructions-content').innerHTML = marked.parse(text);
+            document.getElementById('instructions-content').innerHTML = marked.parse(text);
         })
         .catch(error => {
-          document.getElementById('instructions-content').innerHTML = 'Failed to load instructions.';
+            document.getElementById('instructions-content').innerHTML = 'Failed to load instructions.';
         });
-    </script>
-  </body>
+</script>
+</body>
 </html>
