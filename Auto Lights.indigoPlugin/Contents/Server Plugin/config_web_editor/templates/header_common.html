@@ -1,11 +1,12 @@
 {% set page_title = page_title|default("Indigo Auto Lights") %}
-<div id="header" style="padding: 10px; background-color: #ddd; border-bottom: 2px solid #aaa; display: flex; flex-direction: column; align-items: center;">
-  <img src="../../../Resources/icon.png" alt="Logo" style="height: 40px; align-self: flex-start; margin-bottom: 10px;">
-  <div class="page-title" style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">{{ page_title }}</div>
-  <div id="header-nav" class="tabs">
-    <a href="/plugin_config" class="tab">Plugin Configuration</a>
-    <a href="/zones" class="tab">Zones</a>
-    <a href="/lighting_periods" class="tab">Lighting Periods</a>
-    <a href="/config_backup" class="tab">Config Backup</a>
-  </div>
+<div id="header"
+     style="padding: 10px; background-color: #ddd; border-bottom: 2px solid #aaa; display: flex; flex-direction: column; align-items: center;">
+    <img src="/static/images/icon.png" alt="Logo" style="align-self: flex-start; margin-bottom: 10px;">
+    <div class="page-title" style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">{{ page_title }}</div>
+    <div id="header-nav" class="tabs">
+        <a href="/plugin_config" class="tab">Plugin Configuration</a>
+        <a href="/zones" class="tab">Zones</a>
+        <a href="/lighting_periods" class="tab">Lighting Periods</a>
+        <a href="/config_backup" class="tab">Config Backup</a>
+    </div>
 </div>
