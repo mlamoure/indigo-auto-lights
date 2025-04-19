@@ -10,15 +10,35 @@
 {% include "header_common.html" %}
 <div id="container">
     <div id="content">
-        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 20px;">
-            <form method="GET" action="/download_config" style="display:inline-block;">
-                <button type="submit" class="btn">Download Current Config</button>
-            </form>
-            <form method="POST" action="/upload_config" enctype="multipart/form-data" style="display:inline-block;">
-                <input type="file" name="config_file_upload" accept=".json" style="display:inline-block;"/>
-                <button type="submit" class="btn">Upload Config</button>
-            </form>
-        </div>
+        <h3>Current Configuration</h3>
+        <table class="zones-table" style="margin-bottom: 20px;">
+            <tr>
+                <td>Download Current Config</td>
+                <td>
+                    <form method="GET" action="/download_config" style="margin:0;">
+                        <button type="submit" class="btn">Download Current Config</button>
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Reset to Defaults</td>
+                <td>
+                    <form method="POST" action="/config_backup" style="margin:0;">
+                        <input type="hidden" name="action" value="reset_defaults">
+                        <button type="submit" class="btn">Reset to Defaults</button>
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>Upload Config</td>
+                <td>
+                    <form method="POST" action="/upload_config" enctype="multipart/form-data" style="margin:0;">
+                        <input type="file" name="config_file_upload" accept=".json" class="btn"/>
+                        <button type="submit" class="btn">Upload Config</button>
+                    </form>
+                </td>
+            </tr>
+        </table>
         <hr>
         <h3>Manual Backups</h3>
         <table class="zones-table">
