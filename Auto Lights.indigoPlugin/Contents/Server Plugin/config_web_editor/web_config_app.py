@@ -765,7 +765,7 @@ class DevicePeriodMapWidget:
                 # default to include when missing
                 is_included = field.data.get(dev_id_str, {}).get(period_id_str, True)
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
-                html.append(f'<td><select name="{name}"><option value="include" {"selected" if is_included else ""}>Include from Period</option><option value="exclude" {"selected" if not is_included else ""}>Exclude from Period</option></select></td>')
+                html.append(f'<td><select name="{name}"><option value="include" {"selected" if is_included else ""}>Include in Period</option><option value="exclude" {"selected" if not is_included else ""}>Exclude from Period</option></select></td>')
             html.append('</tr>')
         html.append('</tbody></table>')
         return Markup(''.join(html))
