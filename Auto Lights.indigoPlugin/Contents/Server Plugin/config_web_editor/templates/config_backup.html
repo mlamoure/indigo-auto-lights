@@ -11,7 +11,7 @@
 <div id="container">
     <div id="content">
         <h3>Current Configuration</h3>
-        <table class="zones-table" style="margin-bottom: 20px;">
+        <table class="zones-table">
             <tr>
                 <td>Download Current Config</td>
                 <td>
@@ -33,7 +33,10 @@
                 <td>Upload Config</td>
                 <td>
                     <form method="POST" action="/upload_config" enctype="multipart/form-data" style="margin:0;">
-                        <input type="file" name="config_file_upload" accept=".json" class="btn"/>
+                        <label class="btn">
+                            Choose File
+                            <input type="file" name="config_file_upload" accept=".json" style="display:none;"/>
+                        </label>
                         <button type="submit" class="btn">Upload Config</button>
                     </form>
                 </td>
