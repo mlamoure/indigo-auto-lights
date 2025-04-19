@@ -220,7 +220,7 @@
           "device_period_map": {
             "type": "object",
             "title": "Device to Lighting Period Mappings",
-            "tooltip": "Maps On / Off Lights to your lighting periods.  A checked box (true) means the device is included for that Lighting Period. Unchecking indicates exclusion.",
+            "tooltip": "Maps On / Off Lights to your lighting periods.  By default all lights for the Zone are included in all Lighting Periods, but this can be tweaked here.  When a light is excluded from a Lighting Period, it will not be turned on by Auto Lights script.  However, it will be turned off if the zone is not present.",
             "patternProperties": {
               "^[0-9]+$": {
                 "type": "object",
