@@ -760,13 +760,12 @@ class DevicePeriodMapWidget:
         for dev in self.devices:
             html.append(f'<tr><td>{dev["name"]}</td>')
             for period in self.lighting_periods:
-                checked = ''
                 dev_id_str = str(dev["id"])
                 period_id_str = str(period["id"])
-                if field.data.get(dev_id_str, {}).get(period_id_str, True):
-                    checked = 'checked'
+                # default to include when missing
+                is_included = field.data.get(dev_id_str, {}).get(period_id_str, True)
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
-                html.append(f'<td><input type="checkbox" name="{name}" value="true" {checked}></td>')
+                html.append(f'<td><select name="{name}"><option value="include" {"selected" if is_included else ""}>Include from Period</option><option value="exclude" {"selected" if not is_included else ""}>Exclude from Period</option></select></td>')
             html.append('</tr>')
         html.append('</tbody></table>')
         return Markup(''.join(html))
@@ -792,17 +791,21 @@ class DevicePeriodMapField(Field):
         pass
 
     def process(self, formdata, obj=None, data=None, extra_filters=None):
-        # Override to parse formdata manually
+        # read each "device_period_map-<dev>-<period>" select and turn into bool
         if formdata:
             mapping = {}
             for key in formdata:
-                if key.startswith('device_period_map-'):
-                    parts = key.split('-')
-                    if len(parts) == 3:
-                        dev_id, period_id = parts[1], parts[2]
-                        if dev_id not in mapping:
-                            mapping[dev_id] = {}
-                        mapping[dev_id][period_id] = True
+                if not key.startswith('device_period_map-'):
+                    continue
+                parts = key.split('-')
+                if len(parts) != 3:
+                    continue
+                _, dev_id, period_id = parts
+                val = formdata.get(key)
+                include = (val == 'include')
+                if dev_id not in mapping:
+                    mapping[dev_id] = {}
+                mapping[dev_id][period_id] = include
             self.data = mapping
         else:
             self.data = data or {}
