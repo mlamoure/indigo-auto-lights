@@ -14,10 +14,6 @@
             <form method="GET" action="/download_config" style="display:inline-block;">
                 <button type="submit" class="btn">Download Current Config</button>
             </form>
-            <form method="POST" action="/config_backup" style="display:inline-block;">
-                <input type="hidden" name="action" value="create_manual">
-                <button type="submit" class="btn">Create Manual Backup</button>
-            </form>
             <form method="POST" action="/upload_config" enctype="multipart/form-data" style="display:inline-block;">
                 <input type="file" name="config_file_upload" accept=".json" style="display:inline-block;"/>
                 <button type="submit" class="btn">Upload Config</button>
@@ -63,6 +59,12 @@
             {% endfor %}
             </tbody>
         </table>
+
+        <form method="POST" action="/config_backup" style="display:inline-block;">
+            <input type="hidden" name="action" value="create_manual">
+            <button type="submit" class="btn">Create Manual Backup</button>
+        </form>
+
         <hr>
         <h3>Automatic Backups</h3>
         <p style="font-style: italic; margin-bottom: 10px;">Automatic backups are taken after every configuration change
