@@ -259,7 +259,7 @@ table.zones-table th {
     flex: 0 0 auto;
     display: flex;
     flex-wrap: wrap;
-    width: 220px;
-    height: 180px;
+    width: 312px;    /* 2 × (150px tab + 4px margin + 2px border) */
+    height: 108px;   /* 3 rows × (30px tab + 4px margin + 2px border) */
     margin-left: auto;
 }
