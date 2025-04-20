@@ -114,10 +114,10 @@ body {
 /* Additional consolidated styles from templates */
 
 #info-label {
-  font-style: italic;
-  font-size: 0.85em;
-  color: darkgreen;
-  margin-left: 10px;
+    font-style: italic;
+    font-size: 0.85em;
+    color: darkgreen;
+    margin-left: 10px;
 }
 
 #sidebar ul li a .full-label {
@@ -203,12 +203,17 @@ table.zones-table th {
 .edit-form {
     text-align: left;
 }
+
 /* Ensure select boxes in multiple select container have a minimum width */
 .multiple-select-container select {
     min-width: 90px;
 }
 
-.required-marker { color: red; margin-left: 4px; font-weight: bold; }
+.required-marker {
+    color: red;
+    margin-left: 4px;
+    font-weight: bold;
+}
 
 /* Additional Header Tabs Styling */
 .tabs {
@@ -219,10 +224,11 @@ table.zones-table th {
     flex-wrap: wrap;
     border-radius: 5px;
 }
+
 #header-nav .tab {
-    flex: 0 0 100px;
-    height: 60px;
-    line-height: 60px;
+    flex: 0 0 150px;
+    height: 30px;
+    line-height: 30px;
     text-align: center;
     text-decoration: none;
     color: #333;
@@ -231,9 +237,11 @@ table.zones-table th {
     background-color: #f5f5f5;
     margin: 2px;
 }
+
 #header-nav .tab:hover {
     background-color: #e0e0e0;
 }
+
 .page-title {
     flex: 1 1 auto;
     text-align: center;
