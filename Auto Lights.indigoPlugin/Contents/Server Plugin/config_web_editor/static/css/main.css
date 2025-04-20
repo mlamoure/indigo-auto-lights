@@ -7,12 +7,11 @@ body {
 }
 
 #header {
-    background: #eee;
-    padding: 10px;
-    border-bottom: 1px solid #ccc;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    padding: 10px;
+    background-color: #ddd;
+    border-bottom: 2px solid #aaa;
 }
 
 #container {
@@ -220,24 +219,39 @@ table.zones-table th {
     flex-wrap: wrap;
     border-radius: 5px;
 }
-.tab {
-    padding: 5px 10px;
-    border: 1px solid #aaa;
-    border-radius: 5px;
-    background-color: #f5f5f5;
+#header-nav .tab {
+    flex: 0 0 100px;
+    height: 60px;
+    line-height: 60px;
+    text-align: center;
     text-decoration: none;
     color: #333;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    margin: 2px;
 }
-.tab:hover {
+#header-nav .tab:hover {
     background-color: #e0e0e0;
 }
 .page-title {
+    flex: 1 1 auto;
+    text-align: center;
     font-size: 1.5em;
     font-weight: bold;
-    margin-bottom: 10px;
 }
 
-#header img {
+.header-logo {
+    flex: 0 0 auto;
     height: 100px;
-    width: auto;
+    margin-right: 1rem;
+}
+
+#header-nav {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    width: 220px;
+    height: 180px;
+    margin-left: auto;
 }
