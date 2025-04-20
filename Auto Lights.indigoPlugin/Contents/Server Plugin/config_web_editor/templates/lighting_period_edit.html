@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-{% set page_title = "Indigo Auto Lights - Lighting Period Configuration" %}
+{% set page_title = "Lighting Period Editor" %}
 {% include "header_common.html" %}
 <div id="container">
     <div id="content">
@@ -14,36 +14,45 @@
             {{ lighting_period_form.hidden_tag() }}
 
             {% for field in lighting_period_form if field.name != 'submit' %}
-                <div class="form-field">
-                    {% if field.name in ['from_time_hour', 'to_time_hour'] %}
-                        <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label><select name="{{ field.name }}">
-                            {% for i in range(0, 24) %}
-                                <option value="{{ i }}" {% if field.data|default(0)|int == i %}selected="selected"{% endif %}>{{ i }}</option>
-                            {% endfor %}
-                        </select>
-                    {% elif field.name in ['from_time_minute', 'to_time_minute'] %}
-                        <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label><select name="{{ field.name }}">
-                            {% for m in [0, 15, 30, 45, 59] %}
-                                <option value="{{ m }}" {% if field.data|default(0)|int == m %}selected="selected"{% endif %}>{{ m }}</option>
-                            {% endfor %}
-                        </select>
-                    {% elif field.name == 'mode' %}
-                        <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label><select name="{{ field.name }}">
-                            {% for option in field.choices %}
-                                <option value="{{ option[0] }}" {% if field.data == option[0] %}selected="selected"{% endif %}>{{ option[1] }}</option>
-                            {% endfor %}
-                        </select>
-                    {% else %}
-                        <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label>{{ field() }}
-                    {% endif %}
-                </div>
+            <div class="form-field">
+                {% if field.name in ['from_time_hour', 'to_time_hour'] %}
+                <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
+                    }}</label><select name="{{ field.name }}">
+                {% for i in range(0, 24) %}
+                <option value="{{ i }}" {% if field.data|default(0)|int== i %}selected="selected" {% endif %}>{{ i }}
+                </option>
+                {% endfor %}
+            </select>
+                {% elif field.name in ['from_time_minute', 'to_time_minute'] %}
+                <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
+                    }}</label><select name="{{ field.name }}">
+                {% for m in [0, 15, 30, 45, 59] %}
+                <option value="{{ m }}" {% if field.data|default(0)|int== m %}selected="selected" {% endif %}>{{ m }}
+                </option>
+                {% endfor %}
+            </select>
+                {% elif field.name == 'mode' %}
+                <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
+                    }}</label><select name="{{ field.name }}">
+                {% for option in field.choices %}
+                <option value="{{ option[0] }}" {% if field.data== option[0] %}selected="selected" {% endif %}>{{
+                    option[1] }}
+                </option>
+                {% endfor %}
+            </select>
+                {% else %}
+                <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text }}</label>{{
+                field() }}
+                {% endif %}
+            </div>
             {% endfor %}
             <div>
                 <input type="submit" value="Save" class="btn">
                 <button type="button" class="btn" onclick="window.location.href='/lighting_periods'">Cancel</button>
             </div>
         </form>
-        <div id="save-feedback-overlay" style="display:none; position: fixed; top:20px; left:50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; z-index:9999; color: white; font-size: 1.5em; border-radius: 5px;">
+        <div id="save-feedback-overlay"
+             style="display:none; position: fixed; top:20px; left:50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px 20px; z-index:9999; color: white; font-size: 1.5em; border-radius: 5px;">
             Lighting period saved successfully.
         </div>
     </div>
@@ -78,10 +87,10 @@
         });
     </script>
     <script>
-        document.getElementById("lighting-period-config-form").addEventListener("submit", function(){
+        document.getElementById("lighting-period-config-form").addEventListener("submit", function () {
             var overlay = document.getElementById("save-feedback-overlay");
             overlay.style.display = "block";
-            setTimeout(function(){
+            setTimeout(function () {
                 overlay.style.display = "none";
             }, 2000);
         });

@@ -1,238 +1,261 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <meta charset="utf-8">
     <title>Zone Configuration - Indigo Auto Lights</title>
     <link rel="stylesheet" href="/static/css/main.css">
-  </head>
-  <body>
-{% set page_title = "Indigo Auto Lights - Zone Configuration" %}
+</head>
+<body>
+{% set page_title = "Zone Editor" %}
 {% include "header_common.html" %}
 <div id="container">
-      <div id="content">
-{% from "_form_macros.html" import render_field, save_overlay %}
-<form method="POST" id="zone-config-form" class="edit-form">
-  {{ zone_form.hidden_tag() }}
-  {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map', 'minimum_luminance_settings'] %}
-  {{ render_field(field) }}
-  {% if field.name == 'device_settings' %}
-    <div id="min-lum-wrapper" style="display:none;">
-      {{ render_field(zone_form.minimum_luminance_settings) }}
-    </div>
-  {% endif %}
-  {% endfor %}
-  {{ render_field(zone_form.device_period_map) }}
-  <div>
-    <input type="submit" value="Save" class="btn">
-    <button type="button" class="btn" onclick="window.location.href='/zones'">Cancel</button>
-  </div>
-</form>
-{{ save_overlay() }}
-        <div id="create-var-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
-          <div style="background:#fff; padding:20px; margin:100px auto; width:300px; border-radius:8px; position:relative;">
-            <h3>Create New Variable</h3>
-            <input type="text" id="new-var-name" style="width:300px;" />
-            <div style="margin-top:10px;">
-              <button type="button" id="create-var-submit" class="btn">Submit</button>
-              <button type="button" id="create-var-cancel" class="btn">Cancel</button>
+    <div id="content">
+        {% from "_form_macros.html" import render_field, save_overlay %}
+        <form method="POST" id="zone-config-form" class="edit-form">
+            {{ zone_form.hidden_tag() }}
+            {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map',
+            'minimum_luminance_settings'] %}
+            {{ render_field(field) }}
+            {% if field.name == 'device_settings' %}
+            <div id="min-lum-wrapper" style="display:none;">
+                {{ render_field(zone_form.minimum_luminance_settings) }}
             </div>
-          </div>
+            {% endif %}
+            {% endfor %}
+            {{ render_field(zone_form.device_period_map) }}
+            <div>
+                <input type="submit" value="Save" class="btn">
+                <button type="button" class="btn" onclick="window.location.href='/zones'">Cancel</button>
+            </div>
+        </form>
+        {{ save_overlay() }}
+        <div id="create-var-overlay"
+             style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+            <div style="background:#fff; padding:20px; margin:100px auto; width:300px; border-radius:8px; position:relative;">
+                <h3>Create New Variable</h3>
+                <input type="text" id="new-var-name" style="width:300px;"/>
+                <div style="margin-top:10px;">
+                    <button type="button" id="create-var-submit" class="btn">Submit</button>
+                    <button type="button" id="create-var-cancel" class="btn">Cancel</button>
+                </div>
+            </div>
         </div>
-      </div>
-      <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var currentFieldName = '';
-        document.querySelectorAll('.create-new-var-btn').forEach(function(btn) {
-          btn.addEventListener('click', function() {
-            currentFieldName = btn.getAttribute('data-field-name');
-            var contextType = "";
-            if (document.getElementById('zone-config-form')) {
-              contextType = "zone";
-            } else if (document.getElementById('lighting-period-config-form')) {
-              contextType = "period";
-            } else {
-              contextType = "auto";
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var currentFieldName = '';
+            document.querySelectorAll('.create-new-var-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    currentFieldName = btn.getAttribute('data-field-name');
+                    var contextType = "";
+                    if (document.getElementById('zone-config-form')) {
+                        contextType = "zone";
+                    } else if (document.getElementById('lighting-period-config-form')) {
+                        contextType = "period";
+                    } else {
+                        contextType = "auto";
+                    }
+                    var formField = btn.closest('.form-field');
+                    var label = formField.querySelector('label');
+                    var nameField = document.querySelector('input[name="name"]');
+                    var contextName = nameField ? nameField.value.trim().toLowerCase().replace(/\s+/g, '_') : "default";
+                    var fieldNameWithoutSuffix = currentFieldName.replace(/_var_id$/, '');
+                    var defaultName = "auto_lights_" + contextType + "_" + contextName + "_" + fieldNameWithoutSuffix;
+                    document.getElementById('new-var-name').value = defaultName;
+                    document.getElementById('create-var-overlay').style.display = 'block';
+                });
+            });
+            document.getElementById('create-var-cancel').addEventListener('click', function () {
+                document.getElementById('create-var-overlay').style.display = 'none';
+            });
+            document.getElementById('create-var-submit').addEventListener('click', function () {
+                var varName = document.getElementById('new-var-name').value;
+                fetch('/create_new_variable', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: varName})
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.var_id) {
+                            var fieldSelect = document.querySelector('select[name="' + currentFieldName + '"]');
+                            var option = document.createElement('option');
+                            option.value = data.var_id;
+                            option.text = data.var_name;
+                            option.selected = true;
+                            fieldSelect.appendChild(option);
+                        }
+                        document.getElementById('create-var-overlay').style.display = 'none';
+                    })
+                    .catch(err => {
+                        alert('Error creating variable');
+                    });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var triggers = document.querySelectorAll('.tooltip-label');
+            triggers.forEach(function (el) {
+                el.style.cursor = 'pointer';
+                el.addEventListener('click', function (e) {
+                    var formField = this.closest('.form-field');
+                    var info = formField.querySelector('.tooltip-info');
+                    if (info) {
+                        var label = formField.querySelector('.tooltip-label');
+                        var tooltip = label ? label.getAttribute('data-tooltip') : '';
+                        if (info.style.display === 'none' || info.style.display === '') {
+                            info.textContent = tooltip;
+                            info.style.display = 'block';
+                        } else {
+                            info.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var useVarCheckbox = document.querySelector('input[name="minimum_luminance_use_variable"]');
+            var minLumInput = document.querySelector('input[name="minimum_luminance"]');
+            var minLumVarSelect = document.querySelector('select[name="minimum_luminance_var_id"]');
+
+            function updateFields() {
+                if (useVarCheckbox.checked) {
+                    if (minLumInput) {
+                        minLumInput.disabled = true;
+                    }
+                    if (minLumVarSelect) {
+                        minLumVarSelect.disabled = false;
+                    }
+                } else {
+                    if (minLumInput) {
+                        minLumInput.disabled = false;
+                    }
+                    if (minLumVarSelect) {
+                        minLumVarSelect.disabled = true;
+                    }
+                }
             }
-            var formField = btn.closest('.form-field');
-            var label = formField.querySelector('label');
-            var nameField = document.querySelector('input[name="name"]');
-            var contextName = nameField ? nameField.value.trim().toLowerCase().replace(/\s+/g, '_') : "default";
-            var fieldNameWithoutSuffix = currentFieldName.replace(/_var_id$/, '');
-            var defaultName = "auto_lights_" + contextType + "_" + contextName + "_" + fieldNameWithoutSuffix;
-            document.getElementById('new-var-name').value = defaultName;
-            document.getElementById('create-var-overlay').style.display = 'block';
-          });
-        });
-        document.getElementById('create-var-cancel').addEventListener('click', function() {
-          document.getElementById('create-var-overlay').style.display = 'none';
-        });
-        document.getElementById('create-var-submit').addEventListener('click', function() {
-          var varName = document.getElementById('new-var-name').value;
-          fetch('/create_new_variable', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name: varName })
-          })
-          .then(response => response.json())
-          .then(data => {
-            if(data.var_id) {
-              var fieldSelect = document.querySelector('select[name="'+currentFieldName+'"]');
-              var option = document.createElement('option');
-              option.value = data.var_id;
-              option.text = data.var_name;
-              option.selected = true;
-              fieldSelect.appendChild(option);
+
+            if (useVarCheckbox) {
+                useVarCheckbox.addEventListener('change', updateFields);
+                updateFields();
             }
-            document.getElementById('create-var-overlay').style.display = 'none';
-          })
-          .catch(err => {
-            alert('Error creating variable');
-          });
         });
-      });
-      </script>
-      <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        var triggers = document.querySelectorAll('.tooltip-label');
-        triggers.forEach(function(el) {
-          el.style.cursor = 'pointer';
-          el.addEventListener('click', function(e) {
-            var formField = this.closest('.form-field');
-            var info = formField.querySelector('.tooltip-info');
-            if (info) {
-              var label = formField.querySelector('.tooltip-label');
-              var tooltip = label ? label.getAttribute('data-tooltip') : '';
-              if (info.style.display === 'none' || info.style.display === '') {
-                info.textContent = tooltip;
-                info.style.display = 'block';
-              } else {
-                info.style.display = 'none';
-              }
+    </script>
+    <script>
+        function moveRight(fieldName) {
+            var available = document.getElementById(fieldName.replace('.', '-') + "_available");
+            var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
+            for (var i = available.options.length - 1; i >= 0; i--) {
+                var option = available.options[i];
+                if (option.selected) {
+                    selected.appendChild(option);
+                    option.selected = true;
+                }
             }
-          });
-        });
-      });
-      </script>
-      <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var useVarCheckbox = document.querySelector('input[name="minimum_luminance_use_variable"]');
-    var minLumInput = document.querySelector('input[name="minimum_luminance"]');
-    var minLumVarSelect = document.querySelector('select[name="minimum_luminance_var_id"]');
-    function updateFields() {
-        if (useVarCheckbox.checked) {
-            if (minLumInput) { minLumInput.disabled = true; }
-            if (minLumVarSelect) { minLumVarSelect.disabled = false; }
-        } else {
-            if (minLumInput) { minLumInput.disabled = false; }
-            if (minLumVarSelect) { minLumVarSelect.disabled = true; }
+            if (fieldName.endsWith("luminance_dev_ids")) {
+                updateLuminanceValue();
+            }
         }
-    }
-    if (useVarCheckbox) {
-        useVarCheckbox.addEventListener('change', updateFields);
-        updateFields();
-    }
-});
-      </script>
-      <script>
-function moveRight(fieldName) {
-  var available = document.getElementById(fieldName.replace('.', '-') + "_available");
-  var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
-  for (var i = available.options.length - 1; i >= 0; i--) {
-    var option = available.options[i];
-    if (option.selected) {
-      selected.appendChild(option);
-      option.selected = true;
-    }
-  }
-  if (fieldName.endsWith("luminance_dev_ids")) {
-      updateLuminanceValue();
-  }
-}
-function moveLeft(fieldName) {
-  var available = document.getElementById(fieldName.replace('.', '-') + "_available");
-  var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
-  for (var i = selected.options.length - 1; i >= 0; i--) {
-    var option = selected.options[i];
-    if (option.selected) {
-      available.appendChild(option);
-      option.selected = false;
-    }
-  }
-  if (fieldName.endsWith("luminance_dev_ids")) {
-      updateLuminanceValue();
-  }
-}
-</script>
-<script>
-function updateLuminanceValue() {
-    var wrapper = document.getElementById("min-lum-wrapper");
-    var selected = document.querySelector('[id$="luminance_dev_ids_selected"]');
-    if (wrapper) {
-        wrapper.style.display = (selected && selected.options.length > 0) ? "block" : "none";
-    }
-    if (!selected) return;
-    var deviceIds = [];
-    for (var i = 0; i < selected.options.length; i++) {
-      deviceIds.push(selected.options[i].value);
-    }
-    fetch("/get_luminance_value", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({device_ids: deviceIds})
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById("current-luminance-value").textContent = data.average.toFixed(2);
-    })
-    .catch(err => {
-        document.getElementById("current-luminance-value").textContent = "Error";
-    });
-}
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var useVarCheckbox = document.querySelector('input[name$="minimum_luminance_use_variable"]');
-    var minLumInput = document.querySelector('input[name$="minimum_luminance"]');
-    var minLumVarSelect = document.querySelector('select[name$="minimum_luminance_var_id"]');
-    function updateFields() {
-        if (useVarCheckbox.checked) {
-            if (minLumInput) { minLumInput.disabled = true; }
-            if (minLumVarSelect) { minLumVarSelect.disabled = false; }
-        } else {
-            if (minLumInput) { minLumInput.disabled = false; }
-            if (minLumVarSelect) { minLumVarSelect.disabled = true; }
+
+        function moveLeft(fieldName) {
+            var available = document.getElementById(fieldName.replace('.', '-') + "_available");
+            var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
+            for (var i = selected.options.length - 1; i >= 0; i--) {
+                var option = selected.options[i];
+                if (option.selected) {
+                    available.appendChild(option);
+                    option.selected = false;
+                }
+            }
+            if (fieldName.endsWith("luminance_dev_ids")) {
+                updateLuminanceValue();
+            }
         }
-    }
-    if (useVarCheckbox) {
-       useVarCheckbox.addEventListener('change', updateFields);
-       updateFields();
-    }
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-  updateLuminanceValue();
-  var selected = document.querySelector('[id$="luminance_dev_ids_selected"]');
-  var deviceIds = [];
-  if (selected) {
-    for (var i = 0; i < selected.options.length; i++) {
-      deviceIds.push(parseInt(selected.options[i].value));
-    }
-  }
-  fetch("/get_luminance_value", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({device_ids: deviceIds})
-  })
-  .then(response => response.json())
-  .then(data => {
-    document.getElementById("current-luminance-value").textContent = data.average.toFixed(2);
-  })
-  .catch(err => {
-    document.getElementById("current-luminance-value").textContent = "Error";
-  });
-});
-</script>
+    </script>
+    <script>
+        function updateLuminanceValue() {
+            var wrapper = document.getElementById("min-lum-wrapper");
+            var selected = document.querySelector('[id$="luminance_dev_ids_selected"]');
+            if (wrapper) {
+                wrapper.style.display = (selected && selected.options.length > 0) ? "block" : "none";
+            }
+            if (!selected) return;
+            var deviceIds = [];
+            for (var i = 0; i < selected.options.length; i++) {
+                deviceIds.push(selected.options[i].value);
+            }
+            fetch("/get_luminance_value", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({device_ids: deviceIds})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("current-luminance-value").textContent = data.average.toFixed(2);
+                })
+                .catch(err => {
+                    document.getElementById("current-luminance-value").textContent = "Error";
+                });
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var useVarCheckbox = document.querySelector('input[name$="minimum_luminance_use_variable"]');
+            var minLumInput = document.querySelector('input[name$="minimum_luminance"]');
+            var minLumVarSelect = document.querySelector('select[name$="minimum_luminance_var_id"]');
+
+            function updateFields() {
+                if (useVarCheckbox.checked) {
+                    if (minLumInput) {
+                        minLumInput.disabled = true;
+                    }
+                    if (minLumVarSelect) {
+                        minLumVarSelect.disabled = false;
+                    }
+                } else {
+                    if (minLumInput) {
+                        minLumInput.disabled = false;
+                    }
+                    if (minLumVarSelect) {
+                        minLumVarSelect.disabled = true;
+                    }
+                }
+            }
+
+            if (useVarCheckbox) {
+                useVarCheckbox.addEventListener('change', updateFields);
+                updateFields();
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            updateLuminanceValue();
+            var selected = document.querySelector('[id$="luminance_dev_ids_selected"]');
+            var deviceIds = [];
+            if (selected) {
+                for (var i = 0; i < selected.options.length; i++) {
+                    deviceIds.push(parseInt(selected.options[i].value));
+                }
+            }
+            fetch("/get_luminance_value", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({device_ids: deviceIds})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("current-luminance-value").textContent = data.average.toFixed(2);
+                })
+                .catch(err => {
+                    document.getElementById("current-luminance-value").textContent = "Error";
+                });
+        });
+    </script>
 </div>
-  </body>
+</body>
 </html>
