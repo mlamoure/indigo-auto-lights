@@ -6,12 +6,6 @@
     "plugin_config": {
       "type": "object",
       "properties": {
-        "guest_mode_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Guest Mode Variable",
-          "tooltip": "Set the identifier for the guest mode variable."
-        },
         "enabled_var_id": {
           "type": "integer",
           "x-drop-down": true,
@@ -65,7 +59,6 @@
         }
       },
       "required": [
-        "guest_mode_var_id",
         "enabled_var_id"
       ]
     },

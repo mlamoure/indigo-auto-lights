@@ -26,9 +26,7 @@ class AutoLightsConfig(AutoLightsBase):
         super().__init__()
         self._enabled = False
 
-        self._guest_mode = False
         self._enabled_var_id = -1
-        self._guest_mode_var_id = -1
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0
         self._global_behavior_variables = []
@@ -58,18 +56,8 @@ class AutoLightsConfig(AutoLightsBase):
         self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         # indigo.server.log("AutoLightsConfig: enabled set to: " + str(self._enabled))
 
-    @property
-    def guest_mode(self):
-        return self._guest_mode
 
-    @property
-    def guest_mode_var_id(self):
-        return self._guest_mode_var_id
 
-    @guest_mode_var_id.setter
-    def guest_mode_var_id(self, value):
-        self._guest_mode_var_id = value
-        self._guest_mode = indigo.variables[self._guest_mode_var_id].getValue(bool)
 
     @property
     def default_lock_duration(self) -> int:
