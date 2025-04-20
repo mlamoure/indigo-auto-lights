@@ -64,7 +64,6 @@ class Plugin(indigo.PluginBase):
         self.plugin_file_handler.setLevel(self.logLevel)
 
         # Determine configuration file path based on plugin log file location.
-        # self._config_file_str = "config_web_editor/config/auto_lights_conf.json"
         self._config_file_str = self.plugin_file_handler.baseFilename.replace(
             "Logs", "Preferences"
         ).replace("/plugin.log", "/config/auto_lights_conf.json")
