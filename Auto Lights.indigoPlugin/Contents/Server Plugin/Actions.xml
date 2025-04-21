@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <Actions>
-    <SupportURL>https://wiki.indigodomo.com/doku.php?id=plugins:example_dev_1</SupportURL>
     <Action id="reset_all_locks">
         <Name>Reset All Zone Locks</Name>
         <CallbackMethod>reset_all_locks</CallbackMethod>
