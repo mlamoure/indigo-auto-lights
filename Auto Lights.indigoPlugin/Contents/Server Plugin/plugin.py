@@ -58,10 +58,10 @@ class Plugin(indigo.PluginBase):
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
 
         # Configure logging levels based on plugin preferences.
-        self.logLevel = int(plugin_prefs.get("log_level", logging.INFO))
-        self.logger.debug(f"{self.logLevel=}")
-        self.indigo_log_handler.setLevel(self.logLevel)
-        self.plugin_file_handler.setLevel(self.logLevel)
+        self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
+        self.logger.debug(f"{self.log_level=}")
+        self.indigo_log_handler.setLevel(self.log_level)
+        self.plugin_file_handler.setLevel(self.log_level)
 
         # Determine configuration file path based on plugin log file location.
         self._config_file_str = self.plugin_file_handler.baseFilename.replace(
@@ -231,10 +231,10 @@ class Plugin(indigo.PluginBase):
                 self.start_configuration_web_server()
 
             # Update logging configuration.
-            self.logLevel = int(values_dict.get("log_level", logging.INFO))
-            self.logger.debug(f"{self.logLevel=}")
-            self.indigo_log_handler.setLevel(self.logLevel)
-            self.plugin_file_handler.setLevel(self.logLevel)
+            self.log_level = int(values_dict.get("log_level", logging.INFO))
+            self.logger.debug(f"{self.log_level=}")
+            self.indigo_log_handler.setLevel(self.log_level)
+            self.plugin_file_handler.setLevel(self.log_level)
 
     def get_zone_list(
         self: indigo.PluginBase, filter="", values_dict=None, type_id="", target_id=0
