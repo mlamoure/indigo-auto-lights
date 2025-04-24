@@ -153,6 +153,8 @@ class AutoLightsAgent(AutoLightsBase):
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
+                if device_prop == "presence_dev_ids" and zone.unlock_when_no_presence and not zone.has_presence_detected():
+                    self.reset_locks(zone.name, "no presence detected and `unlock_when_no_presence` is set for this Zone")
                 if self.process_zone(zone):
                     processed.append(zone)
 
@@ -198,7 +200,7 @@ class AutoLightsAgent(AutoLightsBase):
     def get_zones(self) -> List[Zone]:
         return self._config.zones
 
-    def reset_locks(self, zone_name: str = None) -> None:
+    def reset_locks(self, zone_name: str = None, reason: str = "manual reset") -> None:
         """
         Reset locks for zones. If zone_name is provided, only reset that zone's lock; otherwise, reset locks for all zones.
         """
@@ -208,14 +210,14 @@ class AutoLightsAgent(AutoLightsBase):
         if zone_name:
             for zone in self._config.zones:
                 if zone.name == zone_name:
-                    zone.reset_lock("manual reset")
+                    zone.reset_lock(reason)
                     self.process_zone(zone)
                     if zone.name in self._timers:
                         self._timers[zone.name].cancel()
                         del self._timers[zone.name]
         else:
             for zone in self._config.zones:
-                zone.reset_lock("manual reset")
+                zone.reset_lock(reason)
                 self.process_zone(zone)
                 if zone.name in self._timers:
                     self._timers[zone.name].cancel()
