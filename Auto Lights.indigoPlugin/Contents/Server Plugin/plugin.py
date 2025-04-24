@@ -8,11 +8,12 @@ import threading
 from datetime import datetime
 
 import requests
+from werkzeug.serving import make_server
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
 from config_web_editor.tools.indigo_api_tools import get_indigo_api_url, indigo_api_call
-from config_web_editor.web_config_app import run_flask_app
+from config_web_editor.web_config_app import init_flask_app, app as flask_app
 
 try:
     import indigo
@@ -45,6 +46,7 @@ class Plugin(indigo.PluginBase):
 
         self._agent = None
         self._web_server_thread = None
+        self._web_server = None
 
         # Set environment variables for Indigo API configuration.
         os.environ["INDIGO_API_URL"] = plugin_prefs.get(
@@ -200,16 +202,20 @@ class Plugin(indigo.PluginBase):
             self.logger.info(
                 f"Starting the configuration web server... Visit {' or '.join(urls)}"
             )
-            # Start the Flask-based configuration web server in a daemon thread.
+            # Start the configuration web server using a WSGI server in a daemon thread.
+            # Initialize the Flask app (registers config_editor & caches).
+            init_flask_app(self._config_file_str, self._web_config_bind_ip, self._web_config_bind_port)
+            # Create a real WSGI server
+            self._web_server = make_server(
+                self._web_config_bind_ip,
+                int(self._web_config_bind_port),
+                flask_app,
+                threaded=True
+            )
             self._web_server_thread = threading.Thread(
-                target=run_flask_app,
-                args=(
-                    self._web_config_bind_ip,
-                    self._web_config_bind_port,
-                    True,
-                    self._config_file_str,
-                ),
-                daemon=True,
+                target=self._web_server.serve_forever,
+                name="AutoLightsWebUI",
+                daemon=True
             )
             self._web_server_thread.start()
         else:

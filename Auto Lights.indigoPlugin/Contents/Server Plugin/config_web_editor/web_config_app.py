@@ -45,6 +45,7 @@ from .tools.indigo_api_tools import (
     indigo_get_house_devices,
     indigo_create_new_variable,
 )
+from werkzeug.serving import make_server
 
 # Load environment variables if needed
 load_dotenv()
@@ -707,21 +708,21 @@ def upload_config():
     return redirect(url_for("config_backup"))
 
 
-def run_flask_app(
+def init_flask_app(
+    config_file: str,
     host: str = "127.0.0.1",
     port: int = 9500,
     debug: bool = True,
-    config_file: str = None,
-) -> None:
+) -> Flask:
+    """
+    Perform all of the setup currently in run_flask_app(),
+    except for starting the server.
+    """
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    if config_file is None:
-        config_dir = os.path.join(current_dir, "config")
-        config_file = os.path.join(config_dir, "auto_lights_conf.json")
-    else:
-        config_dir = os.path.dirname(os.path.abspath(config_file))
-    schema_file = os.path.join(current_dir, "config/config_schema.json")
-    backup_dir = os.path.join(config_dir, "backups")
-    auto_backup_dir = os.path.join(config_dir, "auto_backups")
+    schema_file = os.path.join(current_dir, "config", "config_schema.json")
+    backup_dir = os.path.join(os.path.dirname(config_file), "backups")
+    auto_backup_dir = os.path.join(os.path.dirname(config_file), "auto_backups")
+
     config_editor = WebConfigEditor(
         config_file, schema_file, backup_dir, auto_backup_dir, flask_app=app
     )
@@ -729,15 +730,29 @@ def run_flask_app(
     app.jinja_env.globals["get_cached_indigo_variables"] = (
         config_editor.get_cached_indigo_variables
     )
-    try:
-        # Initialize caches via config_editor
-        config_editor.get_cached_indigo_devices()
-        config_editor.get_cached_indigo_variables()
-        app.logger.info(f"[{datetime.now()}] Indigo caches initialized")
-    except Exception as e:
-        app.logger.error(f"Error initializing caches: {e}")
-
+    # initialize caches
+    config_editor.get_cached_indigo_devices()
+    config_editor.get_cached_indigo_variables()
+    app.logger.info(f"[{datetime.now()}] Indigo caches initialized")
     config_editor.start_cache_refresher()
+
+    return app
+
+
+def run_flask_app(
+    host: str = "127.0.0.1",
+    port: int = 9500,
+    debug: bool = True,
+    config_file: str = None,
+) -> None:
+    """
+    Starts the Flask development server for backwards compatibility.
+    """
+    if config_file is None:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        config_file = os.path.join(current_dir, "config", "auto_lights_conf.json")
+    # initialize the app setup (config_editor, caches)
+    init_flask_app(config_file, host, port, debug)
     app.run(host=host, port=port, debug=debug, use_reloader=False)
 
 
