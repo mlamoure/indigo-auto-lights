@@ -107,8 +107,5 @@ Originally built as a script before becoming a plugin in 2025, Auto Lights has b
 conversion
 may have introduced issues. The following improvements are planned:
 
-- [ ] Add validation to the forms for required items
-- [ ] Enhance documentation and tool tips
-- [ ] Clarify plugin setup for using a reflector versus a local address for the Indigo web server
 - [ ] Fix the web server shutdown
 
