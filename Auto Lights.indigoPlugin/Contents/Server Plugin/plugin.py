@@ -225,23 +225,26 @@ class Plugin(indigo.PluginBase):
 
     def stop_configuration_web_server(self: indigo.PluginBase):
         """
-        Stops the configuration web server by calling its shutdown endpoint.
+        Stops the configuration web server by calling server.shutdown()
+        instead of an HTTP round-trip.
         """
-        if self._web_server_thread is not None:
-            try:
-                shutdown_url = f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}/shutdown"
-                requests.post(shutdown_url)
-                self.logger.info("Configuration web server shutdown initiated.")
-                self._web_server_thread.join(3.0)
-                if self._web_server_thread.is_alive():
-                    self.logger.warning("Web server thread did not exit cleanly.")
-                else:
-                    self.logger.info("Web server thread exited cleanly.")
-            except Exception as e:
-                self.logger.error(f"Error stopping configuration web server: {e}")
-            self._web_server_thread = None
-        else:
+        if self._web_server is None:
             self.logger.info("Configuration web server is not running.")
+            return
+
+        try:
+            self.logger.info("Shutting down configuration web server...")
+            self._web_server.shutdown()
+            self._web_server_thread.join(timeout=3.0)
+            if self._web_server_thread.is_alive():
+                self.logger.warning("Web server thread did not exit cleanly.")
+            else:
+                self.logger.info("Web server thread exited cleanly.")
+        except Exception as e:
+            self.logger.error(f"Error stopping configuration web server: {e}")
+        finally:
+            self._web_server = None
+            self._web_server_thread = None
 
     def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
         """
