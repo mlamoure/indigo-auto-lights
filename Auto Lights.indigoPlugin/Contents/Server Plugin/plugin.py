@@ -7,7 +7,6 @@ import socket
 import threading
 from datetime import datetime
 
-import requests
 from werkzeug.serving import make_server
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
@@ -204,18 +203,22 @@ class Plugin(indigo.PluginBase):
             )
             # Start the configuration web server using a WSGI server in a daemon thread.
             # Initialize the Flask app (registers config_editor & caches).
-            init_flask_app(self._config_file_str, self._web_config_bind_ip, self._web_config_bind_port)
+            init_flask_app(
+                self._config_file_str,
+                self._web_config_bind_ip,
+                self._web_config_bind_port,
+            )
             # Create a real WSGI server
             self._web_server = make_server(
                 self._web_config_bind_ip,
                 int(self._web_config_bind_port),
                 flask_app,
-                threaded=True
+                threaded=True,
             )
             self._web_server_thread = threading.Thread(
                 target=self._web_server.serve_forever,
                 name="AutoLightsWebUI",
-                daemon=True
+                daemon=True,
             )
             self._web_server_thread.start()
         else:
@@ -238,10 +241,10 @@ class Plugin(indigo.PluginBase):
             self._web_server_thread.join(timeout=3.0)
             if self._web_server_thread.is_alive():
                 self.logger.warning("Web server thread did not exit cleanly.")
-            else:
-                self.logger.info("Web server thread exited cleanly.")
+
         except Exception as e:
             self.logger.error(f"Error stopping configuration web server: {e}")
+
         finally:
             self._web_server = None
             self._web_server_thread = None
