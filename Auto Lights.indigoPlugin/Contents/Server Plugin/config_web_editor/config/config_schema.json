@@ -181,6 +181,11 @@
                 "tooltip": "Enable to extend the lock duration when the zone is active.",
                 "default": true
               },
+              "lock_extension_duration": {
+                "type": "integer",
+                "title": "Lock Extension Duration",
+                "tooltip": "Overrides the plugin configuration for how long the lock is extended when the zone has presence detected."
+              },
               "perform_confirm": {
                 "type": "boolean",
                 "title": "Perform Confirm",
