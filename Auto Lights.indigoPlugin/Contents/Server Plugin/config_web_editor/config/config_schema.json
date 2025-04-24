@@ -15,12 +15,12 @@
         "default_lock_duration": {
           "type": "integer",
           "title": "Default Lock Duration",
-          "tooltip": "Set the default duration for locks in seconds."
+          "tooltip": "Set the default duration for locks."
         },
         "default_lock_extension_duration": {
           "type": "integer",
           "title": "Default Lock Extension Duration",
-          "tooltip": "Set the duration by which the lock is extended in seconds."
+          "tooltip": "Set the duration by which the lock is extended."
         },
         "global_behavior_variables": {
           "type": "array",
