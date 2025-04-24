@@ -197,6 +197,7 @@ def create_field(field_name, field_schema):
     # Example of an enumerated select for lock durations
     elif field_name in [
         "lock_duration",
+        "lock_extension_duration",
         "default_lock_duration",
         "default_lock_extension_duration",
     ]:
