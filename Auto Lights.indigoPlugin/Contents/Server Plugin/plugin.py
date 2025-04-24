@@ -94,6 +94,7 @@ class Plugin(indigo.PluginBase):
 
         :return:
         """
+        self.test_connections()
         self.logger.debug("startup called")
 
         # Subscribe to changes for devices and variables.
@@ -167,6 +168,9 @@ class Plugin(indigo.PluginBase):
     def start_configuration_web_server(self: indigo.PluginBase):
         if self._web_server_thread is not None:
             self.stop_configuration_web_server()
+        if not getattr(self, "connection_indigo_api", False):
+            self.logger.warning("Cannot start web server because Indigo API connection failed.")
+            return
 
         # Check if custom Indigo API configuration has been provided.
         if (
@@ -250,6 +254,7 @@ class Plugin(indigo.PluginBase):
 
             self._disable_web_server = values_dict.get("disable_web_server")
 
+            self.test_connections()
             # Restart or stop the configuration web server based on new settings.
             if self._disable_web_server:
                 self.stop_configuration_web_server()
