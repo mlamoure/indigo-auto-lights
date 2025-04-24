@@ -271,7 +271,7 @@ class Plugin(indigo.PluginBase):
         self._agent.reset_locks()
 
     def print_locked_zones(
-        self: indigo.PluginBase, action, dev, caller_waiting_for_result
+        self: indigo.PluginBase, action=None, dev=None, caller_waiting_for_result=None
     ):
         """
         Menu item callback to log all locked zones.
