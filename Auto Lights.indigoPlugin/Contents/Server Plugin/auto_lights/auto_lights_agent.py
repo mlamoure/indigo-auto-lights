@@ -249,6 +249,11 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Iterate through each zone and log if the zone is locked.
         """
-        for zone in self._config.zones:
-            if zone.locked:
-                self.logger.info(f"Zone '{zone.name}' is locked until {zone.lock_expiration_str}")
+        locked_zones = [zone for zone in self._config.zones if zone.locked]
+        if not locked_zones:
+            self.logger.info("No locked zones.")
+        else:
+            self.logger.info("🔒 Locked Zones:")
+            for zone in locked_zones:
+                self.logger.info(f"🔒 Zone '{zone.name}' is locked until {zone.lock_expiration_str}")
+            self.logger.info("🔒 End of locked zones.")
