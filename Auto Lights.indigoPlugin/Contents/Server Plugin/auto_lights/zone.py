@@ -502,7 +502,7 @@ class Zone(AutoLightsBase):
             and self.current_lighting_period.has_lock_duration_override
         ):
             return self.current_lighting_period.lock_duration
-        if self._lock_duration is None:
+        if self._lock_duration is None or self._lock_duration == -1:
             self._lock_duration = self._config.default_lock_duration
         return self._lock_duration
 
@@ -516,7 +516,7 @@ class Zone(AutoLightsBase):
         Retrieves the lock extension duration in minutes.
         If not explicitly set, defaults to the value specified in the configuration.
         """
-        if self._lock_extension_duration is None:
+        if self._lock_extension_duration is None or self._lock_extension_duration == -1:
             self._lock_extension_duration = self._config.default_lock_extension_duration
         return self._lock_extension_duration
 
