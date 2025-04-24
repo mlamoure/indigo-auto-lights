@@ -93,6 +93,7 @@ class Plugin(indigo.PluginBase):
         :return:
         """
         self.logger.debug("shutdown called")
+        self.stop_configuration_web_server()
 
     def runConcurrentThread(self: indigo.PluginBase):
         try:
