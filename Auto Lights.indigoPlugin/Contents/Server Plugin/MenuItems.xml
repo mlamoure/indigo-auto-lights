@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <MenuItems>
-
-
+    <MenuItem id="print_locks">
+        <Name>Print all locked Zones</Name>
+        <CallbackMethod>print_locked_zones</CallbackMethod>
+    </MenuItem>
 </MenuItems>
