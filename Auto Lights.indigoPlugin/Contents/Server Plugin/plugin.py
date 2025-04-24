@@ -7,6 +7,8 @@ import threading
 from datetime import datetime
 
 import requests
+import random
+from config_web_editor.tools.indigo_api_tools import get_indigo_api_url, indigo_api_call
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
@@ -67,6 +69,24 @@ class Plugin(indigo.PluginBase):
         self._config_file_str = self.plugin_file_handler.baseFilename.replace(
             "Logs", "Preferences"
         ).replace("/plugin.log", "/config/auto_lights_conf.json")
+
+    def test_connections(self) -> None:
+        """
+        Test connectivity to the Indigo API by fetching a random device.
+        """
+        try:
+            random_device = random.choice(list(indigo.devices))
+            device_id = random_device.id
+            device_detail = indigo_api_call(
+                f"{get_indigo_api_url()}/indigo.devices/{device_id}", "GET", None
+            )
+            if "error" not in device_detail:
+                self.connection_indigo_api = True
+            else:
+                self.connection_indigo_api = False
+        except Exception as e:
+            self.logger.error("Indigo API connectivity test failed: %s", e)
+            self.connection_indigo_api = False
 
     def startup(self: indigo.PluginBase) -> None:
         """
