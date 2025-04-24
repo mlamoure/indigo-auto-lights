@@ -1,17 +1,17 @@
 import json
 import logging
 import os
+import random
 import shutil
 import socket
 import threading
 from datetime import datetime
 
 import requests
-import random
-from config_web_editor.tools.indigo_api_tools import get_indigo_api_url, indigo_api_call
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
+from config_web_editor.tools.indigo_api_tools import get_indigo_api_url, indigo_api_call
 from config_web_editor.web_config_app import run_flask_app
 
 try:
@@ -94,8 +94,9 @@ class Plugin(indigo.PluginBase):
 
         :return:
         """
-        self.test_connections()
         self.logger.debug("startup called")
+
+        self.test_connections()
 
         # Subscribe to changes for devices and variables.
         indigo.devices.subscribeToChanges()
@@ -169,7 +170,9 @@ class Plugin(indigo.PluginBase):
         if self._web_server_thread is not None:
             self.stop_configuration_web_server()
         if not getattr(self, "connection_indigo_api", False):
-            self.logger.warning("Cannot start web server because Indigo API connection failed.")
+            self.logger.warning(
+                "Cannot start web server because Indigo API connection failed."
+            )
             return
 
         # Check if custom Indigo API configuration has been provided.
