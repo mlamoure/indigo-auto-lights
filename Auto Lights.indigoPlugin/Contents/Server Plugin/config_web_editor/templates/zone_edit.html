@@ -256,6 +256,19 @@
                 });
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            var extendCheckbox = document.querySelector('input[name="behavior_settings-extend_lock_when_active"]');
+            var extDurField = document.querySelector('select[name="behavior_settings-lock_extension_duration"]');
+            if (extendCheckbox && extDurField) {
+                function toggleLockExt() {
+                    extDurField.disabled = !extendCheckbox.checked;
+                }
+                extendCheckbox.addEventListener('change', toggleLockExt);
+                toggleLockExt();
+            }
+        });
+    </script>
 </div>
 </body>
 </html>
