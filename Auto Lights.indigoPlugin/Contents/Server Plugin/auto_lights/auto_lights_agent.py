@@ -244,3 +244,11 @@ class AutoLightsAgent(AutoLightsBase):
                 )
                 self._timers[unlocked_zone.name] = timer
                 timer.start()
+
+    def print_locked_zones(self) -> None:
+        """
+        Iterate through each zone and log if the zone is locked.
+        """
+        for zone in self._config.zones:
+            if zone.locked:
+                self.logger.info(f"Zone '{zone.name}' is locked until {zone.lock_expiration_str}")

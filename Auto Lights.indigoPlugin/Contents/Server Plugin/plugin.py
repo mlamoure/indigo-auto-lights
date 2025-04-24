@@ -270,6 +270,14 @@ class Plugin(indigo.PluginBase):
     ):
         self._agent.reset_locks()
 
+    def print_locked_zones(
+        self: indigo.PluginBase, action, dev, caller_waiting_for_result
+    ):
+        """
+        Menu item callback to log all locked zones.
+        """
+        self._agent.print_locked_zones()
+
     def create_variable(self, action, dev=None, caller_waiting_for_result=None):
         """
         :param action: action.props contains all the information passed from the web server
