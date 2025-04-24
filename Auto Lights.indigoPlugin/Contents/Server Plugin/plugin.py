@@ -75,6 +75,11 @@ class Plugin(indigo.PluginBase):
         """
         Test connectivity to the Indigo API by fetching a random device.
         """
+
+        # no need to test if the web server is disabled
+        if self._disable_web_server:
+            return
+
         try:
             random_device = random.choice(list(indigo.devices))
             device_id = random_device.id
