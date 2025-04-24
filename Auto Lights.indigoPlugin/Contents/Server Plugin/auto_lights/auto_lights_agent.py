@@ -256,4 +256,7 @@ class AutoLightsAgent(AutoLightsBase):
             self.logger.info("🔒 Locked Zones:")
             for zone in locked_zones:
                 self.logger.info(f"🔒 Zone '{zone.name}' is locked until {zone.lock_expiration_str}")
+                self.logger.info(f"    extend_lock_when_active: {zone.extend_lock_when_active}")
+                self.logger.info(f"    unlock_when_no_presence: {zone.unlock_when_no_presence}")
+                self.logger.info(f"    lock_extension_duration: {zone.lock_extension_duration}")
             self.logger.info("🔒 End of locked zones.")
