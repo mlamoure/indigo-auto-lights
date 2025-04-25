@@ -342,7 +342,7 @@ class AutoLightsAgent(AutoLightsBase):
                 )
                 light_type = "On Light" if dev_id in zone.on_lights_dev_ids else "Off Light"
                 excluded = ""
-                if zone.has_dev_lighting_mapping_exclusion(dev_id, zone.current_lighting_period):
+                if zone.current_lighting_period and zone.has_dev_lighting_mapping_exclusion(dev_id, zone.current_lighting_period):
                     excluded = " (excluded from Lighting Period)"
                 self.logger.info(
                     f"    {light_type} '{dev.name}': current={curr}, target={tgt}{excluded}"
