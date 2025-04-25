@@ -236,7 +236,10 @@ class AutoLightsAgent(AutoLightsBase):
                 if zone.name == zone_name:
                     if zone.locked:
                         zone.reset_lock(reason)
+                        zone.check_out()
+                        zone._target_brightness = None
                         self.process_zone(zone)
+                        zone.check_in()
                         if zone.name in self._timers:
                             self._timers[zone.name].cancel()
                             del self._timers[zone.name]
@@ -244,7 +247,10 @@ class AutoLightsAgent(AutoLightsBase):
             for zone in self._config.zones:
                 if zone.locked:
                     zone.reset_lock(reason)
+                    zone.check_out()
+                    zone._target_brightness = None
                     self.process_zone(zone)
+                    zone.check_in()
                     if zone.name in self._timers:
                         self._timers[zone.name].cancel()
                         del self._timers[zone.name]
