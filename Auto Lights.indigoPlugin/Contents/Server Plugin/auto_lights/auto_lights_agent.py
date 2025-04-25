@@ -79,7 +79,7 @@ class AutoLightsAgent(AutoLightsBase):
         ################################################################
         if zone.has_brightness_changes():
             self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
-            indent = ""
+            indent = "      "
             self.logger.info(f"{indent}🔄 Triggered by: {zone.last_changed_by}")
             reason_text = action_reason or "no explicit reason provided"
             self.logger.info(f"{indent}📝 Reason: {reason_text}")
