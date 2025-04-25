@@ -32,9 +32,10 @@ def send_to_indigo(
     command_attempts = 0
 
     pause_between_actions = 0.15
-    max_wait_seconds = 35
+    max_wait_seconds = 15         # shrink confirmation window from 35 s to 15 s
     check_interval = 1.0
     remaining_wait = max_wait_seconds
+    status_request_count = 0      # only allow up to two statusRequest calls
 
     senseme_plugin_id = "com.pennypacker.indigoplugin.senseme"
     device = indigo.devices[device_id]
@@ -129,7 +130,7 @@ def send_to_indigo(
                 device = indigo.devices[device_id]
                 command_attempts += 1
 
-            elif iteration_counter % 4 == 0:
+            elif iteration_counter % 4 == 0 and status_request_count < 2:
                 logger.info(
                     f"{indent}{indent}.... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
                     f"Max additional wait time: {remaining_wait} more seconds."
@@ -139,6 +140,7 @@ def send_to_indigo(
                 device = indigo.devices[device_id]
                 time.sleep(1)
                 indigo.device.statusRequest(device_id, suppressLogging=True)
+                status_request_count += 1
             else:
                 if iteration_counter > 1:
                     logger.info(
