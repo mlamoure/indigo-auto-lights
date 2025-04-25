@@ -4,4 +4,8 @@
         <Name>Print all locked Zones</Name>
         <CallbackMethod>print_locked_zones</CallbackMethod>
     </MenuItem>
+    <MenuItem id="print_zone_status">
+        <Name>Print zone status</Name>
+        <CallbackMethod>print_zone_status</CallbackMethod>
+    </MenuItem>
 </MenuItems>

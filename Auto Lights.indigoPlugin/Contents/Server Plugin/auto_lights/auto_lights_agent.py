@@ -276,3 +276,22 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.info(
                     f"    unlock_when_no_presence: {zone.unlock_when_no_presence}"
                 )
+
+def print_zone_status(self) -> None:
+    """
+    Iterate through each zone and log its status info.
+    """
+    for zone in self._config.zones:
+        period = (
+            zone.current_lighting_period.name
+            if zone.current_lighting_period
+            else None
+        )
+        locked_info = (
+            f", expiration: {zone.lock_expiration_str}" if zone.locked else ""
+        )
+        self.logger.info(
+            f"Zone '{zone.name}': period={period}, presence={zone.has_presence_detected()}, "
+            f"luminance={zone.luminance}, target_brightness={zone.target_brightness}, "
+            f"locked={zone.locked}{locked_info}"
+        )
