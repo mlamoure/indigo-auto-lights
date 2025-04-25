@@ -129,7 +129,9 @@ def send_to_indigo(
 
                     if action_description:
                         emoji = "💡" if action_description == "turning on" else "⏻"
-                        logger.info(f"{emoji} {action_description} '{device.name}'")
+                        logger.info(
+                            f"{indent}{emoji} {action_description} '{device.name}'"
+                        )
 
                 time.sleep(pause_between_actions)
                 device = indigo.devices[device_id]
