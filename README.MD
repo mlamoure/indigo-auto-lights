@@ -148,4 +148,14 @@ Additionally, available under **Plugins > Auto Lights**:
 1. **Print All Locked Zones**  
    Logs each locked Zone, showing when the lock will expire.
 
+## Screenshots
+
+### Zone Editor
+
+![Zone Editor](screenshots/zone_edit.png)
+
+### Lighting Zones
+
+![Lighting Zones](screenshots/zones.png)
+
 ```
