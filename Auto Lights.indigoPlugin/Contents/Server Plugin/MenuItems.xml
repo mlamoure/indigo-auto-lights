@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <MenuItems>
     <MenuItem id="print_locks">
-        <Name>Print all locked Zones</Name>
+        <Name>Print all locked zones</Name>
         <CallbackMethod>print_locked_zones</CallbackMethod>
     </MenuItem>
     <MenuItem id="print_zone_status">
-        <Name>Print all zone status</Name>
+        <Name>Print zone information</Name>
         <CallbackMethod>print_zone_status</CallbackMethod>
     </MenuItem>
 </MenuItems>
