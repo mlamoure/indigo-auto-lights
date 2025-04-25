@@ -690,6 +690,7 @@ class Zone(AutoLightsBase):
                 continue
             desired = tgt["brightness"]
             actual = current.get(dev_id)
+            self._debug_log(f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}")
             if actual != desired:
                 self._debug_log(
                     f"brightness mismatch on device {dev_id}: have={actual}, want={desired}"
