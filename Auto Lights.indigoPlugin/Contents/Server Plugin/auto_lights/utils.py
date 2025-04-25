@@ -25,6 +25,7 @@ def send_to_indigo(
         desired_brightness (int | bool): The target brightness (0-100) for dimmer
             devices or True/False for switches.
     """
+    indent = "      "
     start_time = time.monotonic()
     is_confirmed = False
     iteration_counter = 0
@@ -90,11 +91,11 @@ def send_to_indigo(
                     # Log action with emoji
                     if action_description in ("turning on", "turning off"):
                         emoji = "💡" if action_description == "turning on" else "⏻"
-                        logger.info(f"{emoji} {action_description} '{device.name}'")
+                        logger.info(f"{indent}{emoji} {action_description} '{device.name}'")
                     else:
                         emoji = "🔼" if action_description == "increasing" else "🔽"
                         logger.info(
-                            f"{emoji} {action_description} brightness for '{device.name}' "
+                            f"{indent}{emoji} {action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {target_level}%"
                         )
 
@@ -130,8 +131,8 @@ def send_to_indigo(
 
             elif iteration_counter % 4 == 0:
                 logger.info(
-                    f"    .... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
-                    f"         Max additional wait time: {remaining_wait} more seconds."
+                    f"{indent}{indent}.... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
+                    f"Max additional wait time: {remaining_wait} more seconds."
                 )
                 check_interval = 2.0
                 time.sleep(check_interval)
