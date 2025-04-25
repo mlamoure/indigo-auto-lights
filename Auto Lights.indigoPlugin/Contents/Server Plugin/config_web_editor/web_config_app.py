@@ -99,7 +99,10 @@ def get_lighting_period_choices():
     choices = []
     for period in lighting_periods:
         if "id" in period and "name" in period:
-            choices.append((period["id"], period["name"]))
+            name = period["name"]
+            mode = period.get("mode")
+            label = f"{name} ({mode})" if mode else name
+            choices.append((period["id"], label))
     return choices
 
 
