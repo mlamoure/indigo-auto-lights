@@ -89,10 +89,12 @@ def send_to_indigo(
 
                     # Log action with emoji
                     if action_description in ("turning on", "turning off"):
-                        logger.info(f"💡 {action_description} '{device.name}'")
+                        emoji = "💡" if action_description == "turning on" else "⏻"
+                        logger.info(f"{emoji} {action_description} '{device.name}'")
                     else:
+                        emoji = "🔼" if action_description == "increasing" else "🔽"
                         logger.info(
-                            f"💡 {action_description} brightness for '{device.name}' "
+                            f"{emoji} {action_description} brightness for '{device.name}' "
                             f"from {current_brightness}% to {target_level}%"
                         )
 
@@ -119,7 +121,8 @@ def send_to_indigo(
                         indigo.device.turnOn(device_id, delay=0)
 
                     if action_description:
-                        logger.info(f"💡 {action_description} '{device.name}'")
+                        emoji = "💡" if action_description == "turning on" else "⏻"
+                        logger.info(f"{emoji} {action_description} '{device.name}'")
 
                 time.sleep(pause_between_actions)
                 device = indigo.devices[device_id]
