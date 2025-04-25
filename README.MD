@@ -24,7 +24,7 @@ like:
   revert your change until the lock expires or is reset.
 - **Automatic Dimming**: Auto Lights can optionally set the brightness to a % based on the current luminance level of
   the
-  room. For example: target brightness = (1 - (Current Luminance / Minimum Luminance)) * 100.
+  room. For example: target brightness = [1 - (current luminance / minimum luminance)] x 100.
 - **Global Enable/Disable**: A single variable can switch off the entire Auto Lights system. Helpful for scenarios like
   turning off lights when you go to bed, or are not at home.
 

@@ -1,56 +1,99 @@
 ## Auto Lights Configuration
 
-When opening the plugin’s web editor, you’ll find a section often labeled “Plugin Settings” or “Auto Lights
-Configuration.” Here are the key topics:
-
 1. **Global Enable / Disable**  
    A switch or variable that, when false, suspends all Auto Lights logic across every Zone.
 
-2. **Default Lock Durations**
+2. **Default Lock Durations** : Both of these are the values that will be the default for Zones. If you choose, any Zone
+   or Lighting Period can override.
     - **Lock Duration**: The base number of minutes to lock a Zone after a manual change.
     - **Lock Extension**: If presence remains, the lock can extend for additional minutes, preventing auto changes.
 
 3. **Behavior Variables**  
    Used for special global conditions (e.g., “Away Mode” or “House Asleep”). If any condition is triggered, the plugin
-   might turn all lights off, overriding normal logic.
+   might turn all lights off, overriding normal logic. If you have multiple, these are treated as a "or" condition.
 
 ---
 
 ## Zones
 
 A Zone represents an area or room in your home where Auto Lights controls specific sets of lights
-based on presence, time of day, and your configured lighting periods. By grouping devices into Zones,
-you can easily manage them as a single unit—turning them on/off or adjusting brightness automatically
-when someone enters or leaves a room. Zones also let Auto Lights lock out changes temporarily if you
-manually adjust a light, so you keep control for as long as needed.
+based on presence, time of day, and your configured lighting periods. A Zone can be a room or a group of rooms such as
+an area. You can share presence and luminance devices across multiple rooms, but do not recommend sharing lights.
 
 A Zone typically includes:
 
-- **On Lights**: Devices that auto-lights will turn on under the right conditions (presence, darkness, and an active
-  Lighting Period).
-- **Off Lights**: Devices the plugin ensures are off if presence stops or if certain conditions are met.
-- **Presence Devices**: Motion or other sensors that detect whether someone’s in the Zone.
-- **Luminance Devices**: Sensors used to measure ambient light and adjust brightness.
-- **Lock Behavior**: Each Zone respects manual overrides. Once locked, the Zone will not automatically turn on or off
-  lights until the lock expires, the presence variable goes false, or you reset the lock.
+- **On / Off Lights**: Devices that auto-lights will control (on and off), turning them on under the right conditions (
+  presence,
+  darkness, and an active Lighting Period).
+    - Supports any device (including plugin devices) that supports .turnOn and .turnOff indigo methods
+        - Hue, Hassbridge, and Lutron devices have been thouroughly tested.
+    - Support for custom lighting control via plugins: SenseME Fan Lights
+- **Off Lights**: Devices that Auto Lights will control only for turning off, if presence stops or if certain conditions
+  are met. Auto Lights will never turn these devices on.
+    - Note: You do not need to include your On / Off Lights in your Off Lights, but it will not hurt if you do so.
+- **Presence Devices**: Motion sensors (can be virtual) that detect whether someone’s in the Zone.
+    - Support for any device that has an onState or onOffState properties.
 
-### Advanced Options
+> **TIP:** Auto Lights supports the use of
+> kmarkley's [Timed Devices](https://forums.indigodomo.com/viewtopic.php?t=18785) plugin. It can be extremely helpful
+> for smoothing out intermittent signals or combining multiple inputs into a unified virtual presence device. For
+> example, in a Living Room that may lack a dedicated motion sensor, you can create a threshold timer that merges the
+> state of other devices, such as a IP-enabled TV, or nearby doors, to detect activity.
 
-- **Exclude from Lock**: If certain devices shouldn’t trigger a manual override lock, add them here.
-- **Minimum Luminance**: The threshold below which the plugin considers the space “dark.”
-
-## Presence Devices
-
-> **TIP:** Auto Lights supports the use of the Timed Device plugin. It can be extremely helpful for smoothing out
-> intermittent signals or combining multiple inputs into a unified virtual presence device. For example, in a Living
-> Room that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion
-> sensor with signals from an IP-enabled TV to detect activity.
+- **Luminance Devices**: Sensors used to measure brightness of the Zone. Once you add a luminance device to your Zone, a
+  number of luminance specific options become available in the Zone config. See [below](#luminance-settings) for more
+  information on the luminance settings.
+- **Locks**: Each Zone respects manual overrides. When this happens, a lock is created for the Zone. Once locked, the
+  Zone will not automatically turn on or off lights until the lock expires, the presence variable goes false, or you
+  reset the lock. Behavior for locks can be customized and has multiple fields. See [below](#locks) for details.
+- **Perform Confirm**: This option is rarely necessary. This option makes Auto Lights wait for confirmation from Indigo
+  that the lighting change was implemented sucessfully, before moving to the next task. If you have devices that
+  sometimes get out of range, it can be helpful. When this option is not turned on, Auto Lights assumes that Indigo
+  delivers the command. This option is not helpful on devices
+- **Exclude from Lock**: If certain devices shouldn’t trigger a manual override lock, add them here. I recommend this
+  for devices that do long fading times for dimmer changes, like the Hue lights plugin. The transition state will
+  confuse Auto Lights and think the dimmer was changed outside of the plugin, and a lock will be created.
 
 ## Locks
 
-> **NOTE:** Locks do not persist plugin re-starts
+* Locks are time-based to begin. Once a lock is detected, you will be notified via the Indigo log of the triggering
+  event.
+* **Lock Duration**: The lock time default is set for the Auto Lights Config. Each Zone can use the default, or
+  override. Note that this duration only applies when the lock is first created. Locks can be extended which uses a
+  different configuration to determine the amount of time, see fields below.
+* **Extend Lock When Presence is Active**: Selecting this option means that the lock will get extended until the lock
+  timer expires AND the Zone presence is False before Auto Lights will take back control. Not selecting this option
+  means that the lock will expire and then Auto Lights will take back control immediately.
+* Once a lock expires, Auto Lights calculates the "target state" of the room and makes those changes. For example, if
+  the room is active at the end of a lock expiration, and it's dark, Auto Lights will turn on the on/off lights, and
+  turn off the (exclusively) off lights.
 
+> **NOTE:** Locks do not persist plugin re-starts. So, if you restart Auto Lights, it will reset all room lighting to
+> the target state.
+
+* **Lock Extension Duration**: Only applicable if 'Extend Lock When Presence is Active' is enabled, if a lock expires
+  and the presence is still active, the lock will be extended by this amount.
 * There are Indigo Actions to reset a lock for any given Zone, or all Zones.
+
+## Luminance Settings
+
+> **NOTE:** Minimum brightness is only available if a luminance device is added.
+
+Luminance, if provided, is used in a number of ways:
+
+1. If a Zone has presence detected, but the minimum luminance is met (room is brighter than the minimum) then lights
+   will NOT be turned on.
+2. If the luminance of the Zone changes to be below the minimum luminance while present, then the lights will be turned
+   on.
+3. **Adjust Dimmer Brightness**: If turned on, the brightness of a dimmer device will be set to:
+    - [1 - (current luminance / minimum luminance)] x 100
+
+> **NOTE:** If you provide more than one Luminance device, the current luminance is calculated as the average across all
+> sensors.
+
+Setting a minimum brightness:
+
+- **Minimum Luminance**: Minimum luminance can be set via Indigo variable, or statically in the Zone configuration.
 
 ---
 
