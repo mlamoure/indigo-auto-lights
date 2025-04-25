@@ -32,10 +32,10 @@ def send_to_indigo(
     command_attempts = 0
 
     pause_between_actions = 0.15
-    max_wait_seconds = 15         # shrink confirmation window from 35 s to 15 s
+    max_wait_seconds = 15  # shrink confirmation window from 35 s to 15 s
     check_interval = 1.0
     remaining_wait = max_wait_seconds
-    status_request_count = 0      # only allow up to two statusRequest calls
+    status_request_count = 0  # only allow up to two statusRequest calls
 
     senseme_plugin_id = "com.pennypacker.indigoplugin.senseme"
     device = indigo.devices[device_id]
@@ -56,7 +56,9 @@ def send_to_indigo(
         if isinstance(device, indigo.DimmerDevice):
             is_confirmed = device.brightness == target_level
         elif isinstance(device, indigo.RelayDevice):
-            want_state = target_bool if target_bool is not None else (target_level == 100)
+            want_state = (
+                target_bool if target_bool is not None else (target_level == 100)
+            )
             is_confirmed = device.onState == want_state
         elif device.pluginId == senseme_plugin_id:
             current_brightness = int(device.states.get("brightness", 0))
@@ -70,7 +72,7 @@ def send_to_indigo(
             if iteration_counter % 8 == 0:
                 if command_attempts > 0:
                     logger.info(
-                        f"... not yet confirmed changes to '{device.name}'. Retrying."
+                        f"{indent}{indent}... not yet confirmed changes to '{device.name}'. Retrying."
                     )
 
                 if is_fan_light or isinstance(device, indigo.DimmerDevice):
@@ -92,7 +94,9 @@ def send_to_indigo(
                     # Log action with emoji
                     if action_description in ("turning on", "turning off"):
                         emoji = "💡" if action_description == "turning on" else "⏻"
-                        logger.info(f"{indent}{emoji} {action_description} '{device.name}'")
+                        logger.info(
+                            f"{indent}{emoji} {action_description} '{device.name}'"
+                        )
                     else:
                         emoji = "🔼" if action_description == "increasing" else "🔽"
                         logger.info(
@@ -144,8 +148,8 @@ def send_to_indigo(
             else:
                 if iteration_counter > 1:
                     logger.info(
-                        f"   ... not yet confirmed changes to '{device.name}'. Waiting up to "
-                        f"       {remaining_wait} more seconds."
+                        f"{indent}{indent}... not yet confirmed changes to '{device.name}'. Waiting up to "
+                        f"{indent}{indent}    {remaining_wait} more seconds."
                     )
                 time.sleep(check_interval)
                 device = indigo.devices[device_id]
@@ -158,11 +162,11 @@ def send_to_indigo(
 
     if action_description and not is_confirmed:
         logger.info(
-            f"    ... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
-            f"        attempts: {command_attempts})"
+            f"{indent}{indent}... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
+            "f{indent}{indent}     attempts: {command_attempts})"
         )
     else:
         logger.debug(
-            f"        ... confirmed change to '{device.name}' (time: {total_time} seconds, "
-            f"            attempts: {command_attempts})"
+            f"{indent}{indent}... confirmed change to '{device.name}' (time: {total_time} seconds, "
+            f"{indent}{indent}    attempts: {command_attempts})"
         )
