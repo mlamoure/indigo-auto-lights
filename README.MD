@@ -52,17 +52,24 @@ There is no authorization on the Web Config interface itself. If this concerns y
 
 # Documentation
 
-See documentation [here](Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/static/Documentation.MD)# Auto Lights Plugin
+See documentation [here](Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/static/Documentation.MD)#
+Auto Lights Plugin
 
-Auto Lights is a lighting automation tool for the Indigo Home Automation system. Instead of manually configuring dozens of triggers, schedules, and variables, Auto Lights empowers you to manage everything through a user-friendly web interface. You define “Zones,” tie them to presence and luminance sensors, set up “Lighting Periods” (like “Morning” or “Nighttime”), and let the plugin automate your lights accordingly.
+Auto Lights is a lighting automation tool for the Indigo Home Automation system. Instead of manually configuring dozens
+of triggers, schedules, and variables, Auto Lights empowers you to manage everything through a user-friendly web
+interface. You define “Zones,” tie them to presence and luminance sensors, set up “Lighting Periods” (like “Morning” or
+“Nighttime”), and let the plugin automate your lights accordingly.
 
 ## Features at a Glance
 
-- **Multi-Zone Management**: Create and manage multiple “Zones” in Indigo from a single interface.  
-- **Presence-Based Lighting**: Use one or more presence sensors or timers and only turn on lights when someone is around.  
-- **Luminance-Aware Dimming**: Automatically adjust dimmer brightness based on ambient light levels.  
-- **Locking Mechanism**: Temporarily lock a Zone whenever a user manually overrides the lights, so the plugin won’t revert your change until the lock expires or is reset.  
-- **Global Enable/Disable**: A single variable can switch off the entire Auto Lights system if you need a quick override.
+- **Multi-Zone Management**: Create and manage multiple “Zones” in Indigo from a single interface.
+- **Presence-Based Lighting**: Use one or more presence sensors or timers and only turn on lights when someone is
+  around.
+- **Luminance-Aware Dimming**: Automatically adjust dimmer brightness based on ambient light levels.
+- **Locking Mechanism**: Temporarily lock a Zone whenever a user manually overrides the lights, so the plugin won’t
+  revert your change until the lock expires or is reset.
+- **Global Enable/Disable**: A single variable can switch off the entire Auto Lights system if you need a quick
+  override.
 
 ---
 
@@ -72,18 +79,23 @@ Auto Lights is a lighting automation tool for the Indigo Home Automation system.
    Auto Lights is tested with the latest Indigo. Older versions may or may not be fully compatible.
 
 2. **API Key / Reflector**  
-   If you use the plugin’s built-in web editor, you’ll need to enable remote access or an Indigo reflector, plus an API key. You can set it to localhost if you prefer local-only operation, but the plugin still benefits from an API key for certain interactions.
+   If you use the plugin’s built-in web editor, you’ll need to enable remote access or an Indigo reflector, plus an API
+   key. You can set it to localhost if you prefer local-only operation, but the plugin still benefits from an API key
+   for certain interactions.
 
 3. **Presence & Luminance Devices**  
-   Almost any Indigo-compatible motion sensor, threshold timer, or other presence device can tell Auto Lights when a room is occupied. Luminance sensors give you the brightness-based dimming logic.
+   Almost any Indigo-compatible motion sensor, threshold timer, or other presence device can tell Auto Lights when a
+   room is occupied. Luminance sensors give you the brightness-based dimming logic.
 
 ---
 
 ## Security Considerations (Web Config Server)
 
-- **No Authentication**: The web editor has no password protection. Running it on `0.0.0.0` lets anyone on your network open the config. 
-- **Bind Address**: By default, the plugin binds to `127.0.0.1`, restricting access to the machine running Indigo. 
-- **Disable Option**: You can disable the web server entirely (see below in Plugin Configuration). The plugin keeps working, but you’ll have to re-enable it to make changes via the web editor.
+- **No Authentication**: The web editor has no password protection. Running it on `0.0.0.0` lets anyone on your network
+  open the config.
+- **Bind Address**: By default, the plugin binds to `127.0.0.1`, restricting access to the machine running Indigo.
+- **Disable Option**: You can disable the web server entirely (see below in Plugin Configuration). The plugin keeps
+  working, but you’ll have to re-enable it to make changes via the web editor.
 
 ---
 
@@ -92,13 +104,16 @@ Auto Lights is a lighting automation tool for the Indigo Home Automation system.
 Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
 
 1. **Reflector / Indigo API URL**  
-   The base URL used by Auto Lights for Indigo API calls. Default is the Indigo Reflector service, but you can point to a local IP or hostname if you prefer.
+   The base URL used by Auto Lights for Indigo API calls. Default is the Indigo Reflector service, but you can point to
+   a local IP or hostname if you prefer.
 
 2. **API Key**  
-   Needed to authenticate API calls. If you’ve enabled “Remote Access” or an Indigo Reflector, you can create new API keys in your Indigo account.
+   Needed to authenticate API calls. If you’ve enabled “Remote Access” or an Indigo Reflector, you can create new API
+   keys in your Indigo account.
 
 3. **Disable Web Server**  
-   Toggle this to fully turn off the built-in config web server. Use it if you want a fully “headless” experience after setting everything up.
+   Toggle this to fully turn off the built-in config web server. Use it if you want a fully “headless” experience after
+   setting everything up.
 
 4. **Web Config Bind IP**  
    `127.0.0.1` (only accessible locally) or `0.0.0.0` (accessible by devices on your local network).
@@ -106,13 +121,13 @@ Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
 5. **Web Config Bind Port**  
    Default is `9000`. Change it if something else is using that port.
 
-6. **Logging Level**  
-   - 5 (Extra Debugging)  
-   - 10 (Debug)  
-   - 20 (Info)  
-   - 30 (Warning)  
-   - 40 (Error)  
-   - 50 (Critical)  
+6. **Logging Level**
+    - 5 (Extra Debugging)
+    - 10 (Debug)
+    - 20 (Info)
+    - 30 (Warning)
+    - 40 (Error)
+    - 50 (Critical)
 
 Choose a level based on how much detail you need in your Indigo logs.
 
@@ -120,7 +135,7 @@ Choose a level based on how much detail you need in your Indigo logs.
 
 ## Plugin Options / Menu Items / Actions
 
-Auto Lights provides several actions under **Plugins > Auto Lights**, or as Indigo “Actions”:
+Auto Lights Actions:
 
 1. **Reset All Zone Locks**  
    Clears lock timers on all Zones, letting Auto Lights resume control immediately.
@@ -128,10 +143,9 @@ Auto Lights provides several actions under **Plugins > Auto Lights**, or as Indi
 2. **Reset Specific Zone Lock**  
    Enables you to unlock just one Zone if you had a manual override but now want automation to resume.
 
-3. **Print All Locked Zones**  
-   Logs each locked Zone, showing when the lock will expire.
+Additionally, available under **Plugins > Auto Lights**:
 
-4. **Create a New Variable**  
-   If exposed, this action can generate a new Indigo variable. Helpful for quickly adding variables for your Zones or for advanced conditions.
+1. **Print All Locked Zones**  
+   Logs each locked Zone, showing when the lock will expire.
 
 ```
