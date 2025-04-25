@@ -107,7 +107,7 @@
                   "type": "integer"
                 },
                 "x-drop-down": true,
-                "x-include-device-classes": "indigo.DimmerDevice,indigo.RelayDevic",
+                "x-include-device-classes": "indigo.DimmerDevice,indigo.RelayDevice",
                 "title": "Off Lights for this Zone",
                 "tooltip": "List of device IDs that turn lights off in the zone.  Note: Devices already added to the On/Off lights to DOT need to be added to this list."
               },
