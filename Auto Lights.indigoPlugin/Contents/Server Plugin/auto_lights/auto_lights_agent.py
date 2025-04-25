@@ -81,7 +81,7 @@ class AutoLightsAgent(AutoLightsBase):
             self.logger.info(
                 "Zone '"
                 + zone.name
-                + "': processing change to "
+                + "': processing change from "
                 + zone.last_changed_by
                 + " (action reason: "
                 + action_reason
@@ -153,8 +153,15 @@ class AutoLightsAgent(AutoLightsBase):
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
-                if device_prop == "presence_dev_ids" and zone.unlock_when_no_presence and not zone.has_presence_detected():
-                    self.reset_locks(zone.name, "no presence detected and `unlock_when_no_presence` is set for this Zone")
+                if (
+                    device_prop == "presence_dev_ids"
+                    and zone.unlock_when_no_presence
+                    and not zone.has_presence_detected()
+                ):
+                    self.reset_locks(
+                        zone.name,
+                        "no presence detected and `unlock_when_no_presence` is set for this Zone",
+                    )
                 if self.process_zone(zone):
                     processed.append(zone)
 
