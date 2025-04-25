@@ -78,12 +78,11 @@ class AutoLightsAgent(AutoLightsBase):
         # Save and write log
         ################################################################
         if zone.has_brightness_changes():
-            self.logger.info(f"💡 Zone '{zone.name}': applying brightness updates")
+            self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
             indent = "   "
             self.logger.info(f"{indent}🔄 Triggered by: {zone.last_changed_by}")
             reason_text = action_reason or "no explicit reason provided"
             self.logger.info(f"{indent}📝 Reason: {reason_text}")
-            self.logger.info(f"{indent}▶️ Dispatching commands to devices…")
             zone.save_brightness_changes()
 
         else:
