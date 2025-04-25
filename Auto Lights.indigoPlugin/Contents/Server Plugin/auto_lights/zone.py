@@ -70,9 +70,7 @@ class Zone(AutoLightsBase):
         self._minimum_luminance = 10000
         self._minimum_luminance_var_id = None
 
-        self._current_lights_status = []
         self._target_brightness = None
-        self._target_brightness_all_off = None
 
         # Behavior flags and settings
         self._adjust_brightness = True
