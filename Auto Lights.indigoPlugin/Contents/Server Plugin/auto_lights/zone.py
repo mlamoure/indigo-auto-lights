@@ -823,6 +823,10 @@ class Zone(AutoLightsBase):
             self._debug_log(f"Target brightness list set: {new_target_brightness}")
 
         # If no presence detected, record action reason.
+        elif self.current_lighting_period.mode == "On and Off" and not self.is_dark():
+            self._debug_log("Zone is bright, setting all lights off")
+            action_reason = "zone is bright, turning lights off"
+            self.target_brightness = 0
         elif not self.has_presence_detected():
             self._debug_log("No presence detected, setting all lights off")
             action_reason = "presence is not detected"
