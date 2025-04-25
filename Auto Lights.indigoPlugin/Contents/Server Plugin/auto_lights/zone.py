@@ -568,7 +568,7 @@ class Zone(AutoLightsBase):
             self._lock_expiration = datetime.datetime.now() - datetime.timedelta(
                 minutes=1
             )
-            self.logger.info(f"Zone '{self._name}' unlocked")
+            self._debug_log(f"Zone '{self._name}' unlocked")
 
     @property
     def lock_expiration_str(self) -> str:
@@ -874,7 +874,7 @@ class Zone(AutoLightsBase):
         else:
             self.locked = False
             self.logger.info(
-                f"Lock expired for zone '{self._name}' and zone is now unlocked"
+                f"🔓️Lock expired for zone '{self._name}' and zone is now unlocked"
             )
 
     def has_variable(self, var_id: int) -> bool:
