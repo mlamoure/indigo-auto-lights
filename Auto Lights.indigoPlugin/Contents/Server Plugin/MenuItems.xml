@@ -5,7 +5,7 @@
         <CallbackMethod>print_locked_zones</CallbackMethod>
     </MenuItem>
     <MenuItem id="print_zone_status">
-        <Name>Print zone status</Name>
+        <Name>Print all zone status</Name>
         <CallbackMethod>print_zone_status</CallbackMethod>
     </MenuItem>
 </MenuItems>
