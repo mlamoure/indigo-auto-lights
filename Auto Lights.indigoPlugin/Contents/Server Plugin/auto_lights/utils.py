@@ -25,7 +25,7 @@ def send_to_indigo(
         desired_brightness (int | bool): The target brightness (0-100) for dimmer
             devices or True/False for switches.
     """
-    start_timestamp = time.time()
+    start_time = time.monotonic()
     is_confirmed = False
     iteration_counter = 0
     command_attempts = 0
@@ -41,23 +41,24 @@ def send_to_indigo(
     sense_plugin = indigo.server.getPlugin(senseme_plugin_id)
 
     action_description = ""
+    # Normalize desired brightness once
+    if isinstance(desired_brightness, bool):
+        target_bool = desired_brightness
+        target_level = 100 if desired_brightness else 0
+    else:
+        target_bool = None
+        target_level = desired_brightness
 
-    while not is_confirmed and (time.time() - start_timestamp) <= max_wait_seconds:
+    while not is_confirmed and (time.monotonic() - start_time) <= max_wait_seconds:
         # Check device state against desired brightness.
         if isinstance(device, indigo.DimmerDevice):
-            is_confirmed = device.brightness == desired_brightness
+            is_confirmed = device.brightness == target_level
         elif isinstance(device, indigo.RelayDevice):
-            if not isinstance(desired_brightness, bool):
-                desired_brightness = desired_brightness == 100
-            is_confirmed = device.onState == desired_brightness
+            want_state = target_bool if target_bool is not None else (target_level == 100)
+            is_confirmed = device.onState == want_state
         elif device.pluginId == senseme_plugin_id:
             current_brightness = int(device.states.get("brightness", 0))
-            target = (
-                int(desired_brightness)
-                if isinstance(desired_brightness, bool)
-                else desired_brightness
-            )
-            is_confirmed = current_brightness == target
+            is_confirmed = current_brightness == target_level
 
         # Skip confirmation if already attempted and not required.
         if not is_confirmed and command_attempts > 0 and not perform_confirm:
@@ -76,50 +77,49 @@ def send_to_indigo(
                         if is_fan_light
                         else device.brightness
                     )
-                    if isinstance(desired_brightness, bool):
-                        desired_brightness = 100 if desired_brightness else 0
-
-                    if desired_brightness == 0 and current_brightness == 100:
+                    # Determine action description
+                    if target_level == 0 and current_brightness > 0:
                         action_description = "turning off"
-                    elif desired_brightness == 100 and current_brightness == 0:
+                    elif target_level == 100 and current_brightness == 0:
                         action_description = "turning on"
-                    elif desired_brightness > current_brightness:
+                    elif target_level > current_brightness:
                         action_description = "increasing"
                     else:
                         action_description = "decreasing"
 
+                    # Log action with emoji
                     if action_description in ("turning on", "turning off"):
-                        logger.info(f"{action_description} '{device.name}'")
+                        logger.info(f"💡 {action_description} '{device.name}'")
                     else:
                         logger.info(
-                            f"    {action_description} brightness for '{device.name}' "
-                            f"from {current_brightness}% to {desired_brightness}%"
+                            f"💡 {action_description} brightness for '{device.name}' "
+                            f"from {current_brightness}% to {target_level}%"
                         )
 
+                    # Send command
                     if is_fan_light:
                         sense_plugin.executeAction(
                             "fanLightBrightness",
                             deviceId=device_id,
-                            props={"lightLevel": str(desired_brightness)},
+                            props={"lightLevel": str(target_level)},
                         )
                     else:
                         indigo.dimmer.setBrightness(
-                            device_id, value=desired_brightness, delay=0
+                            device_id, value=target_level, delay=0
                         )
 
                 elif isinstance(device, indigo.RelayDevice):
-                    if not isinstance(desired_brightness, bool):
-                        desired_brightness = desired_brightness == 100
+                    want_state = target_level == 100
 
-                    if device.onState and not desired_brightness:
+                    if device.onState and not want_state:
                         action_description = "turning off"
                         indigo.device.turnOff(device_id, delay=0)
-                    elif not device.onState and desired_brightness:
+                    elif not device.onState and want_state:
                         action_description = "turning on"
                         indigo.device.turnOn(device_id, delay=0)
 
                     if action_description:
-                        logger.info(f"    {action_description} '{device.name}'")
+                        logger.info(f"💡 {action_description} '{device.name}'")
 
                 time.sleep(pause_between_actions)
                 device = indigo.devices[device_id]
@@ -145,7 +145,7 @@ def send_to_indigo(
                 device = indigo.devices[device_id]
 
         iteration_counter += 1
-        elapsed_time = time.time() - start_timestamp
+        elapsed_time = time.monotonic() - start_time
         remaining_wait = int(round(max_wait_seconds - elapsed_time, 1))
 
     total_time = round(time.time() - start_timestamp, 2)
