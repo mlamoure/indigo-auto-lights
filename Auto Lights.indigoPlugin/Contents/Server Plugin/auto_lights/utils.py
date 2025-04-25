@@ -148,7 +148,7 @@ def send_to_indigo(
         elapsed_time = time.monotonic() - start_time
         remaining_wait = int(round(max_wait_seconds - elapsed_time, 1))
 
-    total_time = round(time.time() - start_timestamp, 2)
+    total_time = round(time.monotonic() - start_time, 2)
 
     if action_description and not is_confirmed:
         logger.info(
