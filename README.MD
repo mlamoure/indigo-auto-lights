@@ -83,7 +83,7 @@ See documentation [here](Auto%20Lights.indigoPlugin/Contents/Server%20Plugin/con
 
 ---
 
-## Plugin Configuration (from PluginConfig.xml)
+## Plugin Configuration
 
 Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
 
