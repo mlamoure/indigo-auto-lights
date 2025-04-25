@@ -34,7 +34,7 @@ you can easily manage them as a single unit—turning them on/off or adjusting b
 when someone enters or leaves a room. Zones also let Auto Lights lock out changes temporarily if you
 manually adjust a light, so you keep control for as long as needed.
 
-## Presence Devices {#zones-presence-devices}
+## Presence Devices
 
 > **TIP:** Auto Lights supports the use of the Timed Device plugin. It can be extremely helpful for smoothing out
 > intermittent signals or combining multiple inputs into a unified virtual presence device. For example, in a Living
@@ -42,17 +42,8 @@ manually adjust a light, so you keep control for as long as needed.
 > that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion sensor
 > with signals from an IP-enabled TV to detect activity.
 
-## Locks {#zones-locks}
+## Locks
 
 > **NOTE:** Locks do not persist plugin re-starts
 
 * There are Indigo Actions to reset a lock for any given Zone, or all Zones.
-
-# Todo
-
-Originally built as a script before becoming a plugin in 2025, Auto Lights has been rigorously tested, though the
-conversion
-may have introduced issues. The following improvements are planned:
-
-- [ ] Fix the web server shutdown
-
