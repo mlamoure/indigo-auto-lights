@@ -273,3 +273,56 @@ table.zones-table th {
     border-radius: 8px;
     text-align: left;
 }
+
+#documentation-snippet {
+    padding: 20px;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    background-color: #fff;
+    margin: 20px 0;
+    line-height: 1.6;
+}
+
+#documentation-snippet h1,
+#documentation-snippet h2,
+#documentation-snippet h3,
+#documentation-snippet h4,
+#documentation-snippet h5,
+#documentation-snippet h6 {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+#documentation-snippet p {
+    margin: 0.8em 0;
+}
+
+#documentation-snippet ul,
+#documentation-snippet ol {
+    margin: 0.8em 0;
+    padding-left: 1.5em;
+}
+
+#documentation-snippet blockquote {
+    border-left: 4px solid #ddd;
+    padding-left: 1em;
+    color: #666;
+    margin: 0.8em 0;
+}
+
+#documentation-snippet code {
+    background-color: #f6f8fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+#documentation-snippet pre {
+    background-color: #f6f8fa;
+    padding: 10px;
+    border-radius: 3px;
+    overflow: auto;
+}
+
+#documentation-snippet img {
+    max-width: 100%;
+}
