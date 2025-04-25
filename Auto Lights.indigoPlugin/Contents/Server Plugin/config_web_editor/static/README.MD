@@ -38,9 +38,8 @@ manually adjust a light, so you keep control for as long as needed.
 
 > **TIP:** Auto Lights supports the use of the Timed Device plugin. It can be extremely helpful for smoothing out
 > intermittent signals or combining multiple inputs into a unified virtual presence device. For example, in a Living
-> Room
-> that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion sensor
-> with signals from an IP-enabled TV to detect activity.
+> Room that may lack a dedicated motion sensor, you can create a threshold timer that merges the state of your motion
+> sensor with signals from an IP-enabled TV to detect activity.
 
 ## Locks
 
