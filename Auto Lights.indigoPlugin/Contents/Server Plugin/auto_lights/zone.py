@@ -678,22 +678,22 @@ class Zone(AutoLightsBase):
         if not self.enabled or not self.target_brightness:
             return False
 
-        current_dict = {
-            item["dev_id"]: item["brightness"] for item in self.current_lights_status
-        }
-        target_dict = {
+        # Build a lookup of current hardware states
+        current = {
             item["dev_id"]: item["brightness"]
-            for item in self.target_brightness
-            if not exclude_lock_devices
-            or item["dev_id"] not in self.exclude_from_lock_dev_ids
+            for item in self.current_lights_status
         }
-        self._debug_log(
-            f"current_lights_status = {current_dict}, target_brightness = {target_dict}"
-        )
-
-        result = current_dict != target_dict
-
-        return result
+        # Compare each target to its actual brightness/state
+        for tgt in self.target_brightness:
+            dev_id = tgt["dev_id"]
+            if exclude_lock_devices and dev_id in self.exclude_from_lock_dev_ids:
+                continue
+            desired = tgt["brightness"]
+            actual = current.get(dev_id)
+            if actual != desired:
+                self._debug_log(f"brightness mismatch on device {dev_id}: have={actual}, want={desired}")
+                return True
+        return False
 
     def save_brightness_changes(self) -> None:
         """
