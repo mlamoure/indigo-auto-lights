@@ -19,7 +19,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-    fetch('/README.MD')
+    fetch("{{ url_for('static', filename='README.MD') }}")
         .then(response => response.text())
         .then(text => {
             document.getElementById('instructions-content').innerHTML = marked.parse(text);
