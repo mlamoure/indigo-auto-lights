@@ -9,7 +9,7 @@
 {% set page_title = "Lighting Period Editor" %}
 {% include "header_common.html" %}
 <script>
-  window.README_SECTION_NAME = "⏰💡 Lighting Periods 💡⏰";
+    window.README_SECTION_NAME = "Lighting Periods";
 </script>
 <div id="container">
     <div id="content">
@@ -22,7 +22,7 @@
                 <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
                     }}</label><select name="{{ field.name }}">
                 {% for i in range(0, 24) %}
-                <option value="{{ i }}" {% if field.data|default(0)|int == i %}selected="selected"{% endif %}>{{ i }}
+                <option value="{{ i }}" {% if field.data|default(0)|int== i %}selected="selected" {% endif %}>{{ i }}
                 </option>
                 {% endfor %}
             </select>
@@ -30,7 +30,7 @@
                 <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
                     }}</label><select name="{{ field.name }}">
                 {% for m in [0, 15, 30, 45, 59] %}
-                <option value="{{ m }}" {% if field.data|default(0)|int == m %}selected="selected"{% endif %}>{{ m }}
+                <option value="{{ m }}" {% if field.data|default(0)|int== m %}selected="selected" {% endif %}>{{ m }}
                 </option>
                 {% endfor %}
             </select>
@@ -102,30 +102,35 @@
 <hr>
 <div id="documentation-snippet"></div>
 <script>
-(async function() {
-  let md = await fetch("{{ url_for('static', filename='Documentation.MD') }}").then(r => r.text());
+    (async function () {
+        let md = await fetch("{{ url_for('static', filename='Documentation.MD') }}").then(r => r.text());
 
-  function extractSection(text, heading) {
-    const lines = text.split("\n");
-    let out = [], inSection = false, depth = 0;
+        function extractSection(text, heading) {
+            const lines = text.split("\n");
+            let out = [], inSection = false, depth = 0;
 
-    for (let l of lines) {
-      const m = l.match(/^(#+)\s+(.*)$/);
-      if (m) {
-        const d = m[1].length, title = m[2].trim();
-        if (!inSection && title === heading) { inSection = true; depth = d; out.push(l); continue; }
-        if (inSection && d <= depth) break;
-      }
-      if (inSection) out.push(l);
-    }
-    return out.join("\n");
-  }
+            for (let l of lines) {
+                const m = l.match(/^(#+)\s+(.*)$/);
+                if (m) {
+                    const d = m[1].length, title = m[2].trim();
+                    if (!inSection && title === heading) {
+                        inSection = true;
+                        depth = d;
+                        out.push(l);
+                        continue;
+                    }
+                    if (inSection && d <= depth) break;
+                }
+                if (inSection) out.push(l);
+            }
+            return out.join("\n");
+        }
 
-  const snippetMd = extractSection(md, window.README_SECTION_NAME || "");
-  if (snippetMd) {
-    document.getElementById("documentation-snippet").innerHTML = marked.parse(snippetMd);
-  }
-})();
+        const snippetMd = extractSection(md, window.README_SECTION_NAME || "");
+        if (snippetMd) {
+            document.getElementById("documentation-snippet").innerHTML = marked.parse(snippetMd);
+        }
+    })();
 </script>
 </body>
 </html>
