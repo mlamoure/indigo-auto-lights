@@ -141,7 +141,7 @@ body {
 }
 
 body {
-    text-align: center;
+    text-align: left;
 }
 
 .container {
@@ -262,4 +262,14 @@ table.zones-table th {
     width: 312px;    /* 2 × (150px tab + 4px margin + 2px border) */
     height: 108px;   /* 3 rows × (30px tab + 4px margin + 2px border) */
     margin-left: auto;
+}
+
+.instructions-container {
+    margin: 40px auto;
+    max-width: 800px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    text-align: left;
 }
