@@ -505,20 +505,6 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/README.MD")
-def readme():
-    """
-    Route that serves the README file as markdown content.
-    Returns the file content with 'text/markdown' Content-Type.
-    """
-    try:
-        with open("static/README.MD", "r") as f:
-            text = f.read()
-        return text, 200, {"Content-Type": "text/markdown"}
-    except Exception as e:
-        return "Error loading README.MD", 500
-
-
 @app.route("/create_new_variable", methods=["POST"])
 def create_new_variable():
     """
