@@ -47,6 +47,7 @@ class AutoLightsAgent(AutoLightsBase):
             self._debug_log(f"Zone is disabled")
             return False
 
+        triggered_by = zone.last_changed_device.name
         zone.check_out()
         ################################################################
         # Lock logic
@@ -88,7 +89,7 @@ class AutoLightsAgent(AutoLightsBase):
         if zone.has_brightness_changes():
             self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
             indent = "      "
-            self.logger.info(f"{indent}🔄 Triggered by: {zone.last_changed_by}")
+            self.logger.info(f"{indent}🔄 Triggered by: {triggered_by}")
             reason_text = action_reason or "no explicit reason provided"
             self.logger.info(f"{indent}📝 Reason: {reason_text}")
             zone.save_brightness_changes()
