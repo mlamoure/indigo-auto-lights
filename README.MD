@@ -67,22 +67,6 @@ See documentation [here](Auto%20Lights.indigoPlugin/Contents/Server%20Plugin/con
 
 ---
 
-## Requirements
-
-1. **Indigo Version**  
-   Auto Lights is tested with the latest Indigo. Older versions may or may not be fully compatible.
-
-2. **API Key / Reflector**  
-   If you use the plugin’s built-in web editor, you’ll need to enable remote access or an Indigo reflector, plus an API
-   key. You can set it to localhost if you prefer local-only operation, but the plugin still benefits from an API key
-   for certain interactions.
-
-3. **Presence & Luminance Devices**  
-   Almost any Indigo-compatible motion sensor, threshold timer, or other presence device can tell Auto Lights when a
-   room is occupied. Luminance sensors give you the brightness-based dimming logic.
-
----
-
 ## Plugin Configuration
 
 Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
