@@ -73,16 +73,14 @@ See documentation [here](Auto%20Lights.indigoPlugin/Contents/Server%20Plugin/con
 Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
 
 1. **Reflector / Indigo API URL**  
-   The base URL used by Auto Lights for Indigo API calls. Default is the Indigo Reflector service, but you can point to
-   a local IP or hostname if you prefer.
+   The base URL used by Auto Lights for Indigo API calls.
 
 2. **API Key**  
-   Needed to authenticate API calls. If you’ve enabled “Remote Access” or an Indigo Reflector, you can create new API
-   keys in your Indigo account.
+   Needed to authenticate API calls.
 
 3. **Disable Web Server**  
-   Toggle this to fully turn off the built-in config web server. Use it if you want a fully “headless” experience after
-   setting everything up.
+   Toggle this to fully turn off the built-in config web server. See [The Web Config Editor](#the-web-config-editor) for
+   more details.
 
 4. **Web Config Bind IP**  
    `127.0.0.1` (only accessible locally) or `0.0.0.0` (accessible by devices on your local network).
