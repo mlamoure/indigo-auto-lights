@@ -200,7 +200,7 @@ class Zone(AutoLightsBase):
     def last_changed_by(self) -> str:
         """Returns the name of the device with the most recent lastChanged value or 'lock reset' if triggered by reset."""
         if self._checked_out:
-            return "lock reset"
+            return "Auto Lights"
         return self.last_changed_device.name
 
     @property
