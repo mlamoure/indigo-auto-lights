@@ -680,8 +680,7 @@ class Zone(AutoLightsBase):
 
         # Build a lookup of current hardware states
         current = {
-            item["dev_id"]: item["brightness"]
-            for item in self.current_lights_status
+            item["dev_id"]: item["brightness"] for item in self.current_lights_status
         }
         # Compare each target to its actual brightness/state
         for tgt in self.target_brightness:
@@ -691,7 +690,9 @@ class Zone(AutoLightsBase):
             desired = tgt["brightness"]
             actual = current.get(dev_id)
             if actual != desired:
-                self._debug_log(f"brightness mismatch on device {dev_id}: have={actual}, want={desired}")
+                self._debug_log(
+                    f"brightness mismatch on device {dev_id}: have={actual}, want={desired}"
+                )
                 return True
         return False
 
@@ -789,7 +790,9 @@ class Zone(AutoLightsBase):
                 is_excluded = self.has_dev_lighting_mapping_exclusion(
                     dev_id, self.current_lighting_period
                 )
-                self._debug_log(f"Device {dev_id} excluded: {is_excluded}")
+                self._debug_log(
+                    f"Device {dev_id} excluded: {is_excluded} becaus of has_dev_lighting_mapping_exclusion"
+                )
                 if not is_excluded:
                     if not self.adjust_brightness:
                         brightness = 100
