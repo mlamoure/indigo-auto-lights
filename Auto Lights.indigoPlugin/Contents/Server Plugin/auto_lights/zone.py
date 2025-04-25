@@ -676,7 +676,9 @@ class Zone(AutoLightsBase):
         Check if the current brightness or state of any on/off device differs from its target brightness.
         """
         if not self.enabled or not self.target_brightness:
-            self._debug_log("has_brightness_changes: returning False because zone disabled or no target brightness")
+            self._debug_log(
+                "has_brightness_changes: returning False because zone disabled or no target brightness"
+            )
             return False
 
         # Build a lookup of current hardware states
@@ -690,11 +692,10 @@ class Zone(AutoLightsBase):
                 continue
             desired = tgt["brightness"]
             actual = current.get(dev_id)
-            self._debug_log(f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}")
+            self._debug_log(
+                f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}"
+            )
             if actual != desired:
-                self._debug_log(
-                    f"brightness mismatch on device {dev_id}: have={actual}, want={desired}"
-                )
                 return True
         self._debug_log("has_brightness_changes: no brightness changes detected")
         return False
