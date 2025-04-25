@@ -35,7 +35,8 @@ Indigo Triggers and Variables to achieve a basic level of automatic light contro
    Auto Lights is tested with the latest Indigo. Older versions may or may not be fully compatible.
 
 2. **API Key / Reflector**  
-   To use the Auto Lights web editor, you’ll need to enable remote access or an Indigo reflector with API Key. [The Web Config](The%20Web%20Config).
+   To use the Auto Lights web editor, you’ll need to enable remote access or an Indigo reflector with API
+   Key. [The Web Config](The%20Web%20Config%20Editor).
 
 3. **Presence & Luminance Devices**  
    Almost any Indigo-compatible motion sensor, threshold timer, or other presence device can tell Auto Lights when a
@@ -43,7 +44,7 @@ Indigo Triggers and Variables to achieve a basic level of automatic light contro
 
 ---
 
-## The Web Config
+## The Web Config Editor
 
 Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
 too advanced for the Indigo native ConfigUI.
