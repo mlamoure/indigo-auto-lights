@@ -285,15 +285,21 @@ class AutoLightsAgent(AutoLightsBase):
             self.logger.info(f"Zone '{zone.name}':")
             current_period = zone.current_lighting_period
             if current_period:
-                self.logger.info(f"    period: {current_period.name}")
+                self.logger.info(f"    current period: {current_period.name}")
                 self.logger.info(f"        type: {current_period.mode}")
-                self.logger.info(f"        start: {current_period.from_time.strftime('%H:%M')}")
-                self.logger.info(f"        end: {current_period.to_time.strftime('%H:%M')}")
+                self.logger.info(
+                    f"        start: {current_period.from_time.strftime('%H:%M')}"
+                )
+                self.logger.info(
+                    f"        end: {current_period.to_time.strftime('%H:%M')}"
+                )
             else:
-                self.logger.info(f"    period: None")
+                self.logger.info(f"    current period: None")
             self.logger.info(f"    presence: {zone.has_presence_detected()}")
-            self.logger.info(f"    luminance: {zone.luminance}")
-            self.logger.info(f"    target_brightness: {zone.target_brightness}")
+            self.logger.info(f"    current luminance: {zone.luminance}")
+            self.logger.info(
+                f"    Auto Lights target brightness: {zone.target_brightness}"
+            )
             self.logger.info(f"    locked: {zone.locked}")
             if zone.locked:
                 self.logger.info(f"        expiration: {zone.lock_expiration_str}")
