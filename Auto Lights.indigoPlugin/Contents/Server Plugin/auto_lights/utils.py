@@ -13,18 +13,18 @@ def send_to_indigo(
     device_id: int, desired_brightness: int | bool, perform_confirm: bool
 ) -> None:
     """
-    Send a command to update an Indigo device (brightness or switch state)
-    and ensure it's confirmed within a limit.
+    Send a command to update an Indigo device and optionally confirm the change.
 
-    This function retries the command until the device state matches the desired
-    value or the maximum wait limit is reached. If 'perform_confirm' is False,
-    confirmation is skipped after the first attempt.
+    Sends a brightness change command for dimmers or on/off for switches, then
+    optionally verifies that the device state matches the desired value within
+    a timeout, retrying or requesting status updates as needed.
 
     Args:
-        device_id (int): The Indigo device ID to be changed.
-        desired_brightness (int | bool): The target brightness (0-100) for dimmer
-            devices or True/False for switches.
+        device_id (int): ID of the Indigo device to control.
+        desired_brightness (int | bool): Target brightness (0-100) for dimmers, or True/False for relays.
+        perform_confirm (bool): If True, retry and confirm state changes until timeout; if False, send once.
     """
+    # Indentation for nested log messages
     indent = "      "
     start_time = time.monotonic()
     is_confirmed = False
@@ -51,6 +51,7 @@ def send_to_indigo(
         target_bool = None
         target_level = desired_brightness
 
+    # Retry loop: send commands and check status until confirmed or timeout
     while not is_confirmed and (time.monotonic() - start_time) <= max_wait_seconds:
         # Check device state against desired brightness.
         if isinstance(device, indigo.DimmerDevice):
