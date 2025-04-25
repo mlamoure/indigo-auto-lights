@@ -73,7 +73,9 @@ A Zone typically includes:
 
 * **Lock Extension Duration**: Only applicable if 'Extend Lock When Presence is Active' is enabled, if a lock expires
   and the presence is still active, the lock will be extended by this amount.
-* There are Indigo Actions to reset a lock for any given Zone, or all Zones.
+
+> **NOTE:** There are Indigo Actions to reset a lock for any given Zone, or all Zones. And the plugin menu has a method
+> to print locks to the Indigo Log.
 
 ## Luminance Settings
 
@@ -99,57 +101,29 @@ Setting a minimum brightness:
 
 ## Lighting Periods
 
-Lighting Periods let you define windows of time (like “Morning” or “Night”) that set different
-behaviors for your lights. Each period has a start and end time, and a mode that describes what
-should happen to the lights during that interval—such as turning them on, dimming them, or turning
-them off altogether. If you ever notice a manual override (like a person flipping a switch),
-Auto Lights respects it until any configured lock duration has passed.
+Lighting Periods let you define windows of time that set different behaviors for your lights based on time of day.
 
-Lighting Periods define the windows of time (with a start and end) during which certain lighting rules apply. In the web
-editor:
-
+- **Name**: The name is simply for reference, and is not functional.
 - **Mode**
-    - **On and Off**: Lights can be turned on or off automatically, depending on presence and darkness.
-    - **Off Only**: Auto Lights only turns lights off if they’ve been left on or presence disappears.
+    - **On and Off**: If selected, On / Off Lights will be be turned on or off automatically, depending on presence and
+      darkness.
+    - **Off Only**: If selected, Auto Lights only turns lights off (both on / off lights, as well as off lights) if
+      they’ve been left on while presence is not detected.
 - **Override Lock Duration**: A specific period can override the default Zone lock duration.
 - **Limit Brightness**: Cap the maximum brightness if you don’t want lights going above, say, 50% at night.
 
----
+> **NOTE:** The configuration editor does not enforce non-overlapping lighting periods. It's up to you to align this.
+> Auto Lights will choose the first lighting period that matches the current time to execute against.
 
-## Locking, Overrides, and Unlocking
-
-Whenever you manually toggle a device that’s part of a Zone, Auto Lights interprets it as an override. That Zone locks
-itself for the configured duration (or an extended time while presence is detected). If you need to restore automation
-sooner, use the plugin’s “Reset Lock” actions. Similarly, if a Zone is locked and presence goes away, the plugin can
-unlock automatically (depending on settings).
+> **NOTE:** A time of day that does not have a lighting period assigned will be attuned to "do nothing" for the plugin
+> during that time.
 
 ---
 
 # Configuration Backup
 
-Todo: write this.# Auto Lights Documentation
+Each change to your configuration, up to 20 changes, is backed-up. You may also create manual backups that never expire.
+The configuration can be downloaded at any time, to be backed up. But, should you need it, the configuration is stored
+here: '/Volumes/Perceptive Automation/Indigo <VERSION>>/Preferences/com.vtmikel.autolights/config'
 
-This document takes a deeper look at how Auto Lights orchestrates Zone-based lighting, presence detection,
-luminance-based dimming, and time-of-day “Lighting Periods.” While the plugin config is stored in JSON under the hood,
-you typically manage it via the built-in web editor. Below are the major concepts you’ll see in that interface.
-
----
-
-## FAQ & Common Scenarios
-
-1. **I want to disable Auto Lights at bedtime**
-    - You can assign a variable (e.g., "Sleep_Mode") as a “Behavior Variable.” If it’s set to true, all Zones can turn
-      off. The plugin sees that as a global off condition.
-
-2. **Lights come on too bright or too dim**
-    - Check your luminance sensors, or the “Limit Brightness” in the relevant Lighting Period. If it’s set too low or
-      not set at all, it might not match your actual preference.
-
-3. **What if I want multiple custom times in one day?**
-    - Set up multiple Lighting Periods (e.g., “Morning,” “Day,” “Evening,” “Night”) with different start/stop times and
-      brightness caps.
-
-Know that everything here is flexible. If you need to fine-tune advanced JSON or do manual changes, they’re possible,
-but generally the web editor is enough for everyday use.
-
-```
+Given that the configuration is stored outside of the plugin file itself, it persists version upgrades.
