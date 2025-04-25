@@ -25,6 +25,7 @@ from flask import (
     send_file,
 )
 from flask_wtf import FlaskForm
+from markupsafe import Markup
 from wtforms import (
     StringField,
     IntegerField,
@@ -35,17 +36,14 @@ from wtforms import (
     Field,
 )
 from wtforms.validators import DataRequired
-from markupsafe import Markup
 
 from .config_editor import WebConfigEditor
-
 # --- Local imports ---
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
     indigo_get_house_devices,
     indigo_create_new_variable,
 )
-from werkzeug.serving import make_server
 
 # Load environment variables if needed
 load_dotenv()
@@ -71,14 +69,19 @@ def ensure_indigo_up():
         current_app.logger.error(f"Indigo unavailable: {e}")
         return render_template("indigo_unavailable.html"), 503
 
+
 @app.errorhandler(Exception)
 def handle_all_editor_errors(e):
     current_app.logger.exception("Config-editor failure")
-    return render_template(
-        "config_editor_error.html",
-        message="Sorry — something went wrong loading the configuration editor. "
-                "Check your Indigo connection and try again."
-    ), 500
+    return (
+        render_template(
+            "config_editor_error.html",
+            message="Sorry — something went wrong loading the configuration editor. "
+            "Check your Indigo connection and try again.",
+        ),
+        500,
+    )
+
 
 def load_config():
 
@@ -429,8 +432,6 @@ def lighting_periods():
     )
 
 
-
-
 @app.route("/lighting_period/<period_id>", methods=["GET", "POST"])
 def lighting_period_config(period_id):
     """
@@ -511,7 +512,7 @@ def readme():
     Returns the file content with 'text/markdown' Content-Type.
     """
     try:
-        with open("README.MD", "r") as f:
+        with open("static/README.MD", "r") as f:
             text = f.read()
         return text, 200, {"Content-Type": "text/markdown"}
     except Exception as e:
@@ -769,10 +770,12 @@ class DevicePeriodMapWidget:
         self.lighting_periods = lighting_periods
 
     def __call__(self, field, **kwargs):
-        html = ['<table class="zones-table device-period-map"><thead><tr><th>Device</th>']
+        html = [
+            '<table class="zones-table device-period-map"><thead><tr><th>Device</th>'
+        ]
         for period in self.lighting_periods:
             html.append(f'<th>{period["name"]}</th>')
-        html.append('</tr></thead><tbody>')
+        html.append("</tr></thead><tbody>")
         for dev in self.devices:
             html.append(f'<tr><td>{dev["name"]}</td>')
             for period in self.lighting_periods:
@@ -781,16 +784,20 @@ class DevicePeriodMapWidget:
                 # default to include when missing
                 is_included = field.data.get(dev_id_str, {}).get(period_id_str, True)
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
-                html.append(f'<td><select name="{name}"><option value="include" {"selected" if is_included else ""}>Include in Period</option><option value="exclude" {"selected" if not is_included else ""}>Exclude from Period</option></select></td>')
-            html.append('</tr>')
-        html.append('</tbody></table>')
-        return Markup(''.join(html))
+                html.append(
+                    f'<td><select name="{name}"><option value="include" {"selected" if is_included else ""}>Include in Period</option><option value="exclude" {"selected" if not is_included else ""}>Exclude from Period</option></select></td>'
+                )
+            html.append("</tr>")
+        html.append("</tbody></table>")
+        return Markup("".join(html))
 
 
 class DevicePeriodMapField(Field):
     widget = None  # Will be set dynamically
 
-    def __init__(self, label='', validators=None, devices=None, lighting_periods=None, **kwargs):
+    def __init__(
+        self, label="", validators=None, devices=None, lighting_periods=None, **kwargs
+    ):
         super().__init__(label, validators, **kwargs)
         self.devices = devices or []
         self.lighting_periods = lighting_periods or []
@@ -811,20 +818,21 @@ class DevicePeriodMapField(Field):
         if formdata:
             mapping = {}
             for key in formdata:
-                if not key.startswith('device_period_map-'):
+                if not key.startswith("device_period_map-"):
                     continue
-                parts = key.split('-')
+                parts = key.split("-")
                 if len(parts) != 3:
                     continue
                 _, dev_id, period_id = parts
                 val = formdata.get(key)
-                include = (val == 'include')
+                include = val == "include"
                 if dev_id not in mapping:
                     mapping[dev_id] = {}
                 mapping[dev_id][period_id] = include
             self.data = mapping
         else:
             self.data = data or {}
+
 
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):
@@ -886,13 +894,18 @@ def zone_config(zone_id):
     try:
         devices_list = current_app.config["config_editor"].get_cached_indigo_devices()
         # Filter to only on_lights_dev_ids for this zone
-        selected_dev_ids = set(zone.get("device_settings", {}).get("on_lights_dev_ids", []))
-        filtered_devices = [dev for dev in devices_list if dev["id"] in selected_dev_ids]
+        selected_dev_ids = set(
+            zone.get("device_settings", {}).get("on_lights_dev_ids", [])
+        )
+        filtered_devices = [
+            dev for dev in devices_list if dev["id"] in selected_dev_ids
+        ]
         lighting_periods_all = config_data.get("lighting_periods", [])
         # Filter to only lighting_period_ids for this zone
         selected_period_ids = set(zone.get("lighting_period_ids", []))
         filtered_periods = [
-            period for period in lighting_periods_all
+            period
+            for period in lighting_periods_all
             if period.get("id") in selected_period_ids
         ]
         if hasattr(zone_form, "device_period_map"):
