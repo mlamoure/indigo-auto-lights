@@ -282,16 +282,18 @@ class AutoLightsAgent(AutoLightsBase):
         Iterate through each zone and log its status info.
         """
         for zone in self._config.zones:
-            period = (
-                zone.current_lighting_period.name
-                if zone.current_lighting_period
-                else None
-            )
-            locked_info = (
-                f", expiration: {zone.lock_expiration_str}" if zone.locked else ""
-            )
-            self.logger.info(
-                f"Zone '{zone.name}': period={period}, presence={zone.has_presence_detected()}, "
-                f"luminance={zone.luminance}, target_brightness={zone.target_brightness}, "
-                f"locked={zone.locked}{locked_info}"
-            )
+            self.logger.info(f"Zone '{zone.name}':")
+            current_period = zone.current_lighting_period
+            if current_period:
+                self.logger.info(f"    period: {current_period.name}")
+                self.logger.info(f"        type: {current_period.mode}")
+                self.logger.info(f"        start: {current_period.from_time.strftime('%H:%M')}")
+                self.logger.info(f"        end: {current_period.to_time.strftime('%H:%M')}")
+            else:
+                self.logger.info(f"    period: None")
+            self.logger.info(f"    presence: {zone.has_presence_detected()}")
+            self.logger.info(f"    luminance: {zone.luminance}")
+            self.logger.info(f"    target_brightness: {zone.target_brightness}")
+            self.logger.info(f"    locked: {zone.locked}")
+            if zone.locked:
+                self.logger.info(f"        expiration: {zone.lock_expiration_str}")
