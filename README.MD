@@ -63,7 +63,7 @@ There is no authorization on the Web Config interface itself. If this concerns y
 
 ## Documentation
 
-See documentation [here](Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/static/Documentation.MD)#
+See documentation [here](Auto Lights.indigoPlugin/Contents/Server Plugin/config_web_editor/static/Documentation.MD)
 
 ---
 
