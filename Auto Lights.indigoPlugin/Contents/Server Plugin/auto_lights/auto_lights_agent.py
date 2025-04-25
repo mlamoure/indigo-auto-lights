@@ -326,9 +326,24 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.info(f"    current period: None")
             self.logger.info(f"    presence: {zone.has_presence_detected()}")
             self.logger.info(f"    current luminance: {zone.luminance}")
-            self.logger.info(
-                f"    Auto Lights target brightness: {zone.target_brightness}"
-            )
+            # Print each zone light’s current and target brightness
+            for dev_id in zone.on_lights_dev_ids + zone.off_lights_dev_ids:
+                dev = indigo.devices[dev_id]
+                curr = next(
+                    (item["brightness"] for item in zone.current_lights_status if item["dev_id"] == dev_id),
+                    None,
+                )
+                tgt = next(
+                    (item["brightness"] for item in zone.target_brightness if item["dev_id"] == dev_id),
+                    None,
+                )
+                light_type = "On Light" if dev_id in zone.on_lights_dev_ids else "Off Light"
+                excluded = ""
+                if zone.has_dev_lighting_mapping_exclusion(dev_id, zone.current_lighting_period):
+                    excluded = " (excluded from Lighting Period)"
+                self.logger.info(
+                    f"    {light_type} '{dev.name}': current={curr}, target={tgt}{excluded}"
+                )
             self.logger.info(f"    locked: {zone.locked}")
             if zone.locked:
                 self.logger.info(f"        expiration: {zone.lock_expiration_str}")
