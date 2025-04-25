@@ -151,6 +151,7 @@ class AutoLightsAgent(AutoLightsBase):
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 if (
                     device_prop == "presence_dev_ids"
+                    and zone.locked
                     and zone.unlock_when_no_presence
                     and not zone.has_presence_detected()
                 ):
