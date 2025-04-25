@@ -2,39 +2,53 @@ Auto Lights is a lighting automation plugin for the Indigo Home Automation syste
 
 # What does it do?
 
-Auto Lights is an opinionated lighting behavior template for your house. It enables you to set up Lighting Zones, and
-configure behavior for each Zone that standardizes the way Indigo controls lights in your home.
+Auto Lights is an **opinionated** lighting behavior template for your home. It enables you to set up Lighting Zones (
+this is intentionally vague, you can define a Zone to be whatever you want), and configure behavior for each Zone that
+standardizes the way Indigo controls lights in your home.
 
-I originally built Auto Lights for my own use in a sensor-rich home, where nearly every room is managed by it.
-However, Auto Lights can be tailored for homes with fewer sensors. Without it, configuring lights using Indigo Triggers
-and Variables can be very labor-intensive. Auto Lights simplifies your setup by providing a streamlined template,
-letting you focus on fine-tuning your triggers instead of handling routine configurations.
+I originally built Auto Lights for my own use in a sensor-rich home, where nearly every room is managed by Auto Lights.
+However, Auto Lights can be used in less complex homes as well. The idea is to save you from configuring many many
+Indigo Triggers and Variables to achieve a basic level of automatic light control functionality to do things like:
 
-Main features of Auto Lights:
+* Turn on lights automatically, based on presence.
+* Setup Lighting Periods (times of the day), which define based on the time of day whether Auto Lights is the primary
+  for turning lights on and off, or just off, or nothing at all, for that period.
+* Turn off lights when presence is not detected
 
-* Each Zone has a set of "On / Off Lights", and a set of [presence devices](#zones-presence-devices).
-* Each Zone has a set of Lighting Periods, which define based on the time of day whether Auto Lights is the primary for
-  turning lights on and off, or just off, for that period.
-* When presence is detected in a Zone, and the current Lighting Period indicates Auto Lights is in control of the
-  lights, Auto Lights will turn on the lights in the On / Off Lights.
-* When presence is not detected, and if there's an active period, Auto Lights will turn off the lights for that Zone.
-
-More advanced features:
+Auto Lights simplifies your setup by providing a streamlined template, letting you focus on fine-tuning your triggers
+instead of handling routine configurations. More advanced features include:
 
 * When it's detected that someone changed the lighting state for a Zone, Auto Lights places that Zone in
-  a [lock](#locks), so that
-  it will not override the change from the user. Locks are time-based, and can be extended based on persistent presence
-  until the room is empty again.
+  a [lock](#locks), so that it will not override the change from the user. Locks are time-based, and can be extended
+  based on persistent presence until the room is empty again.
 * Optionally, a luminance device can be defined, with a minimum luminance setting. So the logic becomes: If Presence
-  while Dark -> Turn on the lights.
+  while Dark and Period is set to Auto Lights Control -> Turn on the lights.
 * For dimmer devices, Auto Lights can optionally set the brightness to a % based on the current luminance level of the
   room. For example: target brightness = (1 - (Current Luminance / Minimum Luminance)) * 100
 
 # Requirements
 
 - [x] Latest Indigo - I only test on the latest
-- [x] "Allow Remote Access" must be on for your server, with Reflector and API Key -- See here for why.
+- [x] "Allow Remote Access" must be on for your server, with Reflector and API Key -- See [here](#the-web-config) for
+  why.
 - [x] Presence and lighting devices to control, for any Zone you wish to use with Auto Lights
+
+## The Web Config
+
+Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
+too advanced for the Indigo native ConfigUI.
+
+The Web Config is run as a separate web server on your Indigo Server. Because of this, it must interact with your Indigo
+via API, and I've only implemented support for using the API key. API keys are only enabled for Indigo with support for
+the reflector. While technically you do not need to use the reflector and can point to http://localhost:8186, you must
+enable reflector to set api keys via the indigo site. I recommend creating a unique API key for Auto
+Lights [here](https://www.indigodomo.com/account/authorizations).
+
+There is no authorization on the Web Config interface itself. If this concerns you, there are two options available:
+
+* Set your web server to only bind to localhost
+* Disable the web config server once you've configured your Auto Lights. The plugin does not need it for execution, it's
+  only needed to build your config.
 
 # Documentation
 

@@ -1,18 +1,3 @@
-## The Web Config
-
-Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
-too advanced for the Indigo native ConfigUI.
-
-The Web Config is run as a separate web server on your Indigo Server. Because of this, it must interact with your Indigo
-via API, and I've only implemented support for using the API key, so therefore the reflector is required. I may look
-into moving this to the native auth in the future.
-
-There is no authorization on the Web Config interface itself. If this concerns you, there are two options available:
-
-* Set your web server to only bind to localhost
-* Disable the web config server once you've configured your Auto Lights. The plugin does not need it for execution, it's
-  only needed to build your config.
-
 # Plugin Settings
 
 This section provides an overview of where you can configure the plugin within Indigo. It covers
