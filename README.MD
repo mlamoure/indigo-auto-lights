@@ -10,7 +10,8 @@ standardizes the way Indigo controls lights in your home.
 
 I originally built Auto Lights for my own use in a sensor-rich home, where nearly every room is managed by Auto Lights.
 However, Auto Lights can be used in less complex homes as well. The idea is to save you from configuring many many
-Indigo Triggers and Variables to achieve a basic level of automatic light control functionality to do things like:
+Indigo Triggers and Variables to achieve a sophisticated level of automatic light control functionality to do things
+like:
 
 - **Multi-Zone Management**: Create and manage multiple “Zones” in Indigo from a single interface.
 - **Presence-Based Lighting**: Use one or more presence sensors or timers and only turn on lights when someone is
@@ -47,7 +48,7 @@ Indigo Triggers and Variables to achieve a basic level of automatic light contro
 ## The Web Config Editor
 
 Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
-too advanced for the Indigo native ConfigUI.
+too advanced for the Indigo native ConfigUI. See [here](#screenshots) for screenshots.
 
 The Web Config is run as a separate web server on your Indigo Server. Because of this, it must interact with your Indigo
 via API, and I've only implemented support for using the API key. API keys are only enabled for Indigo with support for
