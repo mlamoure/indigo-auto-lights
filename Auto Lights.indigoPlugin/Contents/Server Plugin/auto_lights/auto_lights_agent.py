@@ -47,7 +47,8 @@ class AutoLightsAgent(AutoLightsBase):
             self._debug_log(f"Zone is disabled")
             return False
 
-        triggered_by = zone.last_changed_device.name
+        last_dev = zone.last_changed_device
+        triggered_by = last_dev.name if last_dev else "System"
         zone.check_out()
         ################################################################
         # Lock logic
