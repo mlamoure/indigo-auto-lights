@@ -158,7 +158,7 @@
 <div id="documentation-snippet"></div>
 <script>
 (async function() {
-  let md = await fetch("{{ url_for('static', filename='README.MD') }}").then(r => r.text());
+  let md = await fetch("{{ url_for('static', filename='Documentation.MD') }}").then(r => r.text());
 
   function extractSection(text, heading) {
     const lines = text.split("\n");
