@@ -22,7 +22,7 @@
                 <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
                     }}</label><select name="{{ field.name }}">
                 {% for i in range(0, 24) %}
-                <option value="{{ i }}" {% if field.data|default(0)|int== i %}selected="selected" {% endif %}>{{ i }}
+                <option value="{{ i }}" {% if field.data|default(0)|int == i %}selected="selected"{% endif %}>{{ i }}
                 </option>
                 {% endfor %}
             </select>
@@ -30,7 +30,7 @@
                 <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
                     }}</label><select name="{{ field.name }}">
                 {% for m in [0, 15, 30, 45, 59] %}
-                <option value="{{ m }}" {% if field.data|default(0)|int== m %}selected="selected" {% endif %}>{{ m }}
+                <option value="{{ m }}" {% if field.data|default(0)|int == m %}selected="selected"{% endif %}>{{ m }}
                 </option>
                 {% endfor %}
             </select>
