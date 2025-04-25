@@ -54,7 +54,7 @@ A Zone typically includes:
   for devices that do long fading times for dimmer changes, like the Hue lights plugin. The transition state will
   confuse Auto Lights and think the dimmer was changed outside of the plugin, and a lock will be created.
 
-## Locks
+### Locks
 
 * Locks are time-based to begin. Once a lock is detected, you will be notified via the Indigo log of the triggering
   event.
@@ -77,7 +77,7 @@ A Zone typically includes:
 > **NOTE:** There are Indigo Actions to reset a lock for any given Zone, or all Zones. And the plugin menu has a method
 > to print locks to the Indigo Log.
 
-## Luminance Settings
+### Luminance Settings
 
 > **NOTE:** Minimum brightness is only available if a luminance device is added.
 
@@ -120,7 +120,7 @@ Lighting Periods let you define windows of time that set different behaviors for
 
 ---
 
-# Configuration Backup
+## Configuration Backup
 
 Each change to your configuration, up to 20 changes, is backed-up. You may also create manual backups that never expire.
 The configuration can be downloaded at any time, to be backed up. But, should you need it, the configuration is stored
