@@ -28,6 +28,14 @@ class AutoLightsAgent(AutoLightsBase):
         Returns:
             bool: Whether the zone was processed.
         """
+        # Seed baseline target_brightness if it hasn't been set yet
+        if zone._target_brightness is None:
+            baseline = [
+                {"dev_id": s["dev_id"], "brightness": s["brightness"]}
+                for s in zone.current_lights_status
+            ]
+            zone.target_brightness = baseline
+
         if not self._config.enabled:
             return False
 
