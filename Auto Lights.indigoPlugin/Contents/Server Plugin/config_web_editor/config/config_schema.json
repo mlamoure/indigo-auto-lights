@@ -156,6 +156,12 @@
                 "x-drop-down": true,
                 "title": "Minimum Luminance Variable",
                 "tooltip": "Set the identifier for the minimum luminance variable."
+              },
+              "adjust_brightness": {
+                "type": "boolean",
+                "title": "Adjust Dimmer Brightness",
+                "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.",
+                "default": true
               }
             }
           },
@@ -163,12 +169,6 @@
             "type": "object",
             "title": "Lighting Behavior Settings",
             "properties": {
-              "adjust_brightness": {
-                "type": "boolean",
-                "title": "Adjust Dimmer Brightness",
-                "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.",
-                "default": true
-              },
               "lock_duration": {
                 "type": "integer",
                 "title": "Lock Duration",

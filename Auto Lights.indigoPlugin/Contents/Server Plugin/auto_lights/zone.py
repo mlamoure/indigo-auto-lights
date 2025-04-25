@@ -116,10 +116,10 @@ class Zone(AutoLightsBase):
                 self.minimum_luminance = mls["minimum_luminance"]
             if "minimum_luminance_var_id" in mls:
                 self.minimum_luminance_var_id = mls["minimum_luminance_var_id"]
+            if "adjust_brightness" in mls:
+                self.adjust_brightness = mls["adjust_brightness"]
         if "behavior_settings" in cfg:
             bs = cfg["behavior_settings"]
-            if "adjust_brightness" in bs:
-                self.adjust_brightness = bs["adjust_brightness"]
             if "lock_duration" in bs:
                 self.lock_duration = bs["lock_duration"]
             if "extend_lock_when_active" in bs:
