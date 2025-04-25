@@ -8,6 +8,9 @@
   <body>
 {% set page_title = "Lighting Zones" %}
 {% include "header_common.html" %}
+<script>
+  window.README_SECTION_NAME = "Zones";
+</script>
 <div id="container">
       <div id="content">
         <form method="POST" id="zones-form">
@@ -62,5 +65,33 @@
         <button type="button" class="btn" onclick="cancelDelete()">Cancel</button>
       </div>
     </div>
+  <hr>
+  <div id="documentation-snippet"></div>
+  <script>
+  (async function() {
+    let md = await fetch("{{ url_for('static', filename='README.MD') }}").then(r => r.text());
+
+    function extractSection(text, heading) {
+      const lines = text.split("\n");
+      let out = [], inSection = false, depth = 0;
+
+      for (let l of lines) {
+        const m = l.match(/^(#+)\s+(.*)$/);
+        if (m) {
+          const d = m[1].length, title = m[2].trim();
+          if (!inSection && title === heading) { inSection = true; depth = d; out.push(l); continue; }
+          if (inSection && d <= depth) break;
+        }
+        if (inSection) out.push(l);
+      }
+      return out.join("\n");
+    }
+
+    const snippetMd = extractSection(md, window.README_SECTION_NAME || "");
+    if (snippetMd) {
+      document.getElementById("documentation-snippet").innerHTML = marked.parse(snippetMd);
+    }
+  })();
+  </script>
   </body>
 </html>
