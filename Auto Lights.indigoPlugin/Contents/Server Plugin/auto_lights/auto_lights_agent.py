@@ -126,8 +126,21 @@ class AutoLightsAgent(AutoLightsBase):
                 )
 
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
+                    change_info = ""
+                    if "brightness" in diff:
+                        old = getattr(orig_dev, "brightness", None)
+                        new = diff["brightness"]
+                        change_info = f" (was: {old}; now: {new})"
+                    elif "onState" in diff:
+                        old = orig_dev.states.get("onState", False)
+                        new = diff["onState"]
+                        change_info = f" (was: {old}; now: {new})"
+                    elif "onOffState" in diff:
+                        old = orig_dev.states.get("onOffState", False)
+                        new = diff["onOffState"]
+                        change_info = f" (was: {old}; now: {new})"
                     self.logger.info(
-                        f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'."
+                        f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'{change_info}."
                     )
                     self.logger.info("  Lock Details:")
                     self.logger.info(f"    lock_duration: {zone.lock_duration} minutes")
