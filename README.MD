@@ -39,9 +39,10 @@ like:
    To use the Auto Lights web config editor, you’ll need to be able to access Indigo via API key. There's two options to
    do this. See [The Web Config Editor](#the-web-config-editor) for instructions and details.
 
-3. **Presence & Luminance Devices**  
-   Almost any Indigo-compatible motion sensor, threshold timer, or other presence device can tell Auto Lights when a
-   room is occupied. Luminance sensors give you the brightness-based dimming logic.
+3. **Lights to Control & Presence Devices**  
+   Almost any Indigo-compatible lighting device, plus some way of reporting presence to determine if a zone is occupied,
+   such as a motion sensor or virtual presence device. Luminance sensors are optional, and give you the brightness-based
+   dimming logic.
 
 ---
 
