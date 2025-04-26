@@ -27,6 +27,8 @@ like:
   room. For example: target brightness = [1 - (current luminance / minimum luminance)] x 100.
 - **Global Enable/Disable**: A single variable can switch off the entire Auto Lights system. Helpful for scenarios like
   turning off lights when you go to bed, or are not at home.
+- **Clear Explainability**: Auto Lights tries to be transparent in why changes are being made (or not made) so that you
+  can focus on tweaking your configuration to your needs.
 
 ---
 
