@@ -18,6 +18,12 @@ class AutoLightsAgent(AutoLightsBase):
         self._config = config
         self._timers = {}
 
+        # Initialize per-zone transition timers
+        for z in self._config.zones:
+            # give each zone a backreference to the agent
+            z._config.agent = self
+            z.schedule_next_transition()
+
     def process_zone(self, zone: Zone) -> bool:
         """
         Main automation function that processes a series of lighting zones.

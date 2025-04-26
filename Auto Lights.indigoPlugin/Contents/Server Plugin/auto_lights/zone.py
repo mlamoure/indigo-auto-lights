@@ -83,6 +83,9 @@ class Zone(AutoLightsBase):
         self._lock_timer = None
         self._config = config
 
+        # Timer for scheduling next lighting-period transition
+        self._transition_timer: Optional[threading.Timer] = None
+
         self._lock_enabled = True
         self._lock_extension_duration = None
 
@@ -866,6 +869,67 @@ class Zone(AutoLightsBase):
             result = ""
 
         return result
+
+    def schedule_next_transition(self):
+        """
+        Cancel any existing transition timer and schedule exactly one new timer:
+         - if currently in a LightingPeriod: fire at its to_time
+         - otherwise: fire at the next-from_time among all periods
+        """
+        # 1) cancel old
+        if self._transition_timer:
+            self._transition_timer.cancel()
+
+        now = datetime.datetime.now()
+        next_dt = None
+        next_period = None
+        next_boundary = None  # "from_time" or "to_time"
+
+        # helper to consider a boundary time and pick the soonest future one
+        def consider(dt: datetime.datetime, period, boundary_name):
+            nonlocal next_dt, next_period, next_boundary
+            if dt <= now:
+                dt = dt + datetime.timedelta(days=1)
+            if next_dt is None or dt < next_dt:
+                next_dt = dt
+                next_period = period
+                next_boundary = boundary_name
+
+        # if we are in a period now, schedule its end first
+        current = self.current_lighting_period
+        if current:
+            dt = datetime.datetime.combine(now.date(), current.to_time)
+            consider(dt, current, "to_time")
+
+        # always also consider starts of *all* periods
+        for period in self.lighting_periods:
+            dt = datetime.datetime.combine(now.date(), period.from_time)
+            consider(dt, period, "from_time")
+
+        # by now next_dt is the very next boundary for this zone
+        assert next_dt and next_period and next_boundary
+
+        delay = (next_dt - now).total_seconds()
+        self._transition_timer = threading.Timer(
+            delay,
+            self._on_transition,
+            args=(next_period, next_boundary),
+        )
+        self._transition_timer.daemon = True
+        self._transition_timer.start()
+
+    def _on_transition(self, period: LightingPeriod, boundary_name: str):
+        """
+        Called when we hit a scheduled boundary.
+        1) Re-run our zone logic to pick up the new period
+        2) Schedule the *next* boundary
+        """
+        # 1) process zone so that current_lighting_period has flipped
+        #    you need a pointer back to the agent; assume your config holds it:
+        self._config.agent.process_zone(self)
+
+        # 2) schedule the next transition
+        self.schedule_next_transition()
 
     def process_expired_lock(self) -> None:
         """
