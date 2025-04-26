@@ -26,13 +26,20 @@ class AutoLightsAgent(AutoLightsBase):
 
     def process_zone(self, zone: Zone) -> bool:
         """
-        Main automation function that processes a series of lighting zones.
+        Main automation function that processes a single lighting zone.
+
+        This method handles the core automation logic for a zone, including:
+        - Checking if the zone is enabled
+        - Handling zone locks
+        - Evaluating global behavior variables
+        - Calculating target brightness based on lighting periods
+        - Applying changes to devices when needed
 
         Args:
             zone (Zone): A Zone object to process
 
         Returns:
-            bool: Whether the zone was processed.
+            bool: True if the zone was processed, False if skipped due to being disabled or locked.
         """
         # Seed baseline target_brightness if it hasn't been set yet
         if zone._target_brightness is None:
@@ -199,7 +206,10 @@ class AutoLightsAgent(AutoLightsBase):
 
     def process_all_zones(self) -> None:
         """
-        Loop through each zone in the agent's configuration and process each zone.
+        Process all zones in the agent's configuration.
+        
+        Iterates through each zone in the configuration and calls process_zone() on each one.
+        This is typically used when a global configuration change affects all zones.
         """
         for zone in self._config.zones:
             self.process_zone(zone)
@@ -298,7 +308,11 @@ class AutoLightsAgent(AutoLightsBase):
 
     def print_locked_zones(self) -> None:
         """
-        Iterate through each zone and log if the zone is locked.
+        Log information about all currently locked zones.
+        
+        Iterates through each zone and logs detailed information if the zone is locked,
+        including lock expiration time and lock behavior settings. If no zones are locked,
+        logs a message indicating this.
         """
         locked_zones = [zone for zone in self._config.zones if zone.locked]
         if not locked_zones:
@@ -321,7 +335,17 @@ class AutoLightsAgent(AutoLightsBase):
 
     def print_zone_status(self) -> None:
         """
-        Iterate through each zone and log its status info.
+        Log detailed status information for all zones.
+        
+        For each zone, logs information including:
+        - Enabled status
+        - Current lighting period details
+        - Presence detection status
+        - Luminance values and thresholds
+        - Current and target brightness for each light
+        - Lock status and expiration time if locked
+        
+        This is useful for debugging and monitoring the system state.
         """
         for zone in self._config.zones:
             self.logger.info(f"Zone '{zone.name}':")

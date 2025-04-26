@@ -596,7 +596,11 @@ class Zone(AutoLightsBase):
     def target_brightness_all_off(self) -> bool:
         """
         Check if all devices' target brightness indicate an off state.
+        
         For dimmer devices, 0 means off; for relay devices, False means off.
+        
+        Returns:
+            bool: True if all devices are set to off, False otherwise.
         """
         for tb in self.target_brightness:
             if (isinstance(tb, int) and tb != 0) or (isinstance(tb, bool) and tb):
@@ -607,6 +611,12 @@ class Zone(AutoLightsBase):
     def has_presence_detected(self) -> bool:
         """
         Check if presence is detected in this zone across all presence devices.
+        
+        Examines the onState and onOffState of all presence devices in the zone.
+        If any device indicates presence, returns True.
+        
+        Returns:
+            bool: True if presence is detected, False otherwise.
         """
         for dev_id in self.presence_dev_ids:
             presence_device = indigo.devices[dev_id]
@@ -656,7 +666,12 @@ class Zone(AutoLightsBase):
 
     def current_state_any_light_is_on(self) -> bool:
         """
-        Check if any device in current_lights_status is on (True or brightness > 0).
+        Check if any device in current_lights_status is on.
+        
+        A device is considered "on" if its status is True or its brightness is > 0.
+        
+        Returns:
+            bool: True if any light is on, False otherwise.
         """
         for status in self.current_lights_status:
             if status is True or (isinstance(status, (int, float)) and status > 0):
@@ -664,19 +679,36 @@ class Zone(AutoLightsBase):
         return False
 
     def check_in(self):
+        """
+        Mark the zone as checked in (not being processed).
+        """
         self._checked_out = False
 
     def check_out(self):
+        """
+        Mark the zone as checked out (currently being processed).
+        """
         self._checked_out = True
 
     def reset_lock(self, reason: str):
-        """Reset the lock for the zone."""
+        """
+        Reset the lock for the zone.
+        
+        Args:
+            reason (str): The reason for resetting the lock, which will be logged.
+        """
         self.locked = False
         self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
 
     def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
-        Check if the current brightness or state of any on/off device differs from its target brightness.
+        Check if the current brightness or state of any device differs from its target brightness.
+        
+        Args:
+            exclude_lock_devices (bool): If True, devices in exclude_from_lock_dev_ids will be ignored.
+            
+        Returns:
+            bool: True if any device's current state differs from its target, False otherwise.
         """
         if not self.enabled or not self.target_brightness:
             self._debug_log(
@@ -870,6 +902,14 @@ class Zone(AutoLightsBase):
     def has_device(self, dev_id: int) -> str:
         """
         Check if the given device ID exists in this zone's device lists.
+        
+        Args:
+            dev_id (int): The Indigo device ID to check.
+            
+        Returns:
+            str: The name of the list containing the device ID, or an empty string if not found.
+                 Possible values: "exclude_from_lock_dev_ids", "on_lights_dev_ids", 
+                 "off_lights_dev_ids", "presence_dev_ids", "luminance_dev_ids", or "".
         """
         if dev_id in self.exclude_from_lock_dev_ids:
             result = "exclude_from_lock_dev_ids"
