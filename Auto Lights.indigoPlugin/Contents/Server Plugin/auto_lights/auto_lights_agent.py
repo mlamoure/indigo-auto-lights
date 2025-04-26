@@ -314,6 +314,7 @@ class AutoLightsAgent(AutoLightsBase):
         """
         for zone in self._config.zones:
             self.logger.info(f"Zone '{zone.name}':")
+            self.logger.info(f"    enabled: {zone.enabled}")
             current_period = zone.current_lighting_period
             if current_period:
                 self.logger.info(f"    current period: {current_period.name}")
