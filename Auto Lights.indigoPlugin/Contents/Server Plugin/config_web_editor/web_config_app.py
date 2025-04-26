@@ -558,11 +558,12 @@ def refresh_variables():
     Route to force a refresh of Indigo variables in the in-memory cache.
     Returns the refreshed variables as JSON.
     """
-    refreshed = indigo_get_all_house_variables()
+    raw = indigo_get_all_house_variables()
+    variables = raw.get("variables", []) if isinstance(raw, dict) else []
     from flask import g
 
-    g._indigo_variables = refreshed
-    return {"variables": refreshed}
+    g._indigo_variables = variables
+    return {"variables": variables}
 
 
 @app.route("/get_luminance_value", methods=["POST"])
@@ -720,6 +721,9 @@ def init_flask_app(
     app.config["config_editor"] = config_editor
     app.jinja_env.globals["get_cached_indigo_variables"] = (
         config_editor.get_cached_indigo_variables
+    )
+    app.jinja_env.globals["get_cached_indigo_devices"] = (
+        config_editor.get_cached_indigo_devices
     )
     # initialize caches
     config_editor.get_cached_indigo_devices()
