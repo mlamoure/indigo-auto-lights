@@ -160,17 +160,17 @@ class AutoLightsAgent(AutoLightsBase):
                         new = diff["onOffState"]
                         change_info = f" (was: {old}; now: {new})"
                     self.logger.info(
-                        f"New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'{change_info}."
+                        f"🔒 New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'{change_info}."
                     )
-                    self.logger.info("  Lock Details:")
-                    self.logger.info(f"    lock_duration: {zone.lock_duration} minutes")
-                    self.logger.info(f"    lock_expiration: {zone.lock_expiration_str}")
+                    self.logger.info("  🔒 Lock Details:")
+                    self.logger.info(f"    ⏲️ lock_duration: {zone.lock_duration} minutes")
+                    self.logger.info(f"    ⏰ lock_expiration: {zone.lock_expiration_str}")
                     self.logger.info(
-                        f"    extend_lock_when_active: {zone.extend_lock_when_active}"
+                        f"    🔁 extend_lock_when_active: {zone.extend_lock_when_active}"
                     )
                     if zone.extend_lock_when_active:
                         self.logger.info(
-                            f"    lock_extension_duration: {zone.lock_extension_duration} minutes"
+                            f"    ⏳ lock_extension_duration: {zone.lock_extension_duration} minutes"
                         )
                     processed.append(zone)
                     # Schedule processing of expired lock after expiration + 2 seconds
