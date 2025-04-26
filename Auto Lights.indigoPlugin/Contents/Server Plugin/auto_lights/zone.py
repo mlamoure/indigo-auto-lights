@@ -849,7 +849,9 @@ class Zone(AutoLightsBase):
         self, dev_id: int, lighting_period: LightingPeriod
     ) -> bool:
         device_map = self.device_period_map.get(str(dev_id), {})
-        return device_map.get(str(lighting_period.id), True) is False
+        result = device_map.get(str(lighting_period.id), True) is False
+        self._debug_log(f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}")
+        return result
 
     def has_device(self, dev_id: int) -> str:
         """
