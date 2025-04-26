@@ -798,7 +798,7 @@ class Zone(AutoLightsBase):
                     dev_id, self.current_lighting_period
                 )
                 self._debug_log(
-                    f"Device {dev_id} excluded: {is_excluded} becaus of has_dev_lighting_mapping_exclusion"
+                    f"Device {dev_id} excluded: {is_excluded} because of has_dev_lighting_mapping_exclusion"
                 )
                 if not is_excluded:
                     if not self.adjust_brightness:
@@ -917,7 +917,9 @@ class Zone(AutoLightsBase):
         )
         self._transition_timer.daemon = True
         self._transition_timer.start()
-        self._debug_log(f"Scheduled next transition for zone '{self._name}' at {next_dt} for period '{next_period.name}' boundary '{next_boundary}'")
+        self._debug_log(
+            f"Scheduled next transition for zone '{self._name}' at {next_dt} for period '{next_period.name}' boundary '{next_boundary}'"
+        )
 
     def _on_transition(self, period: LightingPeriod, boundary_name: str):
         """
@@ -927,7 +929,9 @@ class Zone(AutoLightsBase):
         """
         # 1) process zone so that current_lighting_period has flipped
         #    you need a pointer back to the agent; assume your config holds it:
-        self._debug_log(f"Transition triggered for zone '{self._name}': period '{period.name}', boundary '{boundary_name}'")
+        self._debug_log(
+            f"Transition triggered for zone '{self._name}': period '{period.name}', boundary '{boundary_name}'"
+        )
         self._config.agent.process_zone(self)
 
         # 2) schedule the next transition
