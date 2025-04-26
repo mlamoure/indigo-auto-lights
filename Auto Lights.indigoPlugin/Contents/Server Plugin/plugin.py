@@ -288,7 +288,7 @@ class Plugin(indigo.PluginBase):
         # Only log on reload, not initial startup
         reloading = hasattr(self, "_config_mtime")
         if reloading:
-            self.logger.info(
+            self.logger.warning(
                 "🔄 Configuration reloaded from web editor; all locks and zone state has been reset"
             )
         confg_file_empty_str = "config_web_editor/config/auto_lights_conf_empty.json"
