@@ -26,7 +26,7 @@
             <tr>
                 <td>Reset to Defaults</td>
                 <td>
-                    <form method="POST" action="/config_backup" style="margin:0;">
+                    <form method="POST" action="/config_backup" style="margin:0;" onsubmit="return confirm('This will reset your Auto Lights config to default and take a backup in Automatic Backups. Are you sure?');">
                         <input type="hidden" name="action" value="reset_defaults">
                         <button type="submit" class="btn">Reset to Defaults</button>
                     </form>

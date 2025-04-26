@@ -600,7 +600,20 @@ def config_backup():
         backup_type = request.form.get("backup_type")
         backup_file = request.form.get("backup_file")
 
-        if action == "create_manual":
+        if action == "reset_defaults":
+            # Automatic backup of the existing config
+            config_data = config_editor.load_config()
+            config_editor.save_config(config_data)
+            # Overwrite with the empty default config
+            empty_config_path = os.path.join(
+                os.path.dirname(__file__),
+                "config",
+                "auto_lights_conf_empty.json",
+            )
+            shutil.copy2(empty_config_path, config_editor.config_file)
+            flash("Configuration reset to defaults. A backup was taken.")
+
+        elif action == "create_manual":
             config_editor.create_manual_backup()
             flash("Manual backup created.")
 
