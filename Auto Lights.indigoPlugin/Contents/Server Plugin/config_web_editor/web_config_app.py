@@ -929,3 +929,13 @@ def zone_config(zone_id):
             return redirect(url_for("zone_config", zone_id=zone_id))
 
     return render_template("zone_edit.html", zone_form=zone_form, index=zone_id)
+
+@app.route("/favicon.ico")
+def favicon():
+    """
+    Serve the plugin's favicon from the static directory.
+    """
+    return send_file(
+        os.path.join(os.path.dirname(__file__), "static", "favicon.ico"),
+        mimetype="image/x-icon",
+    )
