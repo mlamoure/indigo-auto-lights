@@ -185,6 +185,12 @@
               {% endif %}
             {% endfor %}
           </select>
+          {% if field.name == 'lighting_period_ids' %}
+          <div class="select-block reorder-buttons">
+            <button type="button" onclick="moveUp('{{ field.name }}')" title="Move selected period up">↑</button>
+            <button type="button" onclick="moveDown('{{ field.name }}')" title="Move selected period down">↓</button>
+          </div>
+          {% endif %}
         </div>
       </div>
       <div class="tooltip-info" style="display:none;"></div>

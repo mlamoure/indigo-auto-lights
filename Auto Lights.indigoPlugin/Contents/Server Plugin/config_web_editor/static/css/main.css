@@ -326,3 +326,24 @@ table.zones-table th {
 #documentation-snippet img {
     max-width: 100%;
 }
+
+/* Reorder buttons for lighting periods */
+.reorder-buttons {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.reorder-buttons button {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+.reorder-buttons button:hover {
+  background-color: #e0e0e0;
+}
