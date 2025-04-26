@@ -59,13 +59,6 @@ class AutoLightsAgent(AutoLightsBase):
             return False
 
         ################################################################
-        # Period logic
-        ################################################################
-        if zone.lighting_periods is None:
-            zone.check_in()
-            return False
-
-        ################################################################
         # Zone execution logic (Where we decide what changes, if any, need to be made)
         ################################################################
 
@@ -77,11 +70,16 @@ class AutoLightsAgent(AutoLightsBase):
             zone.target_brightness = 0
             action_reason = reason
 
+        if not zone.lighting_periods and not global_lights_off:
+            self._debug_log(f"Skipping: no lighting periods configured")
+            zone.check_in()
+            return False
+
         # Next, look to the target_brightness
         if not global_lights_off and zone.current_lighting_period is not None:
             action_reason = zone.calculate_target_brightness()
             self.logger.debug(
-                f"AutoLightsAgent: Zone '{zone.name}' brightness update: {action_reason}. Target brightness: {zone.target_brightness}"
+                f"brightness update: {action_reason}. Target brightness: {zone.target_brightness}"
             )
 
         ################################################################
