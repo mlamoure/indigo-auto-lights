@@ -771,7 +771,7 @@ class DevicePeriodMapWidget:
             for period in self.lighting_periods:
                 dev_id_str = str(dev["id"])
                 period_id_str = str(period["id"])
-                # default to include when missing
+                # Get the value from field.data, defaulting to True if not present
                 is_included = field.data.get(dev_id_str, {}).get(period_id_str, True)
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
                 html.append(
@@ -899,6 +899,8 @@ def zone_config(zone_id):
             if period.get("id") in selected_period_ids
         ]
         if hasattr(zone_form, "device_period_map"):
+            # Make sure the field has the correct data from the saved configuration
+            zone_form.device_period_map.data = zone.get("device_period_map", {})
             zone_form.device_period_map.devices = filtered_devices
             zone_form.device_period_map.lighting_periods = filtered_periods
             zone_form.device_period_map.widget = DevicePeriodMapWidget(
