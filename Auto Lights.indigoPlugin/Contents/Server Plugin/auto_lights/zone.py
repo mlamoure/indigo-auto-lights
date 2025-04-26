@@ -917,6 +917,7 @@ class Zone(AutoLightsBase):
         )
         self._transition_timer.daemon = True
         self._transition_timer.start()
+        self._debug_log(f"Scheduled next transition for zone '{self._name}' at {next_dt} for period '{next_period.name}' boundary '{next_boundary}'")
 
     def _on_transition(self, period: LightingPeriod, boundary_name: str):
         """
@@ -926,6 +927,7 @@ class Zone(AutoLightsBase):
         """
         # 1) process zone so that current_lighting_period has flipped
         #    you need a pointer back to the agent; assume your config holds it:
+        self._debug_log(f"Transition triggered for zone '{self._name}': period '{period.name}', boundary '{boundary_name}'")
         self._config.agent.process_zone(self)
 
         # 2) schedule the next transition
