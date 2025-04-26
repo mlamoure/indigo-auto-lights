@@ -123,7 +123,6 @@ class Plugin(indigo.PluginBase):
         self.logger.debug("shutdown called")
         self.stop_configuration_web_server()
 
-
     def deviceUpdated(
         self: indigo.PluginBase, orig_dev: indigo.Device, new_dev: indigo.Device
     ) -> None:
@@ -289,7 +288,9 @@ class Plugin(indigo.PluginBase):
         # Only log on reload, not initial startup
         reloading = hasattr(self, "_config_mtime")
         if reloading:
-            self.logger.info("🔄 Configuration reloaded from web editor; all locks and state information have been reset")
+            self.logger.info(
+                "🔄 Configuration reloaded from web editor; all locks and zone state has been reset"
+            )
         confg_file_empty_str = "config_web_editor/config/auto_lights_conf_empty.json"
         config_dir = os.path.dirname(self._config_file_str)
         if not os.path.exists(config_dir):
