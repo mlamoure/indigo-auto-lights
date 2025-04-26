@@ -159,13 +159,17 @@ class WebConfigEditor:
         """
         Background worker to refresh Indigo device/variable caches every interval_seconds seconds.
         """
+        # Initial delay to avoid duplicate startup calls
+        time.sleep(interval_seconds)
         while True:
             try:
-                new_devices = indigo_get_all_house_devices()
-                new_variables = indigo_get_all_house_variables()
+                raw_devices = indigo_get_all_house_devices()
+                raw_variables = indigo_get_all_house_variables()
+                devices = raw_devices.get("devices", []) if isinstance(raw_devices, dict) else []
+                variables = raw_variables.get("variables", []) if isinstance(raw_variables, dict) else []
                 with self._cache_lock:
-                    self._indigo_devices_cache["data"] = new_devices
-                    self._indigo_variables_cache["data"] = new_variables
+                    self._indigo_devices_cache["data"] = devices
+                    self._indigo_variables_cache["data"] = variables
                 msg = f"[{datetime.now():%Y-%m-%d %H:%M}] Indigo caches refreshed"
                 if self.app:
                     with self.app.app_context():
@@ -179,7 +183,7 @@ class WebConfigEditor:
                         self.app.logger.error(err)
                 else:
                     logger.error(err)
-            time.sleep(900)  # 15 minutes
+            time.sleep(interval_seconds)
 
     def start_cache_refresher(self, interval_seconds: int = 900) -> threading.Thread:
         """
