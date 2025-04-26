@@ -132,6 +132,7 @@ class AutoLightsAgent(AutoLightsBase):
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 if not zone.enabled:
+                    self.logger.info(f"🚫 Ignored device change from '{orig_dev.name}' for disabled zone '{zone.name}'.")
                     continue
 
                 self._debug_log(
