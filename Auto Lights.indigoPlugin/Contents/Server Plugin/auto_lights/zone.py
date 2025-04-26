@@ -848,6 +848,20 @@ class Zone(AutoLightsBase):
     def has_dev_lighting_mapping_exclusion(
         self, dev_id: int, lighting_period: LightingPeriod
     ) -> bool:
+        """
+        Determines if a device is excluded from a specific lighting period.
+        
+        This method checks the device-to-period mapping to see if a device
+        should be excluded from a particular lighting period's control.
+        
+        Args:
+            dev_id (int): The Indigo device ID to check
+            lighting_period (LightingPeriod): The lighting period to check against
+            
+        Returns:
+            bool: True if the device is excluded from the lighting period,
+                  False if the device should be controlled by the lighting period
+        """
         device_map = self.device_period_map.get(str(dev_id), {})
         result = device_map.get(str(lighting_period.id), True) is False
         self._debug_log(f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}")
