@@ -932,6 +932,9 @@ class Zone(AutoLightsBase):
          - if currently in a LightingPeriod: fire at its to_time
          - otherwise: fire at the next-from_time among all periods
         """
+        if not self.lighting_periods:
+            self._debug_log(f"Zone '{self._name}' has no lighting periods; skipping scheduling")
+            return
         # 1) cancel old
         if self._transition_timer:
             self._transition_timer.cancel()
