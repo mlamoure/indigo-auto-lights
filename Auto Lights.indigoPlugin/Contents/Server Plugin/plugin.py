@@ -286,6 +286,10 @@ class Plugin(indigo.PluginBase):
         return menu_items
 
     def _init_config_and_agent(self: indigo.PluginBase):
+        # Only log on reload, not initial startup
+        reloading = hasattr(self, "_config_mtime")
+        if reloading:
+            self.logger.info("🔄 Configuration reloaded from web editor; all locks and state information have been reset")
         confg_file_empty_str = "config_web_editor/config/auto_lights_conf_empty.json"
         config_dir = os.path.dirname(self._config_file_str)
         if not os.path.exists(config_dir):
