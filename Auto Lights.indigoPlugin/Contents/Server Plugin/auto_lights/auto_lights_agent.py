@@ -127,6 +127,13 @@ class AutoLightsAgent(AutoLightsBase):
                     f"Change from {orig_dev.name}; zone property: {device_prop}"
                 )
 
+                # Skip lock logic when no active lighting period
+                if zone.current_lighting_period is None:
+                    self._debug_log(
+                        f"Skipping lock logic for '{zone.name}': no active lighting period"
+                    )
+                    continue
+
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
                     change_info = ""
                     if "brightness" in diff:
