@@ -82,6 +82,16 @@ class WebConfigEditor:
         with self.config_file.open("w") as f:
             json.dump(config_data, f, indent=2)
 
+        # Notify plugin to reload config immediately if callback is registered
+        try:
+            cb = None
+            if self.app:
+                cb = self.app.config.get("reload_config_cb")
+            if callable(cb):
+                cb()
+        except Exception as e:
+            logger.error(f"Error running reload_config_cb: {e}")
+
     def create_manual_backup(self) -> None:
         """
         Manually back up the config and prune old backups.

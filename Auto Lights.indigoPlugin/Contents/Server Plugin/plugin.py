@@ -123,20 +123,6 @@ class Plugin(indigo.PluginBase):
         self.logger.debug("shutdown called")
         self.stop_configuration_web_server()
 
-    def runConcurrentThread(self: indigo.PluginBase):
-        try:
-            while True:
-                # Check for changes in the configuration file and reload if it has been modified.
-                if os.path.exists(self._config_file_str):
-                    current_mtime = os.path.getmtime(self._config_file_str)
-                    if current_mtime != self._config_mtime:
-                        self.logger.debug(
-                            "Config file modified, reloading configuration."
-                        )
-                        self._init_config_and_agent()
-                self.sleep(5)
-        except self.StopThread:
-            pass  # Optionally catch the StopThread exception and do any needed cleanup.
 
     def deviceUpdated(
         self: indigo.PluginBase, orig_dev: indigo.Device, new_dev: indigo.Device
@@ -213,6 +199,8 @@ class Plugin(indigo.PluginBase):
                 self._web_config_bind_ip,
                 self._web_config_bind_port,
             )
+            # Notify plugin to reload config immediately after save from web UI
+            flask_app.config["reload_config_cb"] = self._init_config_and_agent
             # Create a real WSGI server
             self._web_server = make_server(
                 self._web_config_bind_ip,
