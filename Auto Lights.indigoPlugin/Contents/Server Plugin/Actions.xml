@@ -18,4 +18,48 @@
         <Name>create a new indigo variable</Name>
         <CallbackMethod>create_variable</CallbackMethod>
     </Action>
+    <Action id="enable_all_zones">
+        <Name>Enable All Zones</Name>
+        <CallbackMethod>change_zones_enabled</CallbackMethod>
+        <ConfigUI>
+            <Field id="type" type="hidden">
+                <DefaultValue>enable_all</DefaultValue>
+            </Field>
+        </ConfigUI>
+    </Action>
+    <Action id="disable_all_zones">
+        <Name>Disable All Zones</Name>
+        <CallbackMethod>change_zones_enabled</CallbackMethod>
+        <ConfigUI>
+            <Field id="type" type="hidden">
+                <DefaultValue>disable_all</DefaultValue>
+            </Field>
+        </ConfigUI>
+    </Action>
+    <Action id="enable_zone">
+        <Name>Enable Zone</Name>
+        <CallbackMethod>change_zones_enabled</CallbackMethod>
+        <ConfigUI>
+            <Field id="type" type="hidden">
+                <DefaultValue>enable</DefaultValue>
+            </Field>
+            <Field id="zone_list" type="menu">
+                <Label>Zone:</Label>
+                <List class="self" filter="" method="get_zone_list"/>
+            </Field>
+        </ConfigUI>
+    </Action>
+    <Action id="disable_zone">
+        <Name>Disable Zone</Name>
+        <CallbackMethod>change_zones_enabled</CallbackMethod>
+        <ConfigUI>
+            <Field id="type" type="hidden">
+                <DefaultValue>disable</DefaultValue>
+            </Field>
+            <Field id="zone_list" type="menu">
+                <Label>Zone:</Label>
+                <List class="self" filter="" method="get_zone_list"/>
+            </Field>
+        </ConfigUI>
+    </Action>
 </Actions>

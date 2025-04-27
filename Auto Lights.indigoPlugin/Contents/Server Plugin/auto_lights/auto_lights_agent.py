@@ -345,6 +345,48 @@ class AutoLightsAgent(AutoLightsBase):
                     f"    unlock_when_no_presence: {zone.unlock_when_no_presence}"
                 )
 
+    def enable_all_zones(self) -> None:
+        """
+        Enable all zones by setting their enabled variable to true.
+        """
+        import indigo
+        for zone in self._config.zones:
+            if zone.enabled_var_id:
+                indigo.variable.updateValue(zone.enabled_var_id, "true")
+                zone.enabled = True
+
+    def disable_all_zones(self) -> None:
+        """
+        Disable all zones by setting their enabled variable to false.
+        """
+        import indigo
+        for zone in self._config.zones:
+            if zone.enabled_var_id:
+                indigo.variable.updateValue(zone.enabled_var_id, "false")
+                zone.enabled = False
+
+    def enable_zone(self, zone_name: str) -> None:
+        """
+        Enable a specific zone by name.
+        """
+        import indigo
+        for zone in self._config.zones:
+            if zone.name == zone_name and zone.enabled_var_id:
+                indigo.variable.updateValue(zone.enabled_var_id, "true")
+                zone.enabled = True
+                break
+
+    def disable_zone(self, zone_name: str) -> None:
+        """
+        Disable a specific zone by name.
+        """
+        import indigo
+        for zone in self._config.zones:
+            if zone.name == zone_name and zone.enabled_var_id:
+                indigo.variable.updateValue(zone.enabled_var_id, "false")
+                zone.enabled = False
+                break
+
     def print_zone_status(self) -> None:
         """
         Log detailed status information for all zones.

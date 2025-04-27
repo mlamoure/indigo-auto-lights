@@ -331,6 +331,23 @@ class Plugin(indigo.PluginBase):
         self.logger.info("Zone status report:")
         self._agent.print_zone_status()
 
+    def change_zones_enabled(self, action, dev=None, caller_waiting_for_result=None):
+        """
+        Handle enabling/disabling zones based on action.props.get("type").
+        Types: 'enable_all', 'disable_all', 'enable', 'disable'
+        """
+        action_type = action.props.get("type")
+        if action_type == "enable_all":
+            self._agent.enable_all_zones()
+        elif action_type == "disable_all":
+            self._agent.disable_all_zones()
+        elif action_type == "enable":
+            zone_name = action.props.get("zone_list")
+            self._agent.enable_zone(zone_name)
+        elif action_type == "disable":
+            zone_name = action.props.get("zone_list")
+            self._agent.disable_zone(zone_name)
+
     def create_variable(self, action, dev=None, caller_waiting_for_result=None):
         """
         :param action: action.props contains all the information passed from the web server
