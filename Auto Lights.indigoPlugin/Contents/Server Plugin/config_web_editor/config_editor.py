@@ -155,7 +155,7 @@ class WebConfigEditor:
             except Exception:
                 logger.warning("Could not remove old backup %s", old)
 
-    def _refresh_indigo_caches(self, interval_seconds: int) -> None:
+    def _refresh_indigo_caches(self) -> None:
         """
         Background worker to refresh Indigo device/variable caches every interval_seconds seconds.
         """
@@ -196,25 +196,11 @@ class WebConfigEditor:
     def get_cached_indigo_devices(self):
         with self._cache_lock:
             if self._indigo_devices_cache["data"] is None:
-                try:
-                    raw = indigo_get_all_house_devices()
-                    self._indigo_devices_cache["data"] = (
-                        raw.get("devices", []) if isinstance(raw, dict) else []
-                    )
-                except Exception as e:
-                    logger.error(f"Cannot reach Indigo for devices: {e}")
-                    self._indigo_devices_cache["data"] = []
+                self._refresh_indigo_caches()
             return self._indigo_devices_cache["data"]
 
     def get_cached_indigo_variables(self):
         with self._cache_lock:
             if self._indigo_variables_cache["data"] is None:
-                try:
-                    raw = indigo_get_all_house_variables()
-                    self._indigo_variables_cache["data"] = (
-                        raw.get("variables", []) if isinstance(raw, dict) else []
-                    )
-                except Exception as e:
-                    logger.error(f"Cannot reach Indigo for variables: {e}")
-                    self._indigo_variables_cache["data"] = []
+                self._refresh_indigo_caches()
             return self._indigo_variables_cache["data"]
