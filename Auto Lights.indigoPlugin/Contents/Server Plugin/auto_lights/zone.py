@@ -131,6 +131,11 @@ class Zone(AutoLightsBase):
                 self.perform_confirm = bs["perform_confirm"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
+            # load the advanced_settings.exclude_from_lock_dev_ids from the config
+            if "advanced_settings" in cfg:
+                adv = cfg["advanced_settings"]
+                if "exclude_from_lock_dev_ids" in adv:
+                    self.exclude_from_lock_dev_ids = adv["exclude_from_lock_dev_ids"]
             if "device_period_map" in cfg:
                 self._device_period_map = cfg["device_period_map"]
             else:
