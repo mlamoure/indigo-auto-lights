@@ -174,7 +174,7 @@ class Zone(AutoLightsBase):
         try:
             self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self._debug_log(f"enabled_var_id {value} not found: {e}")
+            self.logger.error(f"enabled_var_id {value} not found: {e}")
             self._enabled = False
 
     @property
@@ -278,7 +278,7 @@ class Zone(AutoLightsBase):
             try:
                 self._minimum_luminance = indigo.variables[value].getValue(float)
             except Exception as e:
-                self._debug_log(f"minimum_luminance_var_id {value} not found: {e}")
+                self.logger.error(f"minimum_luminance_var_id {value} not found: {e}")
                 self._minimum_luminance = None
 
     @property
