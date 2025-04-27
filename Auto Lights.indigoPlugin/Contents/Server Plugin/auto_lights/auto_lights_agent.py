@@ -353,7 +353,6 @@ class AutoLightsAgent(AutoLightsBase):
         for zone in self._config.zones:
             if zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "true")
-                zone.enabled = True
 
     def disable_all_zones(self) -> None:
         """
@@ -363,7 +362,6 @@ class AutoLightsAgent(AutoLightsBase):
         for zone in self._config.zones:
             if zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "false")
-                zone.enabled = False
 
     def enable_zone(self, zone_name: str) -> None:
         """
@@ -373,7 +371,6 @@ class AutoLightsAgent(AutoLightsBase):
         for zone in self._config.zones:
             if zone.name == zone_name and zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "true")
-                zone.enabled = True
                 break
 
     def disable_zone(self, zone_name: str) -> None:
@@ -384,7 +381,6 @@ class AutoLightsAgent(AutoLightsBase):
         for zone in self._config.zones:
             if zone.name == zone_name and zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "false")
-                zone.enabled = False
                 break
 
     def print_zone_status(self) -> None:
