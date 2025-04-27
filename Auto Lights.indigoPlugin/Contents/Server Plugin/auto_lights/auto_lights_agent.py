@@ -349,7 +349,6 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Enable all zones by setting their enabled variable to true.
         """
-        import indigo
         for zone in self._config.zones:
             if zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "true")
@@ -358,7 +357,6 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Disable all zones by setting their enabled variable to false.
         """
-        import indigo
         for zone in self._config.zones:
             if zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "false")
@@ -367,7 +365,6 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Enable a specific zone by name.
         """
-        import indigo
         for zone in self._config.zones:
             if zone.name == zone_name and zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "true")
@@ -377,7 +374,6 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Disable a specific zone by name.
         """
-        import indigo
         for zone in self._config.zones:
             if zone.name == zone_name and zone.enabled_var_id:
                 indigo.variable.updateValue(zone.enabled_var_id, "false")
