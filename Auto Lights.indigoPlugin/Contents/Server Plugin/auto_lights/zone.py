@@ -415,16 +415,18 @@ class Zone(AutoLightsBase):
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
-        if not self.lighting_periods:
-            self._debug_log(f"no active lighting periods.")
-            return None
-
+        active = None
         for period in self.lighting_periods:
             if period.is_active_period():
-                self._current_lighting_period = period
+                active = period
                 break
 
-        return self._current_lighting_period
+        # clear or update the cache
+        self._current_lighting_period = active
+
+        if not active:
+            self._debug_log(f"Zone '{self._name}': no active lighting period right now.")
+        return active
 
     @property
     def lighting_periods(self) -> List[LightingPeriod]:
