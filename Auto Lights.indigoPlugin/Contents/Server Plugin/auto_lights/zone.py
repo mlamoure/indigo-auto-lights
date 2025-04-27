@@ -162,7 +162,7 @@ class Zone(AutoLightsBase):
         try:
             return indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self.logger.error(f"enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}")
+            self.logger.error(f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}")
             return False
 
     @property
@@ -178,7 +178,7 @@ class Zone(AutoLightsBase):
         try:
             self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self.logger.error(f"enabled_var_id {value} not found: {e}")
+            self.logger.error(f"Zone '{self._name}': enabled_var_id {value} not found: {e}")
             self._enabled = False
 
     @property
