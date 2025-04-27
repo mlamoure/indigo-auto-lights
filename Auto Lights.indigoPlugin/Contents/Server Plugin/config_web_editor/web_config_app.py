@@ -719,8 +719,25 @@ def init_flask_app(
     debug: bool = True,
 ) -> Flask:
     """
-    Perform all of the setup currently in run_flask_app(),
-    except for starting the server.
+    Initialize and configure the Flask app for embedding within Indigo.
+
+    This function performs all setup required for the plugin's web UI:
+      - Loads the JSON schema and configuration
+      - Instantiates WebConfigEditor and seeds caches
+      - Registers Jinja globals and helper functions
+      - Starts the cache refresher thread
+
+    Unlike run_flask_app, this function does NOT call app.run(); it's intended
+    for embedding within Indigo's web server.
+
+    Args:
+        config_file: Path to the plugin's JSON configuration file.
+        host: Host address for Flask (default: 127.0.0.1)
+        port: Port number (default: 9500)
+        debug: Debug mode (default: True)
+
+    Returns:
+        A configured Flask app ready to be run.
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     schema_file = os.path.join(current_dir, "config", "config_schema.json")
@@ -750,7 +767,19 @@ def run_flask_app(
     config_file: str = None,
 ) -> None:
     """
-    Starts the Flask development server for backwards compatibility.
+    Start the Flask development server for standalone use.
+
+    This wrapper calls init_flask_app to configure the app, then invokes app.run(),
+    allowing you to launch the same configuration UI outside of Indigo for development.
+
+    Args:
+        host: Host address (default: 127.0.0.1)
+        port: Port number (default: 9500)
+        debug: Debug mode (default: True)
+        config_file: Optional path to the JSON configuration file.
+
+    Returns:
+        None
     """
     if config_file is None:
         current_dir = os.path.dirname(os.path.abspath(__file__))
