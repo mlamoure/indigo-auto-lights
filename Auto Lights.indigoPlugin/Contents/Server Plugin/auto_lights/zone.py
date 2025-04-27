@@ -700,7 +700,7 @@ class Zone(AutoLightsBase):
             reason (str): The reason for resetting the lock, which will be logged.
         """
         self.locked = False
-        self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
+        self.logger.info(f"🔓 Zone '{self._name}' lock reset: {reason}")
 
     def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
