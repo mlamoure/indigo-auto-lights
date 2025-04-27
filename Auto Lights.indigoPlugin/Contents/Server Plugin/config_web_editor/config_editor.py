@@ -155,17 +155,13 @@ class WebConfigEditor:
             except Exception:
                 logger.warning("Could not remove old backup %s", old)
 
-    def _refresh_indigo_caches(self) -> None:
+    def _refresh_indigo_caches(self, interval_seconds: int) -> None:
         """
         Background worker to refresh Indigo device/variable caches every interval_seconds seconds.
         """
         while True:
             try:
-                new_devices = indigo_get_all_house_devices()
-                new_variables = indigo_get_all_house_variables()
-                with self._cache_lock:
-                    self._indigo_devices_cache["data"] = new_devices
-                    self._indigo_variables_cache["data"] = new_variables
+                self._refresh_indigo_once()
                 msg = f"[{datetime.now():%Y-%m-%d %H:%M}] Indigo caches refreshed"
                 if self.app:
                     with self.app.app_context():
@@ -179,7 +175,7 @@ class WebConfigEditor:
                         self.app.logger.error(err)
                 else:
                     logger.error(err)
-            time.sleep(900)  # 15 minutes
+            time.sleep(interval_seconds)
 
     def start_cache_refresher(self, interval_seconds: int = 900) -> threading.Thread:
         """
@@ -196,11 +192,21 @@ class WebConfigEditor:
     def get_cached_indigo_devices(self):
         with self._cache_lock:
             if self._indigo_devices_cache["data"] is None:
-                self._refresh_indigo_caches()
+                self._refresh_indigo_once()
             return self._indigo_devices_cache["data"]
 
     def get_cached_indigo_variables(self):
         with self._cache_lock:
             if self._indigo_variables_cache["data"] is None:
-                self._refresh_indigo_caches()
+                self._refresh_indigo_once()
             return self._indigo_variables_cache["data"]
+
+    def _refresh_indigo_once(self) -> None:
+        """
+        Fetch Indigo devices and variables once and store in cache.
+        """
+        new_devices = indigo_get_all_house_devices()
+        new_variables = indigo_get_all_house_variables()
+        with self._cache_lock:
+            self._indigo_devices_cache["data"] = new_devices
+            self._indigo_variables_cache["data"] = new_variables
