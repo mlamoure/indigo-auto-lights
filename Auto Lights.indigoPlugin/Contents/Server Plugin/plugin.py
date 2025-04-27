@@ -336,15 +336,15 @@ class Plugin(indigo.PluginBase):
         Handle enabling/disabling zones based on action.props.get("type").
         Types: 'enable_all', 'disable_all', 'enable', 'disable'
         """
-        action_type = action.props.get("type")
-        if action_type == "enable_all":
+        action_type = action.pluginTypeId
+        if action_type == "enable_all_zones":
             self._agent.enable_all_zones()
-        elif action_type == "disable_all":
+        elif action_type == "'disable_all_zones'":
             self._agent.disable_all_zones()
-        elif action_type == "enable":
+        elif action_type == "'enable_zone'":
             zone_name = action.props.get("zone_list")
             self._agent.enable_zone(zone_name)
-        elif action_type == "disable":
+        elif action_type == "disable_zone":
             zone_name = action.props.get("zone_list")
             self._agent.disable_zone(zone_name)
 

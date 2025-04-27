@@ -21,20 +21,10 @@
     <Action id="enable_all_zones">
         <Name>Enable All Zones</Name>
         <CallbackMethod>change_zones_enabled</CallbackMethod>
-        <ConfigUI>
-            <Field id="type" type="hidden">
-                <DefaultValue>enable_all</DefaultValue>
-            </Field>
-        </ConfigUI>
     </Action>
     <Action id="disable_all_zones">
         <Name>Disable All Zones</Name>
         <CallbackMethod>change_zones_enabled</CallbackMethod>
-        <ConfigUI>
-            <Field id="type" type="hidden">
-                <DefaultValue>disable_all</DefaultValue>
-            </Field>
-        </ConfigUI>
     </Action>
     <Action id="enable_zone">
         <Name>Enable Zone</Name>
