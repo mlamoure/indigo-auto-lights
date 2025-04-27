@@ -262,7 +262,16 @@ class Zone(AutoLightsBase):
         self._luminance_dev_ids = value
 
     @property
-    def minimum_luminance(self) -> int:
+    def minimum_luminance(self) -> float:
+        """
+        Minimum luminance threshold for darkness check.
+        If a variable ID is set, always read the current value from Indigo.
+        """
+        if self._minimum_luminance_var_id is not None:
+            try:
+                return indigo.variables[self._minimum_luminance_var_id].getValue(float)
+            except Exception as e:
+                self.logger.error(f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}")
         if self._minimum_luminance is None:
             return 20000
         return self._minimum_luminance
