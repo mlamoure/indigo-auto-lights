@@ -38,7 +38,6 @@ from wtforms import (
 from wtforms.validators import DataRequired
 
 from .config_editor import WebConfigEditor
-
 # --- Local imports ---
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
@@ -751,10 +750,7 @@ def init_flask_app(
     app.jinja_env.globals["get_cached_indigo_variables"] = (
         config_editor.get_cached_indigo_variables
     )
-    # initialize caches
-    config_editor.get_cached_indigo_devices()
-    config_editor.get_cached_indigo_variables()
-    app.logger.info(f"[{datetime.now()}] Indigo caches initialized")
+
     config_editor.start_cache_refresher()
 
     return app
@@ -971,6 +967,7 @@ def zone_config(zone_id):
             return redirect(url_for("zone_config", zone_id=zone_id))
 
     return render_template("zone_edit.html", zone_form=zone_form, index=zone_id)
+
 
 @app.route("/favicon.ico")
 def favicon():
