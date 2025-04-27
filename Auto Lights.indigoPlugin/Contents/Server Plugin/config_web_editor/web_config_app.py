@@ -38,6 +38,7 @@ from wtforms import (
 from wtforms.validators import DataRequired
 
 from .config_editor import WebConfigEditor
+
 # --- Local imports ---
 from .tools.indigo_api_tools import (
     indigo_get_all_house_variables,
