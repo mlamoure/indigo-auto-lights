@@ -157,11 +157,9 @@ class Zone(AutoLightsBase):
     @property
     def enabled(self) -> bool:
         """Indicates whether the zone is enabled."""
-        return self._enabled
-
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        self._enabled = value
+        if self._enabled_var_id is None:
+            return False
+        return indigo.variables[self._enabled_var_id].getValue(bool)
 
     @property
     def enabled_var_id(self) -> int:
