@@ -83,8 +83,13 @@ class AutoLightsAgent(AutoLightsBase):
             zone.target_brightness = 0
             action_reason = reason
 
-        if not zone.lighting_periods and not global_lights_off:
+        if not global_lights_off and not zone.lighting_periods:
             self._debug_log(f"Skipping: no lighting periods configured")
+            zone.check_in()
+            return False
+
+        if not global_lights_off and zone.current_lighting_period is None:
+            self._debug_log(f"Skipping: no current lighting period configured")
             zone.check_in()
             return False
 
@@ -132,7 +137,9 @@ class AutoLightsAgent(AutoLightsBase):
             device_prop = zone.has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 if not zone.enabled:
-                    self.logger.info(f"🚫 Ignored device change from '{orig_dev.name}' for disabled zone '{zone.name}'.")
+                    self.logger.info(
+                        f"🚫 Ignored device change from '{orig_dev.name}' for disabled zone '{zone.name}'."
+                    )
                     continue
 
                 self._debug_log(
@@ -164,8 +171,12 @@ class AutoLightsAgent(AutoLightsBase):
                         f"🔒 New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'{change_info}."
                     )
                     self.logger.info("  🔒 Lock Details:")
-                    self.logger.info(f"    ⏲️ lock_duration: {zone.lock_duration} minutes")
-                    self.logger.info(f"    ⏰ lock_expiration: {zone.lock_expiration_str}")
+                    self.logger.info(
+                        f"    ⏲️ lock_duration: {zone.lock_duration} minutes"
+                    )
+                    self.logger.info(
+                        f"    ⏰ lock_expiration: {zone.lock_expiration_str}"
+                    )
                     self.logger.info(
                         f"    🔁 extend_lock_when_active: {zone.extend_lock_when_active}"
                     )
@@ -208,7 +219,7 @@ class AutoLightsAgent(AutoLightsBase):
     def process_all_zones(self) -> None:
         """
         Process all zones in the agent's configuration.
-        
+
         Iterates through each zone in the configuration and calls process_zone() on each one.
         This is typically used when a global configuration change affects all zones.
         """
@@ -310,7 +321,7 @@ class AutoLightsAgent(AutoLightsBase):
     def print_locked_zones(self) -> None:
         """
         Log information about all currently locked zones.
-        
+
         Iterates through each zone and logs detailed information if the zone is locked,
         including lock expiration time and lock behavior settings. If no zones are locked,
         logs a message indicating this.
@@ -337,7 +348,7 @@ class AutoLightsAgent(AutoLightsBase):
     def print_zone_status(self) -> None:
         """
         Log detailed status information for all zones.
-        
+
         For each zone, logs information including:
         - Enabled status
         - Current lighting period details
@@ -345,7 +356,7 @@ class AutoLightsAgent(AutoLightsBase):
         - Luminance values and thresholds
         - Current and target brightness for each light
         - Lock status and expiration time if locked
-        
+
         This is useful for debugging and monitoring the system state.
         """
         for zone in self._config.zones:
