@@ -35,7 +35,7 @@
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
-                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value }}" {% if 'str' not in (entry.comparison_type|lower) %}disabled{% endif %}>
+                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value or '' }}" {% if 'str' not in ((entry.comparison_type or '')|lower) %}disabled{% endif %}>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <button type="button" class="remove-row">Remove</button>
