@@ -44,7 +44,7 @@ class WebConfigEditor:
         self.app = flask_app
 
         self.config_schema: Dict[str, Any] = self.load_schema()
-        self._cache_lock = threading.Lock()
+        self._cache_lock = threading.RLock()
         self._indigo_devices_cache: Dict[str, Any] = {"data": None}
         self._indigo_variables_cache: Dict[str, Any] = {"data": None}
 
