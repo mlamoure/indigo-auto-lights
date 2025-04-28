@@ -1090,11 +1090,11 @@ class Zone(AutoLightsBase):
         will call check_in() for the zone.
         """
         def writer():
-            self._debug_log(f"[_send_to_indigo writer] starting write for device {device_id}, value {desired_brightness}")
+            self._debug_log(f"starting write for device {device_id}, value {desired_brightness}")
             utils.send_to_indigo(device_id, desired_brightness, self.perform_confirm)
             with self._write_lock:
                 self._pending_writes -= 1
-                self._debug_log(f"[_send_to_indigo writer] completed write for device {device_id}, pending_writes={self._pending_writes}")
+                self._debug_log(f"completed write for device {device_id}, pending_writes={self._pending_writes}")
                 if self._pending_writes == 0:
                     self.check_in()
 
