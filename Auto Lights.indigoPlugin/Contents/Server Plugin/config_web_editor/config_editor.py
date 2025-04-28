@@ -82,6 +82,16 @@ class WebConfigEditor:
         with self.config_file.open("w") as f:
             json.dump(config_data, f, indent=2)
 
+        # Notify plugin to reload config immediately if callback is registered
+        try:
+            cb = None
+            if self.app:
+                cb = self.app.config.get("reload_config_cb")
+            if callable(cb):
+                cb()
+        except Exception as e:
+            logger.error(f"Error running reload_config_cb: {e}")
+
     def create_manual_backup(self) -> None:
         """
         Manually back up the config and prune old backups.
@@ -151,11 +161,7 @@ class WebConfigEditor:
         """
         while True:
             try:
-                new_devices = indigo_get_all_house_devices()
-                new_variables = indigo_get_all_house_variables()
-                with self._cache_lock:
-                    self._indigo_devices_cache["data"] = new_devices
-                    self._indigo_variables_cache["data"] = new_variables
+                self._refresh_indigo_once()
                 msg = f"[{datetime.now():%Y-%m-%d %H:%M}] Indigo caches refreshed"
                 if self.app:
                     with self.app.app_context():
@@ -169,7 +175,7 @@ class WebConfigEditor:
                         self.app.logger.error(err)
                 else:
                     logger.error(err)
-            time.sleep(900)  # 15 minutes
+            time.sleep(interval_seconds)
 
     def start_cache_refresher(self, interval_seconds: int = 900) -> threading.Thread:
         """
@@ -186,25 +192,21 @@ class WebConfigEditor:
     def get_cached_indigo_devices(self):
         with self._cache_lock:
             if self._indigo_devices_cache["data"] is None:
-                try:
-                    raw = indigo_get_all_house_devices()
-                    self._indigo_devices_cache["data"] = (
-                        raw.get("devices", []) if isinstance(raw, dict) else []
-                    )
-                except Exception as e:
-                    logger.error(f"Cannot reach Indigo for devices: {e}")
-                    self._indigo_devices_cache["data"] = []
+                self._refresh_indigo_once()
             return self._indigo_devices_cache["data"]
 
     def get_cached_indigo_variables(self):
         with self._cache_lock:
             if self._indigo_variables_cache["data"] is None:
-                try:
-                    raw = indigo_get_all_house_variables()
-                    self._indigo_variables_cache["data"] = (
-                        raw.get("variables", []) if isinstance(raw, dict) else []
-                    )
-                except Exception as e:
-                    logger.error(f"Cannot reach Indigo for variables: {e}")
-                    self._indigo_variables_cache["data"] = []
+                self._refresh_indigo_once()
             return self._indigo_variables_cache["data"]
+
+    def _refresh_indigo_once(self) -> None:
+        """
+        Fetch Indigo devices and variables once and store in cache.
+        """
+        new_devices = indigo_get_all_house_devices()
+        new_variables = indigo_get_all_house_variables()
+        with self._cache_lock:
+            self._indigo_devices_cache["data"] = new_devices
+            self._indigo_variables_cache["data"] = new_variables

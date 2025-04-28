@@ -116,6 +116,8 @@ class AutoLightsConfig(AutoLightsBase):
         for lp in lp_data:
             lp_instance = LightingPeriod.from_config_dict(lp)
             self._lighting_periods.append(lp_instance)
+        # Build a map of period id to instance for ordering
+        period_map = {p.id: p for p in self._lighting_periods}
 
         # Process zones into Zone objects
         self._zones = []
@@ -123,15 +125,14 @@ class AutoLightsConfig(AutoLightsBase):
         for zone_d in zones_data:
             z = Zone(zone_d.get("name"), self)
             z.from_config_dict(zone_d)
-            # set lighting_periods based on reference ids
-            ref_ids = zone_d.get("lighting_period_ids", [])
-            zone_lps = []
-            for ref in ref_ids:
-                for lp in self._lighting_periods:
-                    if lp.id == ref:
-                        zone_lps.append(lp)
-                        break
-            z.lighting_periods = zone_lps
+            # Retrieve ordered lighting_period_ids or fallback to global order
+            raw_ids = zone_d.get("lighting_period_ids", None)
+            if raw_ids is None:
+                ordered_ids = [p.id for p in self._lighting_periods]
+            else:
+                ordered_ids = raw_ids
+            # Assign ordered LightingPeriod instances
+            z.lighting_periods = [period_map[i] for i in ordered_ids if i in period_map]
             self._zones.append(z)
 
         for zone in self._zones:

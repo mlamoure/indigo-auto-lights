@@ -32,6 +32,76 @@
             </div>
         </form>
         {{ save_overlay() }}
+        
+        <script>
+        function moveUp(fieldName) {
+          var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
+          var selectedIndex = selected.selectedIndex;
+          
+          if (selectedIndex <= 0) return; // Already at the top or nothing selected
+          
+          // Swap the selected option with the one above it
+          var optionToMove = selected.options[selectedIndex];
+          var optionAbove = selected.options[selectedIndex - 1];
+          
+          // Create clones to avoid reference issues
+          var moveClone = document.createElement('option');
+          moveClone.text = optionToMove.text;
+          moveClone.value = optionToMove.value;
+          moveClone.selected = true;
+          
+          var aboveClone = document.createElement('option');
+          aboveClone.text = optionAbove.text;
+          aboveClone.value = optionAbove.value;
+          
+          // Replace the options
+          selected.options[selectedIndex - 1] = moveClone;
+          selected.options[selectedIndex] = aboveClone;
+        }
+
+        function moveDown(fieldName) {
+          var selected = document.getElementById(fieldName.replace('.', '-') + "_selected");
+          var selectedIndex = selected.selectedIndex;
+          
+          if (selectedIndex < 0 || selectedIndex >= selected.options.length - 1) return; // At the bottom or nothing selected
+          
+          // Swap the selected option with the one below it
+          var optionToMove = selected.options[selectedIndex];
+          var optionBelow = selected.options[selectedIndex + 1];
+          
+          // Create clones to avoid reference issues
+          var moveClone = document.createElement('option');
+          moveClone.text = optionToMove.text;
+          moveClone.value = optionToMove.value;
+          moveClone.selected = true;
+          
+          var belowClone = document.createElement('option');
+          belowClone.text = optionBelow.text;
+          belowClone.value = optionBelow.value;
+          
+          // Replace the options
+          selected.options[selectedIndex + 1] = moveClone;
+          selected.options[selectedIndex] = belowClone;
+        }
+
+        // Ensure all options in the selected list are included when the form is submitted
+        document.addEventListener('DOMContentLoaded', function() {
+          var zoneForm = document.getElementById('zone-config-form');
+          if (zoneForm) {
+            zoneForm.addEventListener('submit', function() {
+              // Select all options in all multiple select boxes
+              document.querySelectorAll('select[multiple]').forEach(function(select) {
+                if (select.id.endsWith('_selected')) {
+                  for (var i = 0; i < select.options.length; i++) {
+                    select.options[i].selected = true;
+                  }
+                }
+              });
+            });
+          }
+        });
+        </script>
+        
         <div id="create-var-overlay"
              style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
             <div style="background:#fff; padding:20px; margin:100px auto; width:300px; border-radius:8px; position:relative;">

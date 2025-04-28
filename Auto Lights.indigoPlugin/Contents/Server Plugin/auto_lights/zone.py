@@ -83,6 +83,9 @@ class Zone(AutoLightsBase):
         self._lock_timer = None
         self._config = config
 
+        # Timer for scheduling next lighting-period transition
+        self._transition_timer: Optional[threading.Timer] = None
+
         self._lock_enabled = True
         self._lock_extension_duration = None
 
@@ -128,6 +131,11 @@ class Zone(AutoLightsBase):
                 self.perform_confirm = bs["perform_confirm"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
+            # load the advanced_settings.exclude_from_lock_dev_ids from the config
+            if "advanced_settings" in cfg:
+                adv = cfg["advanced_settings"]
+                if "exclude_from_lock_dev_ids" in adv:
+                    self.exclude_from_lock_dev_ids = adv["exclude_from_lock_dev_ids"]
             if "device_period_map" in cfg:
                 self._device_period_map = cfg["device_period_map"]
             else:
@@ -149,11 +157,13 @@ class Zone(AutoLightsBase):
     @property
     def enabled(self) -> bool:
         """Indicates whether the zone is enabled."""
-        return self._enabled
-
-    @enabled.setter
-    def enabled(self, value: bool) -> None:
-        self._enabled = value
+        if self._enabled_var_id is None:
+            return False
+        try:
+            return indigo.variables[self._enabled_var_id].getValue(bool)
+        except Exception as e:
+            self.logger.error(f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}")
+            return False
 
     @property
     def enabled_var_id(self) -> int:
@@ -165,7 +175,11 @@ class Zone(AutoLightsBase):
     @enabled_var_id.setter
     def enabled_var_id(self, value: int) -> None:
         self._enabled_var_id = value
-        self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
+        try:
+            self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
+        except Exception as e:
+            self.logger.error(f"Zone '{self._name}': enabled_var_id {value} not found: {e}")
+            self._enabled = False
 
     @property
     def perform_confirm(self) -> bool:
@@ -248,7 +262,16 @@ class Zone(AutoLightsBase):
         self._luminance_dev_ids = value
 
     @property
-    def minimum_luminance(self) -> int:
+    def minimum_luminance(self) -> float:
+        """
+        Minimum luminance threshold for darkness check.
+        If a variable ID is set, always read the current value from Indigo.
+        """
+        if self._minimum_luminance_var_id is not None:
+            try:
+                return indigo.variables[self._minimum_luminance_var_id].getValue(float)
+            except Exception as e:
+                self.logger.error(f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}")
         if self._minimum_luminance is None:
             return 20000
         return self._minimum_luminance
@@ -265,7 +288,11 @@ class Zone(AutoLightsBase):
     def minimum_luminance_var_id(self, value: int) -> None:
         self._minimum_luminance_var_id = value
         if value is not None:
-            self._minimum_luminance = indigo.variables[value].getValue(float)
+            try:
+                self._minimum_luminance = indigo.variables[value].getValue(float)
+            except Exception as e:
+                self.logger.error(f"minimum_luminance_var_id {value} not found: {e}")
+                self._minimum_luminance = None
 
     @property
     def luminance(self) -> int:
@@ -412,16 +439,18 @@ class Zone(AutoLightsBase):
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
-        if not self.lighting_periods:
-            self._debug_log(f"no active lighting periods.")
-            return None
-
+        active = None
         for period in self.lighting_periods:
             if period.is_active_period():
-                self._current_lighting_period = period
+                active = period
                 break
 
-        return self._current_lighting_period
+        # clear or update the cache
+        self._current_lighting_period = active
+
+        if not active:
+            self._debug_log(f"Zone '{self._name}': no active lighting period right now.")
+        return active
 
     @property
     def lighting_periods(self) -> List[LightingPeriod]:
@@ -593,7 +622,11 @@ class Zone(AutoLightsBase):
     def target_brightness_all_off(self) -> bool:
         """
         Check if all devices' target brightness indicate an off state.
+        
         For dimmer devices, 0 means off; for relay devices, False means off.
+        
+        Returns:
+            bool: True if all devices are set to off, False otherwise.
         """
         for tb in self.target_brightness:
             if (isinstance(tb, int) and tb != 0) or (isinstance(tb, bool) and tb):
@@ -604,6 +637,12 @@ class Zone(AutoLightsBase):
     def has_presence_detected(self) -> bool:
         """
         Check if presence is detected in this zone across all presence devices.
+        
+        Examines the onState and onOffState of all presence devices in the zone.
+        If any device indicates presence, returns True.
+        
+        Returns:
+            bool: True if presence is detected, False otherwise.
         """
         for dev_id in self.presence_dev_ids:
             presence_device = indigo.devices[dev_id]
@@ -653,7 +692,12 @@ class Zone(AutoLightsBase):
 
     def current_state_any_light_is_on(self) -> bool:
         """
-        Check if any device in current_lights_status is on (True or brightness > 0).
+        Check if any device in current_lights_status is on.
+        
+        A device is considered "on" if its status is True or its brightness is > 0.
+        
+        Returns:
+            bool: True if any light is on, False otherwise.
         """
         for status in self.current_lights_status:
             if status is True or (isinstance(status, (int, float)) and status > 0):
@@ -661,19 +705,36 @@ class Zone(AutoLightsBase):
         return False
 
     def check_in(self):
+        """
+        Mark the zone as checked in (not being processed).
+        """
         self._checked_out = False
 
     def check_out(self):
+        """
+        Mark the zone as checked out (currently being processed).
+        """
         self._checked_out = True
 
     def reset_lock(self, reason: str):
-        """Reset the lock for the zone."""
+        """
+        Reset the lock for the zone.
+        
+        Args:
+            reason (str): The reason for resetting the lock, which will be logged.
+        """
         self.locked = False
-        self.logger.info(f"Zone '{self._name}': zone lock reset because {reason}")
+        self.logger.info(f"🔓 Zone '{self._name}' lock reset: {reason}")
 
     def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
-        Check if the current brightness or state of any on/off device differs from its target brightness.
+        Check if the current brightness or state of any device differs from its target brightness.
+        
+        Args:
+            exclude_lock_devices (bool): If True, devices in exclude_from_lock_dev_ids will be ignored.
+            
+        Returns:
+            bool: True if any device's current state differs from its target, False otherwise.
         """
         if not self.enabled or not self.target_brightness:
             self._debug_log(
@@ -795,7 +856,7 @@ class Zone(AutoLightsBase):
                     dev_id, self.current_lighting_period
                 )
                 self._debug_log(
-                    f"Device {dev_id} excluded: {is_excluded} becaus of has_dev_lighting_mapping_exclusion"
+                    f"Device {dev_id} excluded: {is_excluded} because of has_dev_lighting_mapping_exclusion"
                 )
                 if not is_excluded:
                     if not self.adjust_brightness:
@@ -845,12 +906,36 @@ class Zone(AutoLightsBase):
     def has_dev_lighting_mapping_exclusion(
         self, dev_id: int, lighting_period: LightingPeriod
     ) -> bool:
+        """
+        Determines if a device is excluded from a specific lighting period.
+        
+        This method checks the device-to-period mapping to see if a device
+        should be excluded from a particular lighting period's control.
+        
+        Args:
+            dev_id (int): The Indigo device ID to check
+            lighting_period (LightingPeriod): The lighting period to check against
+            
+        Returns:
+            bool: True if the device is excluded from the lighting period,
+                  False if the device should be controlled by the lighting period
+        """
         device_map = self.device_period_map.get(str(dev_id), {})
-        return device_map.get(str(lighting_period.id), True) is False
+        result = device_map.get(str(lighting_period.id), True) is False
+        self._debug_log(f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}")
+        return result
 
     def has_device(self, dev_id: int) -> str:
         """
         Check if the given device ID exists in this zone's device lists.
+        
+        Args:
+            dev_id (int): The Indigo device ID to check.
+            
+        Returns:
+            str: The name of the list containing the device ID, or an empty string if not found.
+                 Possible values: "exclude_from_lock_dev_ids", "on_lights_dev_ids", 
+                 "off_lights_dev_ids", "presence_dev_ids", "luminance_dev_ids", or "".
         """
         if dev_id in self.exclude_from_lock_dev_ids:
             result = "exclude_from_lock_dev_ids"
@@ -866,6 +951,76 @@ class Zone(AutoLightsBase):
             result = ""
 
         return result
+
+    def schedule_next_transition(self):
+        """
+        Cancel any existing transition timer and schedule exactly one new timer:
+         - if currently in a LightingPeriod: fire at its to_time
+         - otherwise: fire at the next-from_time among all periods
+        """
+        if not self.lighting_periods:
+            self._debug_log(f"Zone '{self._name}' has no lighting periods; skipping scheduling")
+            return
+        # 1) cancel old
+        if self._transition_timer:
+            self._transition_timer.cancel()
+
+        now = datetime.datetime.now()
+        next_dt = None
+        next_period = None
+        next_boundary = None  # "from_time" or "to_time"
+
+        # helper to consider a boundary time and pick the soonest future one
+        def consider(dt: datetime.datetime, period, boundary_name):
+            nonlocal next_dt, next_period, next_boundary
+            if dt <= now:
+                dt = dt + datetime.timedelta(days=1)
+            if next_dt is None or dt < next_dt:
+                next_dt = dt
+                next_period = period
+                next_boundary = boundary_name
+
+        # if we are in a period now, schedule its end first
+        current = self.current_lighting_period
+        if current:
+            dt = datetime.datetime.combine(now.date(), current.to_time)
+            consider(dt, current, "to_time")
+
+        # always also consider starts of *all* periods
+        for period in self.lighting_periods:
+            dt = datetime.datetime.combine(now.date(), period.from_time)
+            consider(dt, period, "from_time")
+
+        # by now next_dt is the very next boundary for this zone
+        assert next_dt and next_period and next_boundary
+
+        delay = (next_dt - now).total_seconds()
+        self._transition_timer = threading.Timer(
+            delay,
+            self._on_transition,
+            args=(next_period, next_boundary),
+        )
+        self._transition_timer.daemon = True
+        self._transition_timer.start()
+        self._debug_log(
+            f"Scheduled next transition for zone '{self._name}' at {next_dt} for period '{next_period.name}' boundary '{next_boundary}'"
+        )
+
+    def _on_transition(self, period: LightingPeriod, boundary_name: str):
+        """
+        Called when we hit a scheduled boundary.
+        1) Re-run our zone logic to pick up the new period
+        2) Schedule the *next* boundary
+        """
+        # 1) process zone so that current_lighting_period has flipped
+        #    you need a pointer back to the agent; assume your config holds it:
+        self._debug_log(
+            f"Transition triggered for zone '{self._name}': period '{period.name}', boundary '{boundary_name}'"
+        )
+        self._config.agent.process_zone(self)
+
+        # 2) schedule the next transition
+        self.schedule_next_transition()
 
     def process_expired_lock(self) -> None:
         """

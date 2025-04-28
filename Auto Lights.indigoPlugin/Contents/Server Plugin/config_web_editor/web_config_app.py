@@ -600,7 +600,20 @@ def config_backup():
         backup_type = request.form.get("backup_type")
         backup_file = request.form.get("backup_file")
 
-        if action == "create_manual":
+        if action == "reset_defaults":
+            # Automatic backup of the existing config
+            config_data = config_editor.load_config()
+            config_editor.save_config(config_data)
+            # Overwrite with the empty default config
+            empty_config_path = os.path.join(
+                os.path.dirname(__file__),
+                "config",
+                "auto_lights_conf_empty.json",
+            )
+            shutil.copy2(empty_config_path, config_editor.config_file)
+            flash("Configuration reset to defaults. A backup was taken.")
+
+        elif action == "create_manual":
             config_editor.create_manual_backup()
             flash("Manual backup created.")
 
@@ -706,8 +719,25 @@ def init_flask_app(
     debug: bool = True,
 ) -> Flask:
     """
-    Perform all of the setup currently in run_flask_app(),
-    except for starting the server.
+    Initialize and configure the Flask app for embedding within Indigo.
+
+    This function performs all setup required for the plugin's web UI:
+      - Loads the JSON schema and configuration
+      - Instantiates WebConfigEditor and seeds caches
+      - Registers Jinja globals and helper functions
+      - Starts the cache refresher thread
+
+    Unlike run_flask_app, this function does NOT call app.run(); it's intended
+    for embedding within Indigo's web server.
+
+    Args:
+        config_file: Path to the plugin's JSON configuration file.
+        host: Host address for Flask (default: 127.0.0.1)
+        port: Port number (default: 9500)
+        debug: Debug mode (default: True)
+
+    Returns:
+        A configured Flask app ready to be run.
     """
     current_dir = os.path.dirname(os.path.abspath(__file__))
     schema_file = os.path.join(current_dir, "config", "config_schema.json")
@@ -721,10 +751,7 @@ def init_flask_app(
     app.jinja_env.globals["get_cached_indigo_variables"] = (
         config_editor.get_cached_indigo_variables
     )
-    # initialize caches
-    config_editor.get_cached_indigo_devices()
-    config_editor.get_cached_indigo_variables()
-    app.logger.info(f"[{datetime.now()}] Indigo caches initialized")
+
     config_editor.start_cache_refresher()
 
     return app
@@ -737,7 +764,19 @@ def run_flask_app(
     config_file: str = None,
 ) -> None:
     """
-    Starts the Flask development server for backwards compatibility.
+    Start the Flask development server for standalone use.
+
+    This wrapper calls init_flask_app to configure the app, then invokes app.run(),
+    allowing you to launch the same configuration UI outside of Indigo for development.
+
+    Args:
+        host: Host address (default: 127.0.0.1)
+        port: Port number (default: 9500)
+        debug: Debug mode (default: True)
+        config_file: Optional path to the JSON configuration file.
+
+    Returns:
+        None
     """
     if config_file is None:
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -771,7 +810,7 @@ class DevicePeriodMapWidget:
             for period in self.lighting_periods:
                 dev_id_str = str(dev["id"])
                 period_id_str = str(period["id"])
-                # default to include when missing
+                # Get the value from field.data, defaulting to True if not present
                 is_included = field.data.get(dev_id_str, {}).get(period_id_str, True)
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
                 html.append(
@@ -899,6 +938,8 @@ def zone_config(zone_id):
             if period.get("id") in selected_period_ids
         ]
         if hasattr(zone_form, "device_period_map"):
+            # Make sure the field has the correct data from the saved configuration
+            zone_form.device_period_map.data = zone.get("device_period_map", {})
             zone_form.device_period_map.devices = filtered_devices
             zone_form.device_period_map.lighting_periods = filtered_periods
             zone_form.device_period_map.widget = DevicePeriodMapWidget(
@@ -927,3 +968,14 @@ def zone_config(zone_id):
             return redirect(url_for("zone_config", zone_id=zone_id))
 
     return render_template("zone_edit.html", zone_form=zone_form, index=zone_id)
+
+
+@app.route("/favicon.ico")
+def favicon():
+    """
+    Serve the plugin's favicon from the static directory.
+    """
+    return send_file(
+        os.path.join(os.path.dirname(__file__), "static", "favicon.ico"),
+        mimetype="image/x-icon",
+    )

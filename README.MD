@@ -27,6 +27,8 @@ like:
   room. For example: target brightness = [1 - (current luminance / minimum luminance)] x 100.
 - **Global Enable/Disable**: A single variable can switch off the entire Auto Lights system. Helpful for scenarios like
   turning off lights when you go to bed, or are not at home.
+- **Clear Explainability**: Auto Lights tries to be transparent in why changes are being made (or not made) so that you
+  can focus on tweaking your configuration to your needs.
 
 ---
 
@@ -36,12 +38,13 @@ like:
    Auto Lights is tested with the latest Indigo. Older versions may or may not be fully compatible.
 
 2. **API Key / Reflector**  
-   To use the Auto Lights web editor, you’ll need to enable remote access or an Indigo reflector with API
-   Key. See [The Web Config Editor](#the-web-config-editor) for more details.
+   To use the Auto Lights web config editor, you’ll need to be able to access Indigo via API key. There's two options to
+   do this. See [The Web Config Editor](#the-web-config-editor) for instructions and details.
 
-3. **Presence & Luminance Devices**  
-   Almost any Indigo-compatible motion sensor, threshold timer, or other presence device can tell Auto Lights when a
-   room is occupied. Luminance sensors give you the brightness-based dimming logic.
+3. **Lights to Control & Presence Devices**  
+   Almost any Indigo-compatible lighting device, plus some way of reporting presence to determine if a zone is occupied,
+   such as a motion sensor or virtual presence device. Luminance sensors are optional, and give you the brightness-based
+   dimming logic.
 
 ---
 
@@ -51,9 +54,14 @@ Auto Lights uses a web interface to build and configure your Zones. This path wa
 too advanced for the Indigo native ConfigUI. See [here](#screenshots) for screenshots.
 
 The Web Config is run as a separate web server on your Indigo Server. Because of this, it must interact with your Indigo
-via API, and I've only implemented support for using the API key. API keys are only enabled for Indigo with support for
-the reflector. I recommend creating a unique API key for Auto
-Lights [here](https://www.indigodomo.com/account/authorizations).
+via API. There are two options to enable this:
+
+1. Enable remote access via Indigo reflector with API (recommended): Be sure your server has been started up with Remote
+   access and refelctor turned on. Get a API key for Auto Lights by
+   going [here](https://www.indigodomo.com/account/authorizations).
+
+2. Enable local secrets (advanced): Add a API key for Auto Lights via
+   the [Local Secrets method in the Indigo Documentation](https://wiki.indigodomo.com/doku.php?id=indigo_2024.2_documentation:indigo_web_server#local_secrets)
 
 There is no authorization on the Web Config interface itself. If this concerns you, there are two options available:
 

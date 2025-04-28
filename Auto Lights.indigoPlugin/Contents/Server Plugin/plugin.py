@@ -64,7 +64,7 @@ class Plugin(indigo.PluginBase):
         self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
         self.logger.debug(f"{self.log_level=}")
         self.indigo_log_handler.setLevel(self.log_level)
-        self.plugin_file_handler.setLevel(self.log_level)
+        self.plugin_file_handler.setLevel(logging.DEBUG)
 
         # Determine configuration file path based on plugin log file location.
         self._config_file_str = self.plugin_file_handler.baseFilename.replace(
@@ -122,21 +122,6 @@ class Plugin(indigo.PluginBase):
         """
         self.logger.debug("shutdown called")
         self.stop_configuration_web_server()
-
-    def runConcurrentThread(self: indigo.PluginBase):
-        try:
-            while True:
-                # Check for changes in the configuration file and reload if it has been modified.
-                if os.path.exists(self._config_file_str):
-                    current_mtime = os.path.getmtime(self._config_file_str)
-                    if current_mtime != self._config_mtime:
-                        self.logger.debug(
-                            "Config file modified, reloading configuration."
-                        )
-                        self._init_config_and_agent()
-                self.sleep(5)
-        except self.StopThread:
-            pass  # Optionally catch the StopThread exception and do any needed cleanup.
 
     def deviceUpdated(
         self: indigo.PluginBase, orig_dev: indigo.Device, new_dev: indigo.Device
@@ -213,6 +198,8 @@ class Plugin(indigo.PluginBase):
                 self._web_config_bind_ip,
                 self._web_config_bind_port,
             )
+            # Notify plugin to reload config immediately after save from web UI
+            flask_app.config["reload_config_cb"] = self._init_config_and_agent
             # Create a real WSGI server
             self._web_server = make_server(
                 self._web_config_bind_ip,
@@ -298,6 +285,12 @@ class Plugin(indigo.PluginBase):
         return menu_items
 
     def _init_config_and_agent(self: indigo.PluginBase):
+        # Only log on reload, not initial startup
+        reloading = hasattr(self, "_config_mtime")
+        if reloading:
+            self.logger.warning(
+                "🔄 Configuration reloaded from web editor; all locks and zone state has been reset"
+            )
         confg_file_empty_str = "config_web_editor/config/auto_lights_conf_empty.json"
         config_dir = os.path.dirname(self._config_file_str)
         if not os.path.exists(config_dir):
@@ -337,6 +330,23 @@ class Plugin(indigo.PluginBase):
         """
         self.logger.info("Zone status report:")
         self._agent.print_zone_status()
+
+    def change_zones_enabled(self, action, dev=None, caller_waiting_for_result=None):
+        """
+        Handle enabling/disabling zones based on action.props.get("type").
+        Types: 'enable_all', 'disable_all', 'enable', 'disable'
+        """
+        action_type = action.pluginTypeId
+        if action_type == "enable_all_zones":
+            self._agent.enable_all_zones()
+        elif action_type == "'disable_all_zones'":
+            self._agent.disable_all_zones()
+        elif action_type == "'enable_zone'":
+            zone_name = action.props.get("zone_list")
+            self._agent.enable_zone(zone_name)
+        elif action_type == "disable_zone":
+            zone_name = action.props.get("zone_list")
+            self._agent.disable_zone(zone_name)
 
     def create_variable(self, action, dev=None, caller_waiting_for_result=None):
         """
