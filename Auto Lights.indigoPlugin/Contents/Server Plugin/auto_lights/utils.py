@@ -150,10 +150,7 @@ def send_to_indigo(
                 status_request_count += 1
             else:
                 if iteration_counter > 1:
-                    logger.info(
-                        f"{indent}{indent}... not yet confirmed changes to '{device.name}'. Waiting up to "
-                        f"{indent}{indent}    {remaining_wait} more seconds."
-                    )
+                    logger.info(f"{indent}{indent}... not yet confirmed changes to '{device.name}'. Waiting up to {remaining_wait} more seconds.")
                 time.sleep(check_interval)
                 device = indigo.devices[device_id]
 
