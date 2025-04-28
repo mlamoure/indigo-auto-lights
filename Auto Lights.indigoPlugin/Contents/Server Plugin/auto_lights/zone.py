@@ -777,34 +777,63 @@ class Zone(AutoLightsBase):
         """
         Apply and confirm the target brightness changes for this zone's devices.
 
-        This method updates devices based on their target brightness settings.
-        For devices that should be off, it sends an off command.
-        For on devices, it looks up the intended brightness value and sends the update.
-        If a device lacks a corresponding target, a warning is logged.
+        We batch up all writes, set pending_writes once, then
+        spawn one thread per write. The final thread to complete
+        will call check_in(), so we don’t prematurely check in.
         """
-        # If all devices are targeted to be off, process off-lights first.
+        # 1) Gather all writes
+        writes: List[tuple[int, Union[int, bool]]] = []
+
+        # If all devices are off, write off-lights first
         if self.target_brightness_all_off:
             for dev_id in self.off_lights_dev_ids:
                 self._debug_log(
                     f"Setting device {dev_id} off as per target_brightness_all_off"
                 )
-                self._send_to_indigo(dev_id, 0)
+                writes.append((dev_id, 0))
 
-        # Build a mapping from device ID to its target brightness for quick lookup.
+        # Then map on-lights
         target_map = {
             item["dev_id"]: item["brightness"] for item in self.target_brightness
         }
-
-        # Process on-lights devices using the target brightness mapping.
         for dev_id in self.on_lights_dev_ids:
-            target_value = target_map.get(dev_id)
-            if target_value is not None:
-                self._debug_log(f"Setting device {dev_id} brightness to {target_value}")
-                self._send_to_indigo(dev_id, target_value)
+            brightness = target_map.get(dev_id)
+            if brightness is not None:
+                self._debug_log(f"Setting device {dev_id} brightness to {brightness}")
+                writes.append((dev_id, brightness))
             else:
                 self.logger.warning(
                     f"No target brightness found for device {dev_id}. Skipping update."
                 )
+
+        # If there’s nothing to do, check in immediately
+        if not writes:
+            self._debug_log("save_brightness_changes: nothing to write, checking in")
+            self.check_in()
+            return
+
+        # 2) Set the pending-write count up front
+        with self._write_lock:
+            self._pending_writes = len(writes)
+
+        # 3) Spawn one thread per write
+        for dev_id, desired in writes:
+            def _writer(dev_id=dev_id, desired_brightness=desired):
+                self._debug_log(
+                    f"starting write for device {dev_id}, value {desired_brightness}"
+                )
+                utils.send_to_indigo(dev_id, desired_brightness, self.perform_confirm)
+                # when done, decrement; if zero, check in
+                with self._write_lock:
+                    self._pending_writes -= 1
+                    self._debug_log(
+                        f"completed write for device {dev_id}, pending_writes={self._pending_writes}"
+                    )
+                    if self._pending_writes == 0:
+                        self.check_in()
+
+            t = threading.Thread(target=_writer, daemon=True)
+            t.start()
 
     def write_debug_output(self, config) -> str:
         """
