@@ -27,6 +27,7 @@ def send_to_indigo(
     # Indentation for nested log messages
     indent = "      "
     start_time = time.monotonic()
+    next_log_time = start_time + 5.0
     is_confirmed = False
     iteration_counter = 0
     command_attempts = 0
@@ -71,10 +72,6 @@ def send_to_indigo(
 
         if not is_confirmed:
             if iteration_counter % 8 == 0:
-                if command_attempts > 0:
-                    logger.info(
-                        f"{indent}{indent}... not yet confirmed changes to '{device.name}'. Retrying."
-                    )
 
                 if is_fan_light or isinstance(device, indigo.DimmerDevice):
                     current_brightness = (
@@ -138,10 +135,6 @@ def send_to_indigo(
                 command_attempts += 1
 
             elif iteration_counter % 4 == 0 and status_request_count < 2:
-                logger.info(
-                    f"{indent}{indent}.... not yet confirmed changes to '{device.name}'. Waiting and querying status. "
-                    f"Max additional wait time: {remaining_wait} more seconds."
-                )
                 check_interval = 2.0
                 time.sleep(check_interval)
                 device = indigo.devices[device_id]
@@ -149,14 +142,18 @@ def send_to_indigo(
                 indigo.device.statusRequest(device_id, suppressLogging=True)
                 status_request_count += 1
             else:
-                if iteration_counter > 1:
-                    logger.info(f"{indent}{indent}... not yet confirmed changes to '{device.name}'. Waiting up to {remaining_wait} more seconds.")
                 time.sleep(check_interval)
                 device = indigo.devices[device_id]
 
         iteration_counter += 1
         elapsed_time = time.monotonic() - start_time
         remaining_wait = int(round(max_wait_seconds - elapsed_time, 1))
+        # Log status every 5 seconds with emoji
+        now = time.monotonic()
+        if now >= next_log_time:
+            rem = int(round(max_wait_seconds - (now - start_time)))
+            logger.info(f"{indent}⏳ Not yet confirmed change to '{device.name}'. {rem} seconds remaining.")
+            next_log_time += 5.0
 
     total_time = round(time.monotonic() - start_time, 2)
 
