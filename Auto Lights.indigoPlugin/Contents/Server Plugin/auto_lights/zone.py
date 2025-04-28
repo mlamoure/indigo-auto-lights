@@ -91,6 +91,10 @@ class Zone(AutoLightsBase):
 
         self._checked_out = False
 
+        # counter for in-flight write commands
+        self._pending_writes = 0
+        self._write_lock = threading.Lock()
+
     def from_config_dict(self, cfg: dict) -> None:
         """
         Updates the zone configuration based on a provided dictionary.
@@ -1080,9 +1084,24 @@ class Zone(AutoLightsBase):
     # (6) Private methods
     def _send_to_indigo(self, device_id: int, desired_brightness: int | bool) -> None:
         """
-        Send a command to update an Indigo device and ensure it is confirmed if self.perform_confirm is True.
+        Send a command to Indigo in a background thread.  _pending_writes is
+        incremented before the start, and when the write finally completes
+        (with or without retries) we decrement it.  The *last* writer to finish
+        will call check_in() for the zone.
         """
-        utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
+        def writer():
+            self._debug_log(f"[_send_to_indigo writer] starting write for device {device_id}, value {desired_brightness}")
+            utils.send_to_indigo(device_id, desired_brightness, self.perform_confirm)
+            with self._write_lock:
+                self._pending_writes -= 1
+                self._debug_log(f"[_send_to_indigo writer] completed write for device {device_id}, pending_writes={self._pending_writes}")
+                if self._pending_writes == 0:
+                    self.check_in()
+
+        with self._write_lock:
+            self._pending_writes += 1
+        t = threading.Thread(target=writer, daemon=True)
+        t.start()
 
     def has_lock_occurred(self) -> bool:
         """Determine if an external change should create a new zone lock."""

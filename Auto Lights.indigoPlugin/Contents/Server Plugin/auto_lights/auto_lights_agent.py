@@ -116,11 +116,10 @@ class AutoLightsAgent(AutoLightsBase):
             reason_text = action_reason or "no explicit reason provided"
             self.logger.info(f"{indent}📝 Reason: {reason_text}")
             zone.save_brightness_changes()
-
         else:
             self._debug_log(f"no changes to make, checked in")
+            zone.check_in()
 
-        zone.check_in()
         return True
 
     def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> List[Zone]:
