@@ -362,15 +362,24 @@ class Plugin(indigo.PluginBase):
             "date_string": str(datetime.now()),  # Used in the config.html template
             "prefs": self.pluginPrefs,
         }
-        if props_dict.get("incoming_request_method", "GET") == "POST":
-            post_params = json.loads(props_dict["request_body"])
-            var_name = post_params.get("var_name", None)
+        if props_dict.get("incoming_request_method") == "POST":
+            post_params = json.loads(props_dict.get("request_body", "{}"))
+            var_name = post_params.get("var_name", "").strip()
+            # Validate input
             if not var_name:
                 context = {"error": "var_name must be provided"}
+                status = 400
             else:
-                newVar = indigo.variable.create(var_name, "true")
-                context = {"var_id": newVar.id}
-            reply["status"] = 200
+                try:
+                    newVar = indigo.variable.create(var_name, "true")
+                    context = {"var_id": newVar.id}
+                    status = 200
+                except Exception as e:
+                    # Log failure and return error message
+                    self.logger.error(f"Failed to create variable '{var_name}': {e}")
+                    context = {"error": str(e)}
+                    status = 500
+            reply["status"] = status
             reply["headers"] = indigo.Dict({"Content-Type": "application/json"})
             reply["content"] = json.dumps(context)
         return reply
