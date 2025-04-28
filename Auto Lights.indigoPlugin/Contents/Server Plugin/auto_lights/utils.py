@@ -8,164 +8,97 @@ except ImportError:
 
 logger = logging.getLogger("Plugin")
 
+def _check_confirm(device, target_level, target_bool) -> bool:
+    """Return True if the device's state matches the target values."""
+    if isinstance(device, indigo.DimmerDevice):
+        return device.brightness == target_level
+    if isinstance(device, indigo.RelayDevice):
+        want = target_bool if target_bool is not None else (target_level == 100)
+        return device.onState == want
+    senseme = "com.pennypacker.indigoplugin.senseme"
+    if device.pluginId == senseme:
+        return int(device.states.get("brightness", 0)) == target_level
+    return True
+
+def _send_command(device_id, target_level, target_bool) -> None:
+    """Send the appropriate Indigo command for the desired state."""
+    device = indigo.devices[device_id]
+    senseme = "com.pennypacker.indigoplugin.senseme"
+    is_fan = device.pluginId == senseme
+    if is_fan or isinstance(device, indigo.DimmerDevice):
+        if is_fan:
+            sense_plugin = indigo.server.getPlugin(senseme)
+            sense_plugin.executeAction(
+                "fanLightBrightness",
+                deviceId=device_id,
+                props={"lightLevel": str(target_level)},
+            )
+        else:
+            indigo.dimmer.setBrightness(device_id, value=target_level, delay=0)
+    elif isinstance(device, indigo.RelayDevice):
+        want_on = target_bool if target_bool is not None else (target_level == 100)
+        if want_on:
+            indigo.device.turnOn(device_id, delay=0)
+        else:
+            indigo.device.turnOff(device_id, delay=0)
+
 
 def send_to_indigo(
-    device_id: int, desired_brightness: int | bool, perform_confirm: bool
+    device_id: int,
+    desired_brightness: int | bool,
+    perform_confirm: bool,
 ) -> None:
     """
-    Send a command to update an Indigo device and optionally confirm the change.
-
-    Sends a brightness change command for dimmers or on/off for switches, then
-    optionally verifies that the device state matches the desired value within
-    a timeout, retrying or requesting status updates as needed.
-
-    Args:
-        device_id (int): ID of the Indigo device to control.
-        desired_brightness (int | bool): Target brightness (0-100) for dimmers, or True/False for relays.
-        perform_confirm (bool): If True, retry and confirm state changes until timeout; if False, send once.
+    Send a command to update an Indigo device with retries, status requests, and timed logs.
     """
-    # Indentation for nested log messages
     indent = "      "
-    start_time = time.monotonic()
-    next_log_time = start_time + 5.0
-    is_confirmed = False
-    iteration_counter = 0
-    command_attempts = 0
-
-    pause_between_actions = 0.15
-    max_wait_seconds = 15
-    check_interval = 1.0
-    remaining_wait = max_wait_seconds
-    status_request_count = 0  # only allow up to two statusRequest calls
-
-    senseme_plugin_id = "com.pennypacker.indigoplugin.senseme"
-    device = indigo.devices[device_id]
-    is_fan_light = device.pluginId == senseme_plugin_id
-    sense_plugin = indigo.server.getPlugin(senseme_plugin_id)
-
-    action_description = ""
-    # Normalize desired brightness once
+    start = time.monotonic()
+    # Determine numeric target and bool for relays
+    target_bool = None
     if isinstance(desired_brightness, bool):
         target_bool = desired_brightness
-        target_level = 100 if desired_brightness else 0
+        target = 100 if desired_brightness else 0
     else:
-        target_bool = None
-        target_level = desired_brightness
+        target = desired_brightness
 
-    # Retry loop: send commands and check status until confirmed or timeout
-    while not is_confirmed and (time.monotonic() - start_time) <= max_wait_seconds:
-        # Check device state against desired brightness.
-        if isinstance(device, indigo.DimmerDevice):
-            is_confirmed = device.brightness == target_level
-        elif isinstance(device, indigo.RelayDevice):
-            want_state = (
-                target_bool if target_bool is not None else (target_level == 100)
-            )
-            is_confirmed = device.onState == want_state
-        elif device.pluginId == senseme_plugin_id:
-            current_brightness = int(device.states.get("brightness", 0))
-            is_confirmed = current_brightness == target_level
+    # Time‐based intervals
+    last_send = last_status = last_log = start
+    max_wait = 15.0
+    send_interval = 0.15
+    status_interval = 2.0
+    log_interval = 5.0
 
-        # Skip confirmation if already attempted and not required.
-        if not is_confirmed and command_attempts > 0 and not perform_confirm:
-            is_confirmed = True
+    # Initial send
+    _send_command(device_id, target, target_bool)
 
-        if not is_confirmed:
-            if iteration_counter % 8 == 0:
-
-                if is_fan_light or isinstance(device, indigo.DimmerDevice):
-                    current_brightness = (
-                        int(device.states.get("brightness", 0))
-                        if is_fan_light
-                        else device.brightness
-                    )
-                    # Determine action description
-                    if target_level == 0 and current_brightness > 0:
-                        action_description = "turning off"
-                    elif target_level == 100 and current_brightness == 0:
-                        action_description = "turning on"
-                    elif target_level > current_brightness:
-                        action_description = "increasing"
-                    else:
-                        action_description = "decreasing"
-
-                    # Log action with emoji
-                    if action_description in ("turning on", "turning off"):
-                        emoji = "💡" if action_description == "turning on" else "⏻"
-                        logger.info(
-                            f"{indent}{emoji} {action_description} '{device.name}'"
-                        )
-                    else:
-                        emoji = "🔼" if action_description == "increasing" else "🔽"
-                        logger.info(
-                            f"{indent}{emoji} {action_description} brightness for '{device.name}' "
-                            f"from {current_brightness}% to {target_level}%"
-                        )
-
-                    # Send command
-                    if is_fan_light:
-                        sense_plugin.executeAction(
-                            "fanLightBrightness",
-                            deviceId=device_id,
-                            props={"lightLevel": str(target_level)},
-                        )
-                    else:
-                        indigo.dimmer.setBrightness(
-                            device_id, value=target_level, delay=0
-                        )
-
-                elif isinstance(device, indigo.RelayDevice):
-                    want_state = target_level == 100
-
-                    if device.onState and not want_state:
-                        action_description = "turning off"
-                        indigo.device.turnOff(device_id, delay=0)
-                    elif not device.onState and want_state:
-                        action_description = "turning on"
-                        indigo.device.turnOn(device_id, delay=0)
-
-                    if action_description:
-                        emoji = "💡" if action_description == "turning on" else "⏻"
-                        logger.info(
-                            f"{indent}{emoji} {action_description} '{device.name}'"
-                        )
-
-                time.sleep(pause_between_actions)
-                device = indigo.devices[device_id]
-                command_attempts += 1
-
-            elif iteration_counter % 4 == 0 and status_request_count < 2:
-                check_interval = 2.0
-                time.sleep(check_interval)
-                device = indigo.devices[device_id]
-                time.sleep(1)
-                indigo.device.statusRequest(device_id, suppressLogging=True)
-                status_request_count += 1
-            else:
-                time.sleep(check_interval)
-                device = indigo.devices[device_id]
-
-        iteration_counter += 1
-        elapsed_time = time.monotonic() - start_time
-        remaining_wait = int(round(max_wait_seconds - elapsed_time, 1))
-        # Log status every 5 seconds with emoji
+    confirmed = False
+    while not confirmed and (time.monotonic() - start) < max_wait:
         now = time.monotonic()
-        if now >= next_log_time:
-            rem = int(round(max_wait_seconds - (now - start_time)))
-            logger.info(
-                f"{indent}⏳ Not yet confirmed change to '{device.name}'. {rem} seconds remaining."
-            )
-            next_log_time += 5.0
+        device = indigo.devices[device_id]
+        confirmed = _check_confirm(device, target, target_bool)
+        if confirmed or not perform_confirm:
+            break
 
-    total_time = round(time.monotonic() - start_time, 2)
+        if now - last_send >= send_interval:
+            _send_command(device_id, target, target_bool)
+            last_send = now
 
-    if action_description and not is_confirmed:
-        logger.info(
-            f"{indent}{indent}... COULD NOT CONFIRM change to '{device.name}' (time: {total_time} seconds, "
-            "f{indent}{indent}     attempts: {command_attempts})"
-        )
+        if now - last_status >= status_interval:
+            try:
+                indigo.device.statusRequest(device_id, suppressLogging=True)
+            except Exception:
+                pass
+            last_status = now
+
+        if now - last_log >= log_interval:
+            remaining = int(max_wait - (now - start))
+            logger.info(f"{indent}⏳ Not yet confirmed change to '{device.name}'. {remaining} seconds remaining.")
+            last_log = now
+
+        time.sleep(0.05)
+
+    total = round(time.monotonic() - start, 2)
+    if confirmed:
+        logger.debug(f"{indent}✅ Confirmed change to '{device.name}' in {total}s")
     else:
-        logger.debug(
-            f"{indent}{indent}... confirmed change to '{device.name}' (time: {total_time} seconds, "
-            f"{indent}{indent}    attempts: {command_attempts})"
-        )
+        logger.info(f"{indent}❌ Could not confirm change to '{device.name}' after {total}s")
