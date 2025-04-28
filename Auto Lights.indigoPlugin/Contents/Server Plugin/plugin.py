@@ -373,14 +373,4 @@ class Plugin(indigo.PluginBase):
             reply["status"] = 200
             reply["headers"] = indigo.Dict({"Content-Type": "application/json"})
             reply["content"] = json.dumps(context)
-            return reply
-        try:
-            template = self.templates.get_template("config.html")
-            reply["status"] = 200
-            reply["headers"] = indigo.Dict({"Content-Type": "text/html"})
-            reply["content"] = template.render(context)
-        except Exception as exc:
-            # some error happened
-            self.logger.error(f"some error occurred: {exc}")
-            reply["status"] = 500
         return reply
