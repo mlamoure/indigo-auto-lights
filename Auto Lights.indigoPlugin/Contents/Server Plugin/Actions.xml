@@ -30,12 +30,9 @@
         <Name>Enable Zone</Name>
         <CallbackMethod>change_zones_enabled</CallbackMethod>
         <ConfigUI>
-            <Field id="type" type="hidden">
-                <DefaultValue>enable</DefaultValue>
-            </Field>
             <Field id="zone_list" type="menu">
                 <Label>Zone:</Label>
-                <List class="self" filter="" method="get_zone_list"/>
+                <List class="self" filter="stuff" method="get_zone_list"/>
             </Field>
         </ConfigUI>
     </Action>
@@ -43,12 +40,9 @@
         <Name>Disable Zone</Name>
         <CallbackMethod>change_zones_enabled</CallbackMethod>
         <ConfigUI>
-            <Field id="type" type="hidden">
-                <DefaultValue>disable</DefaultValue>
-            </Field>
             <Field id="zone_list" type="menu">
                 <Label>Zone:</Label>
-                <List class="self" filter="" method="get_zone_list"/>
+                <List class="self" filter="stuff" method="get_zone_list"/>
             </Field>
         </ConfigUI>
     </Action>
