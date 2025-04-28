@@ -744,13 +744,20 @@ class Zone(AutoLightsBase):
             dev_id = tgt["dev_id"]
             if exclude_lock_devices and dev_id in self.exclude_from_lock_dev_ids:
                 continue
+
             desired = tgt["brightness"]
-            actual = current.get(dev_id)
+            if dev_id not in current:
+                # skip devices that aren’t reported in the current status
+                self._debug_log(f"has_brightness_changes: skipping missing device {dev_id}")
+                continue
+
+            actual = current[dev_id]
             self._debug_log(
                 f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}"
             )
             if actual != desired:
                 return True
+
         self._debug_log("has_brightness_changes: no brightness changes detected")
         return False
 
