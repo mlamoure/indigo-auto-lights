@@ -33,7 +33,7 @@ def send_to_indigo(
     command_attempts = 0
 
     pause_between_actions = 0.15
-    max_wait_seconds = 15  # shrink confirmation window from 35 s to 15 s
+    max_wait_seconds = 15
     check_interval = 1.0
     remaining_wait = max_wait_seconds
     status_request_count = 0  # only allow up to two statusRequest calls
@@ -152,7 +152,9 @@ def send_to_indigo(
         now = time.monotonic()
         if now >= next_log_time:
             rem = int(round(max_wait_seconds - (now - start_time)))
-            logger.info(f"{indent}⏳ Not yet confirmed change to '{device.name}'. {rem} seconds remaining.")
+            logger.info(
+                f"{indent}⏳ Not yet confirmed change to '{device.name}'. {rem} seconds remaining."
+            )
             next_log_time += 5.0
 
     total_time = round(time.monotonic() - start_time, 2)
