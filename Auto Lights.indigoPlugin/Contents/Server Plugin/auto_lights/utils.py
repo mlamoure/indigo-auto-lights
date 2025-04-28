@@ -125,7 +125,7 @@ def send_to_indigo(
 
     total = round(time.monotonic() - start, 2)
     if confirmed:
-        logger.debug(f"{indent}✅ Confirmed change to '{device.name}' in {total}s")
+        logger.info(f"{indent}✅ Confirmed change to '{device.name}' in {total}s")
     else:
         logger.info(
             f"{indent}❌ Could not confirm change to '{device.name}' after {total}s"
