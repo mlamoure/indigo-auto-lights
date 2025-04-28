@@ -154,6 +154,7 @@ class Zone(AutoLightsBase):
     # (4) Properties
     @property
     def name(self) -> str:
+        """Name of the zone."""
         return self._name
 
     @name.setter
@@ -261,6 +262,7 @@ class Zone(AutoLightsBase):
 
     @property
     def luminance_dev_ids(self) -> List[int]:
+        """List of device IDs used for luminance measurements."""
         return self._luminance_dev_ids
 
     @luminance_dev_ids.setter
@@ -288,6 +290,7 @@ class Zone(AutoLightsBase):
 
     @property
     def minimum_luminance_var_id(self) -> int:
+        """Indigo variable ID for minimum luminance threshold."""
         return self._minimum_luminance_var_id
 
     @minimum_luminance_var_id.setter
@@ -437,6 +440,7 @@ class Zone(AutoLightsBase):
 
     @property
     def _target_brightness_lock_comparison(self) -> List[dict]:
+        """Target brightness entries excluding devices excluded from lock detection."""
         return [
             item
             for item in self.target_brightness
@@ -445,6 +449,7 @@ class Zone(AutoLightsBase):
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
+        """Current active lighting period, or None if no period is active."""
         active = None
         for period in self.lighting_periods:
             if period.is_active_period():
@@ -460,6 +465,7 @@ class Zone(AutoLightsBase):
 
     @property
     def lighting_periods(self) -> List[LightingPeriod]:
+        """List of LightingPeriod instances configured for the zone."""
         return self._lighting_periods
 
     @lighting_periods.setter
@@ -594,12 +600,14 @@ class Zone(AutoLightsBase):
 
     @property
     def lock_expiration_str(self) -> str:
+        """Formatted lock expiration timestamp, empty if no expiration."""
         if self._lock_expiration is None:
             return ""
         return self._lock_expiration.strftime("%Y-%m-%d %H:%M:%S")
 
     @property
     def lock_expiration(self) -> datetime.datetime:
+        """Datetime when the zone lock expires."""
         return self._lock_expiration
 
     @lock_expiration.setter
@@ -897,6 +905,7 @@ class Zone(AutoLightsBase):
 
     @property
     def device_period_map(self) -> dict:
+        """Mapping of device IDs to lighting period inclusion/exclusion."""
         return self._device_period_map
 
     @device_period_map.setter
@@ -1076,6 +1085,7 @@ class Zone(AutoLightsBase):
         utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
 
     def has_lock_occurred(self) -> bool:
+        """Determine if an external change should create a new zone lock."""
         # if we’re in the middle of our own process_zone run, don’t treat our device writes as
         # an external change that should create a new lock.
         if self.checked_out:
