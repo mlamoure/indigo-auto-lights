@@ -173,7 +173,9 @@ class Zone(AutoLightsBase):
         try:
             return indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self.logger.error(f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}")
+            self.logger.error(
+                f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}"
+            )
             return False
 
     @property
@@ -189,7 +191,9 @@ class Zone(AutoLightsBase):
         try:
             self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self.logger.error(f"Zone '{self._name}': enabled_var_id {value} not found: {e}")
+            self.logger.error(
+                f"Zone '{self._name}': enabled_var_id {value} not found: {e}"
+            )
             self._enabled = False
 
     @property
@@ -283,7 +287,9 @@ class Zone(AutoLightsBase):
             try:
                 return indigo.variables[self._minimum_luminance_var_id].getValue(float)
             except Exception as e:
-                self.logger.error(f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}")
+                self.logger.error(
+                    f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}"
+                )
         if self._minimum_luminance is None:
             return 20000
         return self._minimum_luminance
@@ -464,7 +470,9 @@ class Zone(AutoLightsBase):
         self._current_lighting_period = active
 
         if not active:
-            self._debug_log(f"Zone '{self._name}': no active lighting period right now.")
+            self._debug_log(
+                f"Zone '{self._name}': no active lighting period right now."
+            )
         return active
 
     @property
@@ -497,7 +505,6 @@ class Zone(AutoLightsBase):
     def last_changed(self) -> datetime.datetime:
         """Returns the last changed timestamp from the last_changed_device property."""
         return self.last_changed_device.lastChanged
-
 
     @property
     def checked_out(self) -> bool:
@@ -627,9 +634,9 @@ class Zone(AutoLightsBase):
     def target_brightness_all_off(self) -> bool:
         """
         Check if all devices' target brightness indicate an off state.
-        
+
         For dimmer devices, 0 means off; for relay devices, False means off.
-        
+
         Returns:
             bool: True if all devices are set to off, False otherwise.
         """
@@ -642,10 +649,10 @@ class Zone(AutoLightsBase):
     def has_presence_detected(self) -> bool:
         """
         Check if presence is detected in this zone across all presence devices.
-        
+
         Examines the onState and onOffState of all presence devices in the zone.
         If any device indicates presence, returns True.
-        
+
         Returns:
             bool: True if presence is detected, False otherwise.
         """
@@ -698,9 +705,9 @@ class Zone(AutoLightsBase):
     def current_state_any_light_is_on(self) -> bool:
         """
         Check if any device in current_lights_status is on.
-        
+
         A device is considered "on" if its status is True or its brightness is > 0.
-        
+
         Returns:
             bool: True if any light is on, False otherwise.
         """
@@ -724,7 +731,7 @@ class Zone(AutoLightsBase):
     def reset_lock(self, reason: str):
         """
         Reset the lock for the zone.
-        
+
         Args:
             reason (str): The reason for resetting the lock, which will be logged.
         """
@@ -734,10 +741,10 @@ class Zone(AutoLightsBase):
     def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
         Check if the current brightness or state of any device differs from its target brightness.
-        
+
         Args:
             exclude_lock_devices (bool): If True, devices in exclude_from_lock_dev_ids will be ignored.
-            
+
         Returns:
             bool: True if any device's current state differs from its target, False otherwise.
         """
@@ -760,7 +767,9 @@ class Zone(AutoLightsBase):
             desired = tgt["brightness"]
             if dev_id not in current:
                 # skip devices that aren’t reported in the current status
-                self._debug_log(f"has_brightness_changes: skipping missing device {dev_id}")
+                self._debug_log(
+                    f"has_brightness_changes: skipping missing device {dev_id}"
+                )
                 continue
 
             actual = current[dev_id]
@@ -818,6 +827,7 @@ class Zone(AutoLightsBase):
 
         # 3) Spawn one thread per write
         for dev_id, desired in writes:
+
             def _writer(dev_id=dev_id, desired_brightness=desired):
                 self._debug_log(
                     f"starting write for device {dev_id}, value {desired_brightness}"
@@ -950,33 +960,35 @@ class Zone(AutoLightsBase):
     ) -> bool:
         """
         Determines if a device is excluded from a specific lighting period.
-        
+
         This method checks the device-to-period mapping to see if a device
         should be excluded from a particular lighting period's control.
-        
+
         Args:
             dev_id (int): The Indigo device ID to check
             lighting_period (LightingPeriod): The lighting period to check against
-            
+
         Returns:
             bool: True if the device is excluded from the lighting period,
                   False if the device should be controlled by the lighting period
         """
         device_map = self.device_period_map.get(str(dev_id), {})
         result = device_map.get(str(lighting_period.id), True) is False
-        self._debug_log(f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}")
+        self._debug_log(
+            f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}"
+        )
         return result
 
     def has_device(self, dev_id: int) -> str:
         """
         Check if the given device ID exists in this zone's device lists.
-        
+
         Args:
             dev_id (int): The Indigo device ID to check.
-            
+
         Returns:
             str: The name of the list containing the device ID, or an empty string if not found.
-                 Possible values: "exclude_from_lock_dev_ids", "on_lights_dev_ids", 
+                 Possible values: "exclude_from_lock_dev_ids", "on_lights_dev_ids",
                  "off_lights_dev_ids", "presence_dev_ids", "luminance_dev_ids", or "".
         """
         if dev_id in self.exclude_from_lock_dev_ids:
@@ -1001,7 +1013,9 @@ class Zone(AutoLightsBase):
          - otherwise: fire at the next-from_time among all periods
         """
         if not self.lighting_periods:
-            self._debug_log(f"Zone '{self._name}' has no lighting periods; skipping scheduling")
+            self._debug_log(
+                f"Zone '{self._name}' has no lighting periods; skipping scheduling"
+            )
             return
         # 1) cancel old
         if self._transition_timer:
@@ -1109,28 +1123,6 @@ class Zone(AutoLightsBase):
             result = False
 
         return result
-
-    # (6) Private methods
-    def _send_to_indigo(self, device_id: int, desired_brightness: int | bool) -> None:
-        """
-        Send a command to Indigo in a background thread.  _pending_writes is
-        incremented before the start, and when the write finally completes
-        (with or without retries) we decrement it.  The *last* writer to finish
-        will call check_in() for the zone.
-        """
-        def writer():
-            self._debug_log(f"starting write for device {device_id}, value {desired_brightness}")
-            utils.send_to_indigo(device_id, desired_brightness, self.perform_confirm)
-            with self._write_lock:
-                self._pending_writes -= 1
-                self._debug_log(f"completed write for device {device_id}, pending_writes={self._pending_writes}")
-                if self._pending_writes == 0:
-                    self.check_in()
-
-        with self._write_lock:
-            self._pending_writes += 1
-        t = threading.Thread(target=writer, daemon=True)
-        t.start()
 
     def has_lock_occurred(self) -> bool:
         """Determine if an external change should create a new zone lock."""
