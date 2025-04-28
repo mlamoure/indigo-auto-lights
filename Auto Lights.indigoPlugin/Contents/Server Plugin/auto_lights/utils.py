@@ -96,27 +96,31 @@ def send_to_indigo(
         now = time.monotonic()
         device = indigo.devices[device_id]
         confirmed = _check_confirm(device, target, target_bool)
-        if confirmed or not perform_confirm:
+        if confirmed:
             break
 
-        if now - last_send >= send_interval:
-            _send_command(device_id, target, target_bool)
-            last_send = now
+        # only re-send & statusRequest if caller asked us to confirm
+        if perform_confirm:
+            if now - last_send >= send_interval:
+                _send_command(device_id, target, target_bool)
+                last_send = now
 
-        if now - last_status >= status_interval:
-            try:
-                indigo.device.statusRequest(device_id, suppressLogging=True)
-            except Exception:
-                pass
-            last_status = now
+            if now - last_status >= status_interval:
+                try:
+                    indigo.device.statusRequest(device_id, suppressLogging=True)
+                except Exception:
+                    pass
+                last_status = now
 
+        # always log how much time remains
         if now - last_log >= log_interval:
             remaining = int(max_wait - (now - start))
             logger.info(
-                f"{indent}⏳ Not yet confirmed change to '{device.name}'. {remaining} seconds remaining."
+                f"{indent}⏳ Waiting for '{device.name}' to reach target ({remaining}s left)…"
             )
             last_log = now
 
+        # brief sleep to avoid burning CPU
         time.sleep(0.05)
 
     total = round(time.monotonic() - start, 2)
