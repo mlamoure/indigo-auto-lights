@@ -41,6 +41,12 @@ class AutoLightsAgent(AutoLightsBase):
         Returns:
             bool: True if the zone was processed, False if skipped due to being disabled or locked.
         """
+        # -------------------------------------------------------------------
+        # If we’re already in the middle of running this zone, skip duplicates
+        # -------------------------------------------------------------------
+        if zone.checked_out:
+            self._debug_log(f"Skipping process_zone for '{zone.name}' – still checked out")
+            return False
         # Seed baseline target_brightness if it hasn't been set yet
         if zone._target_brightness is None:
             baseline = [

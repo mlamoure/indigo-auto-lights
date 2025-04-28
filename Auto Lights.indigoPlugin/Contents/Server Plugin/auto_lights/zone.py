@@ -216,8 +216,8 @@ class Zone(AutoLightsBase):
 
     @property
     def last_changed_by(self) -> str:
-        """Returns the name of the device with the most recent lastChanged value or 'lock reset' if triggered by reset."""
-        if self._checked_out:
+        """Returns the name of the device with the most recent lastChanged value, or 'Auto Lights' if we’re currently processing."""
+        if self.checked_out:
             return "Auto Lights"
         return self.last_changed_device.name
 
@@ -488,24 +488,11 @@ class Zone(AutoLightsBase):
         """Returns the last changed timestamp from the last_changed_device property."""
         return self.last_changed_device.lastChanged
 
-    @property
-    def check_out_var(self) -> indigo.Variable:
-        var_name = self._name.replace(" ", "_") + "_autoLights__checkedOut"
-        try:
-            debug_var = indigo.variables[var_name]
-        except KeyError:
-            if "auto_lights_script" not in indigo.variables.folders:
-                pass
-            var_folder = indigo.variables.folders["auto_lights_script"]
-            debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
-            self._debug_log(
-                f"[Zone.check_out_var] check_out_var: created variable {var_name}"
-            )
-        return debug_var
 
     @property
     def checked_out(self) -> bool:
-        return self.check_out_var.getValue(bool)
+        """True if this zone is currently in the middle of a process_zone run."""
+        return self._checked_out
 
     @property
     def lock_enabled(self) -> bool:
@@ -1082,13 +1069,13 @@ class Zone(AutoLightsBase):
         utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
 
     def has_lock_occurred(self) -> bool:
-        if self._checked_out:
+        # if we’re in the middle of our own process_zone run, don’t treat our device writes as
+        # an external change that should create a new lock.
+        if self.checked_out:
             return False
 
         result = self.has_brightness_changes(exclude_lock_devices=True)
         self._debug_log(f"has_lock_occurred result: {result}")
-
         if self.locked != result:
             self.locked = result
-
         return result
