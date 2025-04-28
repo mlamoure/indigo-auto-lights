@@ -10,21 +10,27 @@ logger = logging.getLogger("Plugin")
 
 def _check_confirm(device, target_level, target_bool) -> bool:
     """Return True if the device's state matches the target values."""
+    logger.debug(f"_check_confirm called for '{device.name}' with target_level={target_level}, target_bool={target_bool}")
     if isinstance(device, indigo.DimmerDevice):
-        return device.brightness == target_level
-    if isinstance(device, indigo.RelayDevice):
+        result = device.brightness == target_level
+    elif isinstance(device, indigo.RelayDevice):
         want = target_bool if target_bool is not None else (target_level == 100)
-        return device.onState == want
-    senseme = "com.pennypacker.indigoplugin.senseme"
-    if device.pluginId == senseme:
-        return int(device.states.get("brightness", 0)) == target_level
-    return True
+        result = device.onState == want
+    else:
+        senseme = "com.pennypacker.indigoplugin.senseme"
+        if device.pluginId == senseme:
+            result = int(device.states.get("brightness", 0)) == target_level
+        else:
+            result = True
+    logger.debug(f"_check_confirm result for '{device.name}': {result}")
+    return result
 
 def _send_command(device_id, target_level, target_bool) -> None:
     """Send the appropriate Indigo command for the desired state."""
     device = indigo.devices[device_id]
     senseme = "com.pennypacker.indigoplugin.senseme"
     is_fan = device.pluginId == senseme
+    logger.debug(f"_send_command called for '{device.name}' (id={device_id}) with target_level={target_level}, target_bool={target_bool}")
     if is_fan or isinstance(device, indigo.DimmerDevice):
         if is_fan:
             sense_plugin = indigo.server.getPlugin(senseme)
@@ -33,14 +39,18 @@ def _send_command(device_id, target_level, target_bool) -> None:
                 deviceId=device_id,
                 props={"lightLevel": str(target_level)},
             )
+            logger.debug(f"_send_command: senseme fanLightBrightness for '{device.name}' -> {target_level}")
         else:
             indigo.dimmer.setBrightness(device_id, value=target_level, delay=0)
+            logger.debug(f"_send_command: dimmer.setBrightness for '{device.name}' -> {target_level}")
     elif isinstance(device, indigo.RelayDevice):
         want_on = target_bool if target_bool is not None else (target_level == 100)
         if want_on:
             indigo.device.turnOn(device_id, delay=0)
+            logger.debug(f"_send_command: turned ON '{device.name}'")
         else:
             indigo.device.turnOff(device_id, delay=0)
+            logger.debug(f"_send_command: turned OFF '{device.name}'")
 
 
 def send_to_indigo(
