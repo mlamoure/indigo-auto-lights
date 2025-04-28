@@ -73,6 +73,14 @@ def send_to_indigo(
     """
     indent = "      "
     start = time.monotonic()
+    # Capture old state for logging purposes
+    device = indigo.devices[device_id]
+    old_level = None
+    old_state = None
+    if isinstance(device, indigo.DimmerDevice):
+        old_level = device.brightness
+    elif isinstance(device, indigo.RelayDevice):
+        old_state = device.onState
     # Determine numeric target and bool for relays
     target_bool = None
     if isinstance(desired_brightness, bool):
@@ -125,7 +133,21 @@ def send_to_indigo(
 
     total = round(time.monotonic() - start, 2)
     if confirmed:
-        logger.info(f"{indent}✅ Confirmed change to '{device.name}' in {total}s")
+        # Log detailed change based on device type
+        if isinstance(device, indigo.DimmerDevice) and old_level is not None:
+            if target > old_level:
+                emoji = "🔆"
+                logger.info(f"{indent}{emoji} increased brightness of '{device.name}' from {old_level} to {target}")
+            elif target < old_level:
+                emoji = "🔅"
+                logger.info(f"{indent}{emoji} decreased brightness of '{device.name}' from {old_level} to {target}")
+        elif isinstance(device, indigo.RelayDevice) and old_state is not None:
+            emoji = "💡"
+            action = "turned on" if target_bool else "turned off"
+            logger.info(f"{indent}{emoji} {action} '{device.name}'")
+        else:
+            # Fallback logging
+            logger.info(f"{indent}✅ Confirmed change to '{device.name}' in {total}s")
     else:
         logger.info(
             f"{indent}❌ Could not confirm change to '{device.name}' after {total}s"
