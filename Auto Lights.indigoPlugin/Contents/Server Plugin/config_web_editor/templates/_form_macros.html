@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function(){
              headers: {
                "Content-Type": "application/json"
              },
-             body: JSON.stringify({ var_name: varName })
+             body: JSON.stringify({ name: varName, schema_property: fieldName })
           })
           .then(response => {
               if (!response.ok) {
@@ -239,7 +239,12 @@ document.addEventListener('DOMContentLoaded', function(){
           })
           .then(data => {
               alert("Variable created with ID: " + data.var_id);
-              // Optionally, refresh the variable list here.
+              // automatically add and select new variable in the dropdown
+              const sel = document.querySelector(`select[name="${data.schema_property}"]`);
+              if (sel) {
+                  const opt = new Option(data.var_name, data.var_id, true, true);
+                  sel.add(opt);
+              }
           })
           .catch(err => {
               console.error("Error creating variable", err);
