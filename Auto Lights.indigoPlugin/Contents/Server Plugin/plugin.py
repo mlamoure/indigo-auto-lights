@@ -368,7 +368,7 @@ class Plugin(indigo.PluginBase):
             if not var_name:
                 context = {"error": "var_name must be provided"}
             else:
-                newVar = indigo.variable.create(var_name, "default value")
+                newVar = indigo.variable.create(var_name, "true")
                 context = {"var_id": newVar.id}
             reply["status"] = 200
             reply["headers"] = indigo.Dict({"Content-Type": "application/json"})
