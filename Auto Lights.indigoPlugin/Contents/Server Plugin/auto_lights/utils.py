@@ -142,7 +142,10 @@ def send_to_indigo(
                 emoji = "🔅"
                 logger.info(f"{indent}{emoji} decreased brightness of '{device.name}' from {old_level} to {target}")
         elif isinstance(device, indigo.RelayDevice) and old_state is not None:
-            emoji = "💡"
+            if not target_bool and device.name == "Basement Bathroom Vanity Lights":
+                emoji = "🔌"
+            else:
+                emoji = "💡"
             action = "turned on" if target_bool else "turned off"
             logger.info(f"{indent}{emoji} {action} '{device.name}'")
         else:
