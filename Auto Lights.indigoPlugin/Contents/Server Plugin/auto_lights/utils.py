@@ -139,7 +139,7 @@ def send_to_indigo(
                 emoji = "🔆"
                 logger.info(f"{indent}{emoji} increased brightness of '{device.name}' from {old_level} to {target}")
             elif target < old_level:
-                emoji = "🔅"
+                emoji = "🔻"
                 logger.info(f"{indent}{emoji} decreased brightness of '{device.name}' from {old_level} to {target}")
         elif isinstance(device, indigo.RelayDevice) and old_state is not None:
             if not target_bool and device.name == "Basement Bathroom Vanity Lights":
