@@ -324,9 +324,12 @@ class Zone(AutoLightsBase):
         self._debug_log(f"computed luminance: {self._luminance}")
         return self._luminance
 
-    @property
-    def current_lights_status(self) -> List[dict]:
-        """Retrieve the current status of on and off lights for the zone."""
+    def current_lights_status(self, include_lock_excluded: bool = False) -> List[dict]:
+        """
+        Retrieve the current status of on and off lights for the zone.
+        By default this skips any device in exclude_from_lock_dev_ids;
+        set include_lock_excluded=True to see *all* devices.
+        """
         status = []
 
         def get_device_status(device):
@@ -340,7 +343,7 @@ class Zone(AutoLightsBase):
 
         # Gather on_lights
         for dev_id in self.on_lights_dev_ids:
-            if dev_id in self.exclude_from_lock_dev_ids:
+            if not include_lock_excluded and dev_id in self.exclude_from_lock_dev_ids:
                 continue
             status.append(
                 {
@@ -351,7 +354,7 @@ class Zone(AutoLightsBase):
 
         # Gather off_lights
         for dev_id in self.off_lights_dev_ids:
-            if dev_id in self.exclude_from_lock_dev_ids:
+            if not include_lock_excluded and dev_id in self.exclude_from_lock_dev_ids:
                 continue
             status.append(
                 {
@@ -714,7 +717,7 @@ class Zone(AutoLightsBase):
         Returns:
             bool: True if any light is on, False otherwise.
         """
-        for status in self.current_lights_status:
+        for status in self.current_lights_status():
             if status is True or (isinstance(status, (int, float)) and status > 0):
                 return True
         return False
@@ -759,7 +762,8 @@ class Zone(AutoLightsBase):
 
         # Build a lookup of current hardware states
         current = {
-            item["dev_id"]: item["brightness"] for item in self.current_lights_status
+            item["dev_id"]: item["brightness"]
+            for item in self.current_lights_status()
         }
         # Compare each target to its actual brightness/state
         for tgt in self.target_brightness:

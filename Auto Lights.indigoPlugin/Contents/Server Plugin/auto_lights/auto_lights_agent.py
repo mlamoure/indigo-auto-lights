@@ -53,7 +53,7 @@ class AutoLightsAgent(AutoLightsBase):
         if zone._target_brightness is None:
             baseline = [
                 {"dev_id": s["dev_id"], "brightness": s["brightness"]}
-                for s in zone.current_lights_status
+                for s in zone.current_lights_status()
             ]
             zone.target_brightness = baseline
 
@@ -61,7 +61,7 @@ class AutoLightsAgent(AutoLightsBase):
             return False
 
         self._debug_log(
-            f"Processing: enabled={zone.enabled}, current_lights_status={zone.current_lights_status}"
+            f"Processing: enabled={zone.enabled}, current_lights_status={zone.current_lights_status()}"
         )
 
         if not zone.enabled:
@@ -431,7 +431,7 @@ class AutoLightsAgent(AutoLightsBase):
                 curr = next(
                     (
                         item["brightness"]
-                        for item in zone.current_lights_status
+                        for item in zone.current_lights_status(include_lock_excluded=True)
                         if item["dev_id"] == dev_id
                     ),
                     None,
@@ -477,7 +477,7 @@ class AutoLightsAgent(AutoLightsBase):
             # build quick lookup dicts
             current_map = {
                 entry["dev_id"]: entry["brightness"]
-                for entry in zone.current_lights_status
+                for entry in zone.current_lights_status()
             }
             # zone.target_brightness might be None or empty
             target_map = {
