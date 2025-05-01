@@ -206,6 +206,7 @@ class AutoLightsAgent(AutoLightsBase):
                         timer = threading.Timer(
                             delay, self.process_expired_lock, args=[zone]
                         )
+                        timer.daemon = True
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
@@ -460,3 +461,22 @@ class AutoLightsAgent(AutoLightsBase):
             self.logger.info(f"    locked: {zone.locked}")
             if zone.locked:
                 self.logger.info(f"        expiration: {zone.lock_expiration_str}")
+
+    def shutdown(self) -> None:
+        """
+        Cancel all outstanding timers (lock-expiration timers in self._timers,
+        plus each zone's transition-timer and lock-timer).
+        """
+        # Cancel agent-level timers
+        for t in self._timers.values():
+            t.cancel()
+        self._timers.clear()
+
+        # Cancel each zone's timers
+        for zone in self._config.zones:
+            if getattr(zone, "_transition_timer", None):
+                zone._transition_timer.cancel()
+                zone._transition_timer = None
+            if getattr(zone, "_lock_timer", None):
+                zone._lock_timer.cancel()
+                zone._lock_timer = None

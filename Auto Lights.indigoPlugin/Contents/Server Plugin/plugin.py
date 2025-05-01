@@ -128,6 +128,8 @@ class Plugin(indigo.PluginBase):
         :return:
         """
         self.logger.debug("shutdown called")
+        if hasattr(self, "_agent") and self._agent is not None:
+            self._agent.shutdown()
         self.stop_configuration_web_server()
 
     def deviceUpdated(

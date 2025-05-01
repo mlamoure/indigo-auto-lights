@@ -595,6 +595,7 @@ class Zone(AutoLightsBase):
                 if self._lock_timer:
                     self._lock_timer.cancel()
                 self._lock_timer = threading.Timer(delay, self.process_expired_lock)
+                self._lock_timer.daemon = True
                 self._lock_timer.start()
 
             self.logger.info(
