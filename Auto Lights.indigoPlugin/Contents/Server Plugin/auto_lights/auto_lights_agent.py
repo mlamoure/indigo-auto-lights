@@ -490,6 +490,9 @@ class AutoLightsAgent(AutoLightsBase):
             for dev_id in zone.on_lights_dev_ids + zone.off_lights_dev_ids:
                 actual = current_map.get(dev_id)
                 desired = target_map.get(dev_id)
+                # skip if target is None
+                if desired is None:
+                    continue
                 if actual != desired:
                     # something is out-of-sync
                     self.logger.warning(
