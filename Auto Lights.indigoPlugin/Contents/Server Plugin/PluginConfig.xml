@@ -42,8 +42,10 @@
 
 
     <Field id="log_non_events" type="checkbox" defaultValue="false">
-        <Label>Log non-events to the Indigo Event Log:</Label>
-        <Description>When enabled, the plugin will log to INFO when presence is detected but no lights are turned on; when presence is detected but there is no active lighting period; and when a device is excluded from the current period.</Description>
+        <Label>Log non-action-taken events to the Indigo Event Log:</Label>
+        <Description>When enabled, the plugin will log extra information to Indigo log. Not recommended unless you are
+            debugging your config.
+        </Description>
     </Field>
 </PluginConfig>
 
