@@ -91,9 +91,9 @@ def send_to_indigo(
 
     # Time‐based intervals
     last_send = last_status = last_log = start
-    max_wait = 15.0
-    send_interval = 5
-    status_interval = 2.0
+    max_wait = 24.0
+    send_interval = 10
+    status_interval = 8
     log_interval = 5.0
 
     # Initial send
