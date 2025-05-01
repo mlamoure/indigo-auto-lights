@@ -1006,7 +1006,8 @@ class Zone(AutoLightsBase):
         else:
             result = ""
 
-        self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
+        if result:
+            self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
 
     def schedule_next_transition(self):
