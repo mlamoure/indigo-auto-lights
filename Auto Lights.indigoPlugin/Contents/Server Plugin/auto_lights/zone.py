@@ -820,7 +820,7 @@ class Zone(AutoLightsBase):
                 self._debug_log(f"Setting device {dev_id} brightness to {brightness}")
                 writes.append((dev_id, brightness))
             else:
-                self.logger.warning(
+                self._debug_log(
                     f"No target brightness found for device {dev_id}. Skipping update."
                 )
 
@@ -951,7 +951,9 @@ class Zone(AutoLightsBase):
         # If no presence detected, record action reason.
         elif self.current_lighting_period.mode == "On and Off" and not self.is_dark():
             if self._config.log_non_events and presence_detected:
-                self.logger.info(f"🔇 Presence detected in Zone '{self.name}', but room is not dark – no lights turned on")
+                self.logger.info(
+                    f"🔇 Presence detected in Zone '{self.name}', but room is not dark – no lights turned on"
+                )
             self._debug_log("Zone is bright, setting all lights off")
             action_reason = "zone is bright, turning lights off"
             self.target_brightness = 0
