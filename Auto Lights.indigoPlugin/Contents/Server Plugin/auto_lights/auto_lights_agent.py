@@ -45,7 +45,9 @@ class AutoLightsAgent(AutoLightsBase):
         # If we’re already in the middle of running this zone, skip duplicates
         # -------------------------------------------------------------------
         if zone.checked_out:
-            self._debug_log(f"Skipping process_zone for '{zone.name}' – still checked out")
+            self._debug_log(
+                f"Skipping process_zone for '{zone.name}' – still checked out"
+            )
             return False
         # Seed baseline target_brightness if it hasn't been set yet
         if zone._target_brightness is None:
