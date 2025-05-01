@@ -730,12 +730,14 @@ class Zone(AutoLightsBase):
         Mark the zone as checked in (not being processed).
         """
         self._checked_out = False
+        self._debug_log(f"Zone '{self.name}' checked in")
 
     def check_out(self):
         """
         Mark the zone as checked out (currently being processed).
         """
         self._checked_out = True
+        self._debug_log(f"Zone '{self.name}' checked out")
 
     def reset_lock(self, reason: str):
         """
