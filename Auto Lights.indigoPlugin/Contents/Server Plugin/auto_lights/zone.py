@@ -977,6 +977,7 @@ class Zone(AutoLightsBase):
         self._debug_log(
             f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}"
         )
+        self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
 
     def has_device(self, dev_id: int) -> str:
