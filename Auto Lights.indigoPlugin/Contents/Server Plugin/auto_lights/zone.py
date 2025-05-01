@@ -922,7 +922,7 @@ class Zone(AutoLightsBase):
                     if self._config.log_non_events:
                         device = indigo.devices[dev_id]
                         self.logger.info(
-                            f"🚫 did not make changes to '{device.name}' because it is excluded from the current period ({self.current_lighting_period.name})"
+                            f"      🚫 did not make changes to '{device.name}' because it is excluded from the current period ({self.current_lighting_period.name})"
                         )
                     continue
                 if not is_excluded:
