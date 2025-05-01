@@ -207,6 +207,8 @@ class AutoLightsAgent(AutoLightsBase):
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
+
+                # if presence has changed and the zone is locked, investigate if it should be unlocked
                 if (
                     device_prop == "presence_dev_ids"
                     and zone.locked
@@ -217,6 +219,7 @@ class AutoLightsAgent(AutoLightsBase):
                         zone.name,
                         "no presence detected and `unlock_when_no_presence` is set for this Zone",
                     )
+
                 if self.process_zone(zone):
                     processed.append(zone)
 
