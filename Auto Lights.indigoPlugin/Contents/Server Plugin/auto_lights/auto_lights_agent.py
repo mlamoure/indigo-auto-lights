@@ -496,9 +496,7 @@ class AutoLightsAgent(AutoLightsBase):
                     )
                 else:
                     # everything matches
-                    self._debug_log(
-                        f"[debug_zone_states] Zone '{zone.name}' device {dev_id} OK: {actual!r}"
-                    )
+                    self._debug_log(f"device {dev_id} OK: {actual!r}")
 
     def shutdown(self) -> None:
         """
