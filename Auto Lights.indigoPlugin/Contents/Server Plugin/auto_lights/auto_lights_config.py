@@ -24,6 +24,7 @@ class AutoLightsConfig(AutoLightsBase):
         The properties can be adjusted as needed to fine-tune lighting behavior.
         """
         super().__init__()
+        self.log_non_events = False
         self._enabled = False
 
         self._enabled_var_id = -1
