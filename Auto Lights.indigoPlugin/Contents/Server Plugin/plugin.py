@@ -117,6 +117,8 @@ class Plugin(indigo.PluginBase):
     def runConcurrentThread(self):
         try:
             while True:
+                if self._agent is not None:
+                    self._agent.debug_zone_states()
                 self.sleep(60)  # in seconds
         except self.StopThread:
             pass  # Optionally catch the StopThread exception and do any needed cleanup.

@@ -462,6 +462,44 @@ class AutoLightsAgent(AutoLightsBase):
             if zone.locked:
                 self.logger.info(f"        expiration: {zone.lock_expiration_str}")
 
+    def debug_zone_states(self) -> None:
+        """
+        Debug helper: for each enabled, unlocked, idle zone,
+        compare current_lights_status to target_brightness on all
+        on_lights_dev_ids + off_lights_dev_ids.  Log DEBUG on match,
+        WARNING on mismatch.
+        """
+        for zone in self._config.zones:
+            # skip if zone off, locked or already processing
+            if not zone.enabled or zone.locked or zone.checked_out:
+                continue
+
+            # build quick lookup dicts
+            current_map = {
+                entry["dev_id"]: entry["brightness"]
+                for entry in zone.current_lights_status
+            }
+            # zone.target_brightness might be None or empty
+            target_map = {
+                entry["dev_id"]: entry["brightness"]
+                for entry in (zone.target_brightness or [])
+            }
+
+            for dev_id in zone.on_lights_dev_ids + zone.off_lights_dev_ids:
+                actual = current_map.get(dev_id)
+                desired = target_map.get(dev_id)
+                if actual != desired:
+                    # something is out-of-sync
+                    self.logger.warning(
+                        f"[DebugSync] Zone '{zone.name}' device {dev_id}: "
+                        f"actual={actual!r}, target={desired!r}"
+                    )
+                else:
+                    # everything matches
+                    self._debug_log(
+                        f"[DebugSync] Zone '{zone.name}' device {dev_id} OK: {actual!r}"
+                    )
+
     def shutdown(self) -> None:
         """
         Cancel all outstanding timers (lock-expiration timers in self._timers,
