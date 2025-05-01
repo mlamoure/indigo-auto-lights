@@ -491,12 +491,12 @@ class AutoLightsAgent(AutoLightsBase):
                 if actual != desired:
                     # something is out-of-sync
                     self.logger.warning(
-                        f"[debug_zone_states] Zone '{zone.name}' device {dev_id}: "
+                        f"[debug_zone_states] Zone '{zone.name}' device '{indigo.devices[dev_id].name}': "
                         f"actual={actual!r}, target={desired!r}"
                     )
                 else:
                     # everything matches
-                    self._debug_log(f"device {dev_id} OK: {actual!r}")
+                    self._debug_log(f"device '{indigo.devices[dev_id].name}' OK: {actual!r}")
 
     def shutdown(self) -> None:
         """
