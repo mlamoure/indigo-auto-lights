@@ -115,6 +115,9 @@ class Plugin(indigo.PluginBase):
         self._init_config_and_agent()
 
     def runConcurrentThread(self):
+        # sleep at first to let first-run go through.
+        self.sleep(15)
+
         try:
             while True:
                 if self._agent is not None:
