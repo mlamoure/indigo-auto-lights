@@ -918,6 +918,13 @@ class Zone(AutoLightsBase):
                 self._debug_log(
                     f"Device {dev_id} excluded: {is_excluded} because of has_dev_lighting_mapping_exclusion"
                 )
+                if is_excluded:
+                    if self._config.log_non_events:
+                        device = indigo.devices[dev_id]
+                        self.logger.info(
+                            f"🚫 did not make changes to '{device.name}' because it is excluded from the current period ({self.current_lighting_period.name})"
+                        )
+                    continue
                 if not is_excluded:
                     if not self.adjust_brightness:
                         brightness = 100
@@ -943,6 +950,8 @@ class Zone(AutoLightsBase):
 
         # If no presence detected, record action reason.
         elif self.current_lighting_period.mode == "On and Off" and not self.is_dark():
+            if self._config.log_non_events and presence_detected:
+                self.logger.info(f"🔇 Presence detected in Zone '{self.name}', but room is not dark – no lights turned on")
             self._debug_log("Zone is bright, setting all lights off")
             action_reason = "zone is bright, turning lights off"
             self.target_brightness = 0

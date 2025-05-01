@@ -59,6 +59,7 @@ class Plugin(indigo.PluginBase):
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
+        self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
 
         # Configure logging levels based on plugin preferences.
         self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
@@ -274,6 +275,7 @@ class Plugin(indigo.PluginBase):
             self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
 
             self._disable_web_server = values_dict.get("disable_web_server")
+            self._log_non_events = bool(values_dict.get("log_non_events", False))
 
             self.test_connections()
             # Restart or stop the configuration web server based on new settings.
@@ -315,6 +317,7 @@ class Plugin(indigo.PluginBase):
         self._config_path = conf_path
         self._config_mtime = os.path.getmtime(conf_path)
         config = AutoLightsConfig(conf_path)
+        config.log_non_events = self._log_non_events
         self._agent = AutoLightsAgent(config)
         self._agent.process_all_zones()
 

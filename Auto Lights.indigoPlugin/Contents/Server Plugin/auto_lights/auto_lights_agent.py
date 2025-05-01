@@ -92,11 +92,15 @@ class AutoLightsAgent(AutoLightsBase):
             action_reason = reason
 
         if not global_lights_off and not zone.lighting_periods:
+            if self._config.log_non_events and zone.has_presence_detected():
+                self.logger.info(f"🔇 Presence detected in Zone '{zone.name}' but no lighting periods are configured – no action taken")
             self._debug_log(f"Skipping: no lighting periods configured")
             zone.check_in()
             return False
 
         if not global_lights_off and zone.current_lighting_period is None:
+            if self._config.log_non_events and zone.has_presence_detected():
+                self.logger.info(f"🔇 Presence detected in Zone '{zone.name}' but no active lighting period right now – no action taken")
             self._debug_log(f"Skipping: no current lighting period configured")
             zone.check_in()
             return False
