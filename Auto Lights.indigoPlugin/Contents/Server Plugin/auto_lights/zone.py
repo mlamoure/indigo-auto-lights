@@ -332,6 +332,8 @@ class Zone(AutoLightsBase):
         def get_device_status(device):
             if isinstance(device, indigo.DimmerDevice):
                 return int(device.brightness)
+            elif hasattr(device, "brightness"):
+                return int(device.brightness)
             elif "brightness" in device.states:
                 return int(device.states["brightness"])
             return bool(device.onState)
