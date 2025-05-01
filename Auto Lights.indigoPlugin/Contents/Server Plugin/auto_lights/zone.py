@@ -339,6 +339,9 @@ class Zone(AutoLightsBase):
                 return int(device.brightness)
             elif "brightness" in device.states:
                 return int(device.states["brightness"])
+            elif "brightnessLevel" in device.states:
+                return int(device.states["brightness"])
+
             return bool(device.onState)
 
         # Gather on_lights
@@ -762,8 +765,7 @@ class Zone(AutoLightsBase):
 
         # Build a lookup of current hardware states
         current = {
-            item["dev_id"]: item["brightness"]
-            for item in self.current_lights_status()
+            item["dev_id"]: item["brightness"] for item in self.current_lights_status()
         }
         # Compare each target to its actual brightness/state
         for tgt in self.target_brightness:
