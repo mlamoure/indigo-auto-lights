@@ -90,9 +90,9 @@ def send_to_indigo(
 
     # Time‐based intervals
     last_send = last_log = start
-    max_wait = 24.0
-    send_interval = 10
-    log_interval = 5.0
+    max_wait = 21.0
+    send_interval = 7.0
+    log_interval = 3.0
 
     # Initial send
     _send_command(device_id, target, target_bool)
