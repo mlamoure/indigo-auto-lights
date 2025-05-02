@@ -881,7 +881,10 @@ class Zone(AutoLightsBase):
         )
         presence_detected = self.has_presence_detected()
         dark_condition = self.is_dark()
-        self._debug_log(f"Current lighting period mode: {mode}, limit_brightness={self.current_lighting_period.limit_brightness}, adjust_brightness={self.adjust_brightness}")
+        # avoid None.current_lighting_period.limit_brightness
+        cp = self.current_lighting_period
+        lb = cp.limit_brightness if cp is not None else None
+        self._debug_log(f"Current lighting period mode: {mode}, limit_brightness={lb}, adjust_brightness={self.adjust_brightness}")
         self._debug_log(f"Presence detected: {presence_detected}")
         self._debug_log(f"Is dark: {dark_condition}")
 
