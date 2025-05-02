@@ -27,29 +27,22 @@ class AutoLightsAgent(AutoLightsBase):
     def process_zone(self, zone: Zone) -> bool:
         """
         Main automation function that processes a single lighting zone.
-
-        This method handles the core automation logic for a zone, including:
-        - Checking if the zone is enabled
-        - Handling zone locks
-        - Evaluating global behavior variables
-        - Calculating target brightness based on lighting periods
-        - Applying changes to devices when needed
-
-        Args:
-            zone (Zone): A Zone object to process
-
-        Returns:
-            bool: True if the zone was processed, False if skipped due to being disabled or locked.
         """
-        # -------------------------------------------------------------------
-        # If we’re already in the middle of running this zone, skip duplicates
-        # -------------------------------------------------------------------
+        # GUARD: skip if already running
         if zone.checked_out:
-            self._debug_log(
-                f"Skipping process_zone for '{zone.name}' – still checked out"
-            )
+            self._debug_log(f"Skipping process_zone for '{zone.name}' – still checked out")
             return False
-        # Seed baseline target_brightness if it hasn't been set yet
+
+        # GUARD: plugin globally disabled
+        if not self.config.enabled:
+            return False
+
+        # GUARD: zone disabled
+        if not zone.enabled:
+            self._debug_log(f"Skipping process_zone for '{zone.name}' – zone disabled")
+            return False
+
+        # Initialize baseline if needed
         if zone._target_brightness is None:
             baseline = [
                 {"dev_id": s["dev_id"], "brightness": s["brightness"]}
@@ -57,65 +50,44 @@ class AutoLightsAgent(AutoLightsBase):
             ]
             zone.target_brightness = baseline
 
-        if not self.config.enabled:
-            return False
-
-        self._debug_log(
-            f"Processing: enabled={zone.enabled}, current_lights_status={zone.current_lights_status()}"
-        )
-
-        if not zone.enabled:
-            self._debug_log(f"Zone is disabled")
-            return False
-
+        # Context for logging and block writes
         last_dev = zone.last_changed_device
         triggered_by = last_dev.name if last_dev else "Auto Lights"
         zone.check_out()
-        ################################################################
-        # Lock logic
-        ################################################################
+
+        # LOCK: skip if already locked
         if zone.lock_enabled and zone.locked:
-            self._debug_log(f"Zone is locked until {zone.lock_expiration}")
+            self._debug_log(f"Zone '{zone.name}' is locked until {zone.lock_expiration}")
             zone.check_in()
             return False
 
-        ################################################################
-        # Zone execution logic (Where we decide what changes, if any, need to be made)
-        ################################################################
-
-        # Check global behavior variables using has_global_lights_off
+        # Determine plan
         plan_global = self.config.has_global_lights_off()
         if plan_global.contributions:
             plan = plan_global
             zone.target_brightness = 0
-
-        if not plan_global.contributions:
+        else:
+            # Skip if no periods configured
             if not zone.lighting_periods:
                 if self.config.log_non_events and zone.has_presence_detected():
                     self.logger.info(
-                        f"🔇 Presence detected in Zone '{zone.name}' but no lighting periods are configured – no action taken"
+                        f"🔇 Presence detected in Zone '{zone.name}' but no lighting periods configured – no action taken"
                     )
-                self._debug_log(f"Skipping: no lighting periods configured")
                 zone.check_in()
                 return False
-
+            # Skip if no active period
             if zone.current_lighting_period is None:
                 if self.config.log_non_events and zone.has_presence_detected():
                     self.logger.info(
                         f"🔇 Presence detected in Zone '{zone.name}' but no active lighting period right now – no action taken"
                     )
-                self._debug_log(f"Skipping: no current lighting period configured")
                 zone.check_in()
                 return False
+            # Normal plan computation
+            plan = zone.calculate_target_brightness()
+            zone.target_brightness = plan.new_targets
 
-            # Next, look to the target_brightness for lighting periods
-            if zone.current_lighting_period is not None:
-                plan = zone.calculate_target_brightness()
-                zone.target_brightness = plan.new_targets
-
-        ################################################################
-        # Save and write plan to Indigo Event Log
-        ################################################################
+        # EXECUTE: apply or skip changes
         if zone.has_brightness_changes():
             self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
             self.logger.info(f"\t🔄 Triggered by: {triggered_by}")
@@ -131,7 +103,7 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.info(f"\t\t{emoji} {msg}")
             zone.save_brightness_changes()
         else:
-            self._debug_log(f"no changes to make, checked in")
+            self._debug_log(f"Zone '{zone.name}': no changes to make")
             zone.check_in()
 
         return True
