@@ -412,6 +412,9 @@ class AutoLightsAgent(AutoLightsBase):
                     )
             else:
                 self.logger.info(f"    current period: None")
+            self.logger.info("    lighting_periods:")
+            for period in zone.lighting_periods:
+                self.logger.info(f"        {period.name} ({period.mode}) {period.from_time.strftime('%H:%M')}-{period.to_time.strftime('%H:%M')}")
             self.logger.info(f"    presence: {zone.has_presence_detected()}")
             self.logger.info(
                 f"    luminance: {zone.luminance} "
