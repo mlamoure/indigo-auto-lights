@@ -87,6 +87,7 @@ class AutoLightsAgent(AutoLightsBase):
 
         # Check global behavior variables using has_global_lights_off
         global_lights_off, reason = self.config.has_global_lights_off()
+
         if global_lights_off:
             zone.target_brightness = 0
             action_reason = reason
@@ -111,7 +112,8 @@ class AutoLightsAgent(AutoLightsBase):
 
         # Next, look to the target_brightness
         if not global_lights_off and zone.current_lighting_period is not None:
-            action_reason = zone.calculate_target_brightness()
+            plan = zone.calculate_target_brightness()
+            zone.target_brightness = plan.new_targets
             self.logger.debug(
                 f"brightness update: {action_reason}. Target brightness: {zone.target_brightness}"
             )
@@ -120,9 +122,6 @@ class AutoLightsAgent(AutoLightsBase):
         # Save and write log
         ################################################################
         if zone.has_brightness_changes():
-            plan = zone.calculate_target_brightness()
-            zone.target_brightness = plan.new_targets
-
             self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
             self.logger.info(f"\t🔄 Triggered by: {triggered_by}")
             self.logger.info(f"\t📝 Change logic:")
@@ -437,7 +436,9 @@ class AutoLightsAgent(AutoLightsBase):
                     f"        end: {current_period.to_time.strftime('%H:%M')}"
                 )
                 if current_period.limit_brightness is not None:
-                    self.logger.info(f"        limit_brightness: {current_period.limit_brightness}")
+                    self.logger.info(
+                        f"        limit_brightness: {current_period.limit_brightness}"
+                    )
             else:
                 self.logger.info(f"    current period: None")
             self.logger.info(f"    presence: {zone.has_presence_detected()}")
