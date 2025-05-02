@@ -113,9 +113,6 @@ def send_to_indigo(
         # always log how much time remains
         if now - last_log >= log_interval:
             remaining = int(max_wait - (now - start))
-            logger.info(
-                f"{indent}⏳ Waiting for '{device.name}' to reach target ({remaining}s left)…"
-            )
             last_log = now
 
         # brief sleep to avoid burning CPU
@@ -127,25 +124,14 @@ def send_to_indigo(
         if isinstance(device, indigo.DimmerDevice) and old_level is not None:
             if target > old_level:
                 emoji = "🔆"
-                logger.info(
-                    f"{indent}{emoji} increased brightness of '{device.name}' from {old_level} to {target}"
-                )
             elif target < old_level:
                 emoji = "🔻"
-                logger.info(
-                    f"{indent}{emoji} decreased brightness of '{device.name}' from {old_level} to {target}"
-                )
         elif isinstance(device, indigo.RelayDevice) and old_state is not None:
             if not target_bool:
                 emoji = "🔌"
             else:
                 emoji = "💡"
             action = "turned on" if target_bool else "turned off"
-            logger.info(f"{indent}{emoji} {action} '{device.name}'")
         else:
             # Fallback logging
-            logger.info(f"{indent}✅ Confirmed change to '{device.name}' in {total}s")
     else:
-        logger.info(
-            f"{indent}❌ Could not confirm change to '{device.name}' after {total}s"
-        )
