@@ -906,7 +906,7 @@ class Zone(AutoLightsBase):
             if presence:
                 plan_contribs.append(("🚫", "skipping period logic, turning all off"))
             else:
-                plan_contribs.append(("🔇", "no presence detected → all off"))
+                plan_contribs.append(("💤", "no presence detected → all off"))
             new_targets = [
                 {"dev_id": d["dev_id"], "brightness": 0}
                 for d in self.current_lights_status()
@@ -931,9 +931,13 @@ class Zone(AutoLightsBase):
                         brightness = min(raw, limit_b) if limit_b is not None else raw
                     new_targets.append({"dev_id": dev_id, "brightness": brightness})
             else:
-                plan_contribs.append(
-                    ("🔇", "either bright or no presence → turning all off")
-                )
+                if not presence:
+                    plan_contribs.append(("👥", "no presence → turning all off"))
+                elif not darkness:
+                    plan_contribs.append(
+                        ("☀️", "zone is bright enough → turning all off")
+                    )
+
                 new_targets = [
                     {"dev_id": d["dev_id"], "brightness": 0}
                     for d in self.current_lights_status()
