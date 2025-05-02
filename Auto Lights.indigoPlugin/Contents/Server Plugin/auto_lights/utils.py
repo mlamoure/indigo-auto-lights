@@ -68,54 +68,42 @@ def send_to_indigo(
     desired_brightness: int | bool,
 ) -> None:
     """
-    Send a command to update an Indigo device with retries, status requests, and timed logs.
+    Send a command to update an Indigo device with retries.
     """
-    indent = "      "
     start = time.monotonic()
-    # Capture old state for logging purposes
     device = indigo.devices[device_id]
-    old_level = None
-    old_state = None
-    if isinstance(device, indigo.DimmerDevice):
-        old_level = device.brightness
-    elif isinstance(device, indigo.RelayDevice):
-        old_state = device.onState
+
     # Determine numeric target and bool for relays
-    target_bool = None
     if isinstance(desired_brightness, bool):
         target_bool = desired_brightness
         target = 100 if desired_brightness else 0
     else:
+        target_bool = None
         target = desired_brightness
 
-    # Time‐based intervals
-    last_send = last_log = start
+    # Retry settings
     max_wait = 21.0
     send_interval = 7.0
-    log_interval = 3.0
+    last_send = start
 
     # Initial send
     _send_command(device_id, target, target_bool)
 
-    confirmed = False
-    while not confirmed and (time.monotonic() - start) < max_wait:
-        now = time.monotonic()
-        device = indigo.devices[device_id]
-        confirmed = _check_confirm(device, target, target_bool)
-        if confirmed:
+    # Retry until confirmed or timeout
+    while True:
+        elapsed = time.monotonic() - start
+        if elapsed >= max_wait:
             break
 
-        # resend commands at defined interval
+        now = time.monotonic()
         if now - last_send >= send_interval:
             _send_command(device_id, target, target_bool)
             last_send = now
 
-        # always log how much time remains
-        if now - last_log >= log_interval:
-            remaining = int(max_wait - (now - start))
-            last_log = now
+        if _check_confirm(indigo.devices[device_id], target, target_bool):
+            break
 
-        # brief sleep to avoid burning CPU
         time.sleep(0.05)
 
-    total = round(time.monotonic() - start, 2)
+    total_time = round(time.monotonic() - start, 2)
+    logger.debug(f"send_to_indigo: '{device.name}' completed in {total_time}s")
