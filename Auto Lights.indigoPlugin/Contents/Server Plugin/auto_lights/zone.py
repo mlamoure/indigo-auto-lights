@@ -883,7 +883,7 @@ class Zone(AutoLightsBase):
 
         plan_contribs.append(("📶", f"presence detected = {presence}"))
         if self.luminance_dev_ids:
-            plan_contribs.append(("🌙", f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={self.minimum_luminance})"))
+            plan_contribs.append(("🌙", f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})"))
         if not period:
             plan_contribs.append(("⏰", "no active lighting period"))
         else:
