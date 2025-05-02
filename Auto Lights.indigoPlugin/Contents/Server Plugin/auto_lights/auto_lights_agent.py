@@ -83,14 +83,11 @@ class AutoLightsAgent(AutoLightsBase):
         # Zone execution logic (Where we decide what changes, if any, need to be made)
         ################################################################
 
-        action_reason = ""
-
         # Check global behavior variables using has_global_lights_off
         global_lights_off, reason = self.config.has_global_lights_off()
 
         if global_lights_off:
             zone.target_brightness = 0
-            action_reason = reason
 
         if not global_lights_off and not zone.lighting_periods:
             if self.config.log_non_events and zone.has_presence_detected():
@@ -115,7 +112,7 @@ class AutoLightsAgent(AutoLightsBase):
             plan = zone.calculate_target_brightness()
             zone.target_brightness = plan.new_targets
             self.logger.debug(
-                f"brightness update: {action_reason}. Target brightness: {zone.target_brightness}"
+                f"brightness update: {plan}. Target brightness: {zone.target_brightness}"
             )
 
         ################################################################
