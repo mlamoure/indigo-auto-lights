@@ -276,6 +276,7 @@ class Plugin(indigo.PluginBase):
 
             self._disable_web_server = values_dict.get("disable_web_server")
             self._log_non_events = bool(values_dict.get("log_non_events", False))
+            self._agent.config.log_non_events = self._log_non_events
 
             self.test_connections()
             # Restart or stop the configuration web server based on new settings.
