@@ -476,8 +476,8 @@ class AutoLightsAgent(AutoLightsBase):
         WARNING on mismatch.
         """
         for zone in self._config.zones:
-            # skip if zone off, locked or already processing
-            if not zone.enabled or zone.locked or zone.checked_out:
+            # skip if zone off, locked, already processing, or no active lighting period
+            if not zone.enabled or zone.locked or zone.checked_out or zone.current_lighting_period is None:
                 continue
 
             # build quick lookup dicts
