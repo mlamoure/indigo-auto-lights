@@ -1,5 +1,6 @@
 import json
-from typing import List
+from typing import List, Tuple
+from .auto_lights_base import BrightnessPlan
 
 from .auto_lights_base import AutoLightsBase
 from .lighting_period import LightingPeriod
@@ -151,13 +152,12 @@ class AutoLightsConfig(AutoLightsBase):
                 return True
         return False
 
-    def has_global_lights_off(self) -> tuple[bool, str]:
+    def has_global_lights_off(self) -> BrightnessPlan:
         """
         Check global behavior variables to determine if global lights should be turned off.
-        Returns a tuple where the first element indicates whether lights should be off,
-        and the second element is a descriptive reason.
-        Evaluates each variable based on its 'comparison_type'.
+        Returns a BrightnessPlan with any triggers contributing to global off.
         """
+        plan_contribs: List[Tuple[str,str]] = []
         for behavior in self._global_behavior_variables:
             var_id = behavior.get("var_id")
             var_value = behavior.get("var_value")
@@ -167,22 +167,21 @@ class AutoLightsConfig(AutoLightsBase):
                 var_name = indigo.variables[var_id].name
             except Exception:
                 continue
-            if comp_type:
-                lc_current = str(current_value).lower()
-                lc_var_value = str(var_value).lower()
-                if comp_type == "is equal to (str, lower())":
-                    if lc_current == lc_var_value:
-                        return True, f"Variable {var_name} equals expected value '{var_value}'"
-                elif comp_type == "is not equal to (str, lower())":
-                    if lc_current != lc_var_value:
-                        return True, f"Variable {var_name} does not equal '{var_value}'"
-                elif comp_type == "is TRUE (bool)":
-                    if str(current_value).lower() in ["true", "1"]:
-                        return True, f"Variable {var_name} evaluated as True"
-                elif comp_type == "is FALSE (bool)":
-                    if str(current_value).lower() in ["false", "0"]:
-                        return True, f"Variable {var_name} evaluated as False"
-            else:
-                if str(current_value).lower() == str(var_value).lower():
-                    return True, f"Variable {var_name} equals (default string comparison) '{var_value}'"
-        return False, "No global behavior variables triggered global lights off."
+            lc_current = str(current_value).lower()
+            lc_var_value = str(var_value).lower()
+            if comp_type == "is equal to (str, lower())" and lc_current == lc_var_value:
+                plan_contribs.append(("🌐", f"Variable {var_name} equals expected value '{var_value}'"))
+            elif comp_type == "is not equal to (str, lower())" and lc_current != lc_var_value:
+                plan_contribs.append(("🌐", f"Variable {var_name} does not equal '{var_value}'"))
+            elif comp_type == "is TRUE (bool)" and lc_current in ["true", "1"]:
+                plan_contribs.append(("🌐", f"Variable {var_name} evaluated as True"))
+            elif comp_type == "is FALSE (bool)" and lc_current in ["false", "0"]:
+                plan_contribs.append(("🌐", f"Variable {var_name} evaluated as False"))
+            elif comp_type is None and lc_current == lc_var_value:
+                plan_contribs.append(("🌐", f"Variable {var_name} equals (default) '{var_value}'"))
+        return BrightnessPlan(
+            contributions=plan_contribs,
+            exclusions=[],
+            new_targets=[],
+            device_changes=[],
+        )

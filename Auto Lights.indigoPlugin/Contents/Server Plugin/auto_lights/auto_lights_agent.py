@@ -84,12 +84,11 @@ class AutoLightsAgent(AutoLightsBase):
         ################################################################
 
         # Check global behavior variables using has_global_lights_off
-        global_lights_off, reason = self.config.has_global_lights_off()
-
-        if global_lights_off:
+        plan_global = self.config.has_global_lights_off()
+        if plan_global.contributions:
+            plan = plan_global
             zone.target_brightness = 0
-
-        if not global_lights_off and not zone.lighting_periods:
+        elif not zone.lighting_periods:
             if self.config.log_non_events and zone.has_presence_detected():
                 self.logger.info(
                     f"🔇 Presence detected in Zone '{zone.name}' but no lighting periods are configured – no action taken"
@@ -107,13 +106,10 @@ class AutoLightsAgent(AutoLightsBase):
             zone.check_in()
             return False
 
-        # Next, look to the target_brightness
-        if not global_lights_off and zone.current_lighting_period is not None:
+        # Next, look to the target_brightness for lighting periods
+        if not plan_global.contributions and zone.current_lighting_period is not None:
             plan = zone.calculate_target_brightness()
             zone.target_brightness = plan.new_targets
-            self.logger.debug(
-                f"brightness update: {plan}. Target brightness: {zone.target_brightness}"
-            )
 
         ################################################################
         # Save and write log
