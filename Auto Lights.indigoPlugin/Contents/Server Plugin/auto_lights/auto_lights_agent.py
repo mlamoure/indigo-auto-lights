@@ -30,7 +30,9 @@ class AutoLightsAgent(AutoLightsBase):
         """
         # GUARD: skip if already running
         if zone.checked_out:
-            self._debug_log(f"Skipping process_zone for '{zone.name}' – still checked out")
+            self._debug_log(
+                f"Skipping process_zone for '{zone.name}' – still checked out"
+            )
             return False
 
         # GUARD: plugin globally disabled
@@ -57,7 +59,9 @@ class AutoLightsAgent(AutoLightsBase):
 
         # LOCK: skip if already locked
         if zone.lock_enabled and zone.locked:
-            self._debug_log(f"Zone '{zone.name}' is locked until {zone.lock_expiration}")
+            self._debug_log(
+                f"Zone '{zone.name}' is locked until {zone.lock_expiration}"
+            )
             zone.check_in()
             return False
 
@@ -342,7 +346,9 @@ class AutoLightsAgent(AutoLightsBase):
                 )
                 self.logger.info("    lighting_periods:")
                 for period in zone.lighting_periods:
-                    self.logger.info(f"        {period.name} ({period.mode}) {period.from_time.strftime('%H:%M')}-{period.to_time.strftime('%H:%M')}")
+                    self.logger.info(
+                        f"        {period.name} ({period.mode}) {period.from_time.strftime('%H:%M')}-{period.to_time.strftime('%H:%M')}"
+                    )
 
     def enable_all_zones(self) -> None:
         """
