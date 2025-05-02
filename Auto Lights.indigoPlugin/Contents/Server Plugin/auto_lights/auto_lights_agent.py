@@ -344,11 +344,6 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.info(
                     f"    unlock_when_no_presence: {zone.unlock_when_no_presence}"
                 )
-                self.logger.info("    lighting_periods:")
-                for period in zone.lighting_periods:
-                    self.logger.info(
-                        f"        {period.name} ({period.mode}) {period.from_time.strftime('%H:%M')}-{period.to_time.strftime('%H:%M')}"
-                    )
 
     def enable_all_zones(self) -> None:
         """
