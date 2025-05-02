@@ -914,7 +914,7 @@ class Zone(AutoLightsBase):
                         raw = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
                         brightness = min(raw, limit_b) if limit_b is not None else raw
                     new_targets.append({"dev_id": dev_id, "brightness": brightness})
-                    plan_contribs.append(("🔢", f"device {dev_id} target={brightness}"))
+                    # plan_contribs.append(("🔢", f"device {dev_id} target={brightness}"))
             else:
                 plan_contribs.append(("🔇", "either bright or no presence → turning all off"))
                 new_targets = [{"dev_id": d["dev_id"], "brightness": 0} for d in self.current_lights_status()]
