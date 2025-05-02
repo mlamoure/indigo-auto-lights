@@ -430,7 +430,7 @@ class AutoLightsAgent(AutoLightsBase):
                 tgt = next(
                     (
                         item["brightness"]
-                        for item in zone.target_brightness
+                        for item in (zone.target_brightness or [])
                         if item["dev_id"] == dev_id
                     ),
                     None,
