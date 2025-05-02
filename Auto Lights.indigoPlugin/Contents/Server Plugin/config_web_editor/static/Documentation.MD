@@ -46,10 +46,6 @@ A Zone typically includes:
 - **Locks**: Each Zone respects manual overrides. When this happens, a lock is created for the Zone. Once locked, the
   Zone will not automatically turn on or off lights until the lock expires, the presence variable goes false, or you
   reset the lock. Behavior for locks can be customized and has multiple fields. See [below](#locks) for details.
-- **Perform Confirm**: This option is rarely necessary. This option makes Auto Lights wait for confirmation from Indigo
-  that the lighting change was implemented sucessfully, before moving to the next task. If you have devices that
-  sometimes get out of range, it can be helpful. When this option is not turned on, Auto Lights assumes that Indigo
-  delivers the command. This option is not helpful on devices
 - **Exclude from Lock**: If certain devices shouldn’t trigger a manual override lock, add them here. I recommend this
   for devices that do long fading times for dimmer changes, like the Hue lights plugin. The transition state will
   confuse Auto Lights and think the dimmer was changed outside of the plugin, and a lock will be created.
