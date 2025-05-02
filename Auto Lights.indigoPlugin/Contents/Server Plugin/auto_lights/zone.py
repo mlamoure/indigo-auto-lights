@@ -919,7 +919,10 @@ class Zone(AutoLightsBase):
                     excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
                     if excluded:
                         plan_exclusions.append(
-                            ("❌", f"{indigo.devices[dev_id].name} is excluded from current period")
+                            (
+                                "❌",
+                                f"{indigo.devices[dev_id].name} is excluded from current period",
+                            )
                         )
                         continue
                     if not self.adjust_brightness:
@@ -963,7 +966,7 @@ class Zone(AutoLightsBase):
                         action = "turned off"
                     device_changes.append((emoji, f"{action} '{device.name}'"))
                 else:
-                    emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "🔻"
+                    emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
                     device_changes.append((emoji, f"{device.name}: {old_b} → {new_b}"))
 
         return BrightnessPlan(
