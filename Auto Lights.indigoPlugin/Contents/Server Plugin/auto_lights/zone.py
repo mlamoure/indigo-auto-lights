@@ -1083,7 +1083,7 @@ class Zone(AutoLightsBase):
             )
             self.lock_expiration = new_expiration
             self.logger.info(
-                f"Lock extended for zone '{self._name}' until {self.lock_expiration_str}"
+                f"🔁Lock extended for zone '{self._name}' until {self.lock_expiration_str}"
             )
         else:
             self.locked = False
