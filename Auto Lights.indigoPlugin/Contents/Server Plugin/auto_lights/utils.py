@@ -66,7 +66,6 @@ def _send_command(device_id, target_level, target_bool) -> None:
 def send_to_indigo(
     device_id: int,
     desired_brightness: int | bool,
-    perform_confirm: bool,
 ) -> None:
     """
     Send a command to update an Indigo device with retries, status requests, and timed logs.
@@ -90,10 +89,9 @@ def send_to_indigo(
         target = desired_brightness
 
     # Time‐based intervals
-    last_send = last_status = last_log = start
+    last_send = last_log = start
     max_wait = 24.0
     send_interval = 10
-    status_interval = 8
     log_interval = 5.0
 
     # Initial send
@@ -107,18 +105,10 @@ def send_to_indigo(
         if confirmed:
             break
 
-        # only re-send & statusRequest if caller asked us to confirm
-        if perform_confirm:
-            if now - last_send >= send_interval:
-                _send_command(device_id, target, target_bool)
-                last_send = now
-
-            if now - last_status >= status_interval:
-                try:
-                    indigo.device.statusRequest(device_id, suppressLogging=True)
-                except Exception:
-                    pass
-                last_status = now
+        # resend commands at defined interval
+        if now - last_send >= send_interval:
+            _send_command(device_id, target, target_bool)
+            last_send = now
 
         # always log how much time remains
         if now - last_log >= log_interval:

@@ -74,7 +74,6 @@ class Zone(AutoLightsBase):
 
         # Behavior flags and settings
         self._adjust_brightness = True
-        self._perform_confirm = True
         self._lock_duration = None
         self._extend_lock_when_active = True
         self._unlock_when_no_presence = True
@@ -137,8 +136,6 @@ class Zone(AutoLightsBase):
                 self.extend_lock_when_active = bs["extend_lock_when_active"]
             if "lock_extension_duration" in bs:
                 self.lock_extension_duration = bs["lock_extension_duration"]
-            if "perform_confirm" in bs:
-                self.perform_confirm = bs["perform_confirm"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
             # load the advanced_settings.exclude_from_lock_dev_ids from the config
@@ -196,14 +193,6 @@ class Zone(AutoLightsBase):
             )
             self._enabled = False
 
-    @property
-    def perform_confirm(self) -> bool:
-        """Returns True if zone actions require confirmation, otherwise False."""
-        return self._perform_confirm
-
-    @perform_confirm.setter
-    def perform_confirm(self, value: bool) -> None:
-        self._perform_confirm = value
 
     @property
     def unlock_when_no_presence(self) -> bool:
@@ -843,7 +832,7 @@ class Zone(AutoLightsBase):
                 self._debug_log(
                     f"starting write for device {dev_id}, value {desired_brightness}"
                 )
-                utils.send_to_indigo(dev_id, desired_brightness, self.perform_confirm)
+                utils.send_to_indigo(dev_id, desired_brightness)
                 # when done, decrement; if zero, check in
                 with self._write_lock:
                     self._pending_writes -= 1
