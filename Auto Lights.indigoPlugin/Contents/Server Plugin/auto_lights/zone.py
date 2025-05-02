@@ -924,9 +924,19 @@ class Zone(AutoLightsBase):
             did, new_b = t["dev_id"], t["brightness"]
             old_b = current.get(did)
             if old_b is not None and old_b != new_b:
-                emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "🔻"
                 device = indigo.devices[did]
-                device_changes.append((emoji, f"{device.name}: {old_b} → {new_b}"))
+                # Non-dimmer devices: use on/off logging
+                if not isinstance(device, indigo.DimmerDevice):
+                    if new_b:
+                        emoji = "💡"
+                        action = "turned on"
+                    else:
+                        emoji = "🔌"
+                        action = "turned off"
+                    device_changes.append((emoji, f"{action} '{device.name}'"))
+                else:
+                    emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "🔻"
+                    device_changes.append((emoji, f"{device.name}: {old_b} → {new_b}"))
 
         return BrightnessPlan(
             contributions=plan_contribs,
