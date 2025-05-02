@@ -2,7 +2,7 @@ import datetime
 import logging
 import math
 import threading
-from typing import List, Union, Optional, TYPE_CHECKING
+from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
 from .auto_lights_base import BrightnessPlan
 from .auto_lights_base import AutoLightsBase

@@ -97,7 +97,7 @@ class AutoLightsAgent(AutoLightsBase):
             zone.check_in()
             return False
 
-        if not global_lights_off and zone.current_lighting_period is None:
+        if not plan_global.contributions and zone.current_lighting_period is None:
             if self.config.log_non_events and zone.has_presence_detected():
                 self.logger.info(
                     f"🔇 Presence detected in Zone '{zone.name}' but no active lighting period right now – no action taken"
