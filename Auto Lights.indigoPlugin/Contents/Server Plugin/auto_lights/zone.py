@@ -4,8 +4,8 @@ import math
 import threading
 from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
-from .auto_lights_base import BrightnessPlan
 from .auto_lights_base import AutoLightsBase
+from .auto_lights_base import BrightnessPlan
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
@@ -193,7 +193,6 @@ class Zone(AutoLightsBase):
                 f"Zone '{self._name}': enabled_var_id {value} not found: {e}"
             )
             self._enabled = False
-
 
     @property
     def unlock_when_no_presence(self) -> bool:
@@ -873,8 +872,8 @@ class Zone(AutoLightsBase):
         Build and return a BrightnessPlan instead of logging directly.
         """
         self._debug_log("calculate_target_brightness called")
-        plan_contribs: List[Tuple[str,str]] = []
-        plan_exclusions: List[Tuple[str,str]] = []
+        plan_contribs: List[Tuple[str, str]] = []
+        plan_exclusions: List[Tuple[str, str]] = []
 
         period = self.current_lighting_period
         presence = self.has_presence_detected()
@@ -883,11 +882,21 @@ class Zone(AutoLightsBase):
 
         plan_contribs.append(("📶", f"presence detected = {presence}"))
         if self.luminance_dev_ids:
-            plan_contribs.append(("🌙", f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})"))
+            plan_contribs.append(
+                (
+                    "🌙",
+                    f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})",
+                )
+            )
         if not period:
             plan_contribs.append(("⏰", "no active lighting period"))
         else:
-            plan_contribs.append(("⏰", f"period '{period.name}' mode='{period.mode}' from {period.from_time.strftime('%H:%M')} to {period.to_time.strftime('%H:%M')}"))
+            plan_contribs.append(
+                (
+                    "⏰",
+                    f"period '{period.name}' mode='{period.mode}' from {period.from_time.strftime('%H:%M')} to {period.to_time.strftime('%H:%M')}",
+                )
+            )
             if limit_b is not None:
                 plan_contribs.append(("⚖️", f"limit_brightness override = {limit_b}"))
 
@@ -898,7 +907,10 @@ class Zone(AutoLightsBase):
                 plan_contribs.append(("🚫", "skipping period logic, turning all off"))
             else:
                 plan_contribs.append(("🔇", "no presence detected → all off"))
-            new_targets = [{"dev_id": d["dev_id"], "brightness": 0} for d in self.current_lights_status()]
+            new_targets = [
+                {"dev_id": d["dev_id"], "brightness": 0}
+                for d in self.current_lights_status()
+            ]
 
         else:
             if period.mode == "On and Off" and presence and darkness:
@@ -906,21 +918,32 @@ class Zone(AutoLightsBase):
                 for dev_id in self.on_lights_dev_ids:
                     excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
                     if excluded:
-                        plan_exclusions.append(("❌", f"device {dev_id} excluded by period map"))
+                        plan_exclusions.append(
+                            ("❌", f"device {dev_id} excluded by period map")
+                        )
                         continue
                     if not self.adjust_brightness:
                         brightness = 100
                     else:
-                        raw = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+                        raw = math.ceil(
+                            (1 - (self.luminance / self.minimum_luminance)) * 100
+                        )
                         brightness = min(raw, limit_b) if limit_b is not None else raw
                     new_targets.append({"dev_id": dev_id, "brightness": brightness})
-                    # plan_contribs.append(("🔢", f"device {dev_id} target={brightness}"))
             else:
-                plan_contribs.append(("🔇", "either bright or no presence → turning all off"))
-                new_targets = [{"dev_id": d["dev_id"], "brightness": 0} for d in self.current_lights_status()]
+                plan_contribs.append(
+                    ("🔇", "either bright or no presence → turning all off")
+                )
+                new_targets = [
+                    {"dev_id": d["dev_id"], "brightness": 0}
+                    for d in self.current_lights_status()
+                ]
 
-        current = {d["dev_id"]: d["brightness"] for d in self.current_lights_status(include_lock_excluded=True)}
-        device_changes: List[Tuple[str,str]] = []
+        current = {
+            d["dev_id"]: d["brightness"]
+            for d in self.current_lights_status(include_lock_excluded=True)
+        }
+        device_changes: List[Tuple[str, str]] = []
         for t in new_targets:
             did, new_b = t["dev_id"], t["brightness"]
             old_b = current.get(did)
