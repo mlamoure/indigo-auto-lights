@@ -134,4 +134,5 @@ def send_to_indigo(
             action = "turned on" if target_bool else "turned off"
         else:
             # Fallback logging
+            pass
     else:
