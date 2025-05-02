@@ -119,20 +119,3 @@ def send_to_indigo(
         time.sleep(0.05)
 
     total = round(time.monotonic() - start, 2)
-    if confirmed:
-        # Log detailed change based on device type
-        if isinstance(device, indigo.DimmerDevice) and old_level is not None:
-            if target > old_level:
-                emoji = "🔆"
-            elif target < old_level:
-                emoji = "🔻"
-        elif isinstance(device, indigo.RelayDevice) and old_state is not None:
-            if not target_bool:
-                emoji = "🔌"
-            else:
-                emoji = "💡"
-            action = "turned on" if target_bool else "turned off"
-        else:
-            # Fallback logging
-            pass
-    else:
