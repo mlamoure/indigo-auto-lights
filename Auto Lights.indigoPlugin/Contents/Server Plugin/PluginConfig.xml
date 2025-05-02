@@ -40,16 +40,9 @@
         </List>
     </Field>
 
-    <Field id="log_non_events" type="checkbox" defaultValue="false">
+    <Field id="log_non_events" type="checkbox" defaultValue="false"
+           tooltip=" When enabled, the plugin will log extra information to Indigo log. Not recommended unless you are debugging your config.">
         <Label>Log non-action-taken events to the Indigo Event Log:</Label>
     </Field>
-
-    <Field id="log_non_events_instr" type="label" fontColor="darkgray" fontSize="small" alignWithControl="false">
-        <Label>
-            When enabled, the plugin will log extra information to Indigo log. Not recommended unless you are
-            debugging your config.
-        </Label>
-    </Field>
-
 </PluginConfig>
 
