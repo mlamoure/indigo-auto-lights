@@ -428,6 +428,8 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.info(
                     f"        end: {current_period.to_time.strftime('%H:%M')}"
                 )
+                if current_period.limit_brightness is not None:
+                    self.logger.info(f"        limit_brightness: {current_period.limit_brightness}")
             else:
                 self.logger.info(f"    current period: None")
             self.logger.info(f"    presence: {zone.has_presence_detected()}")
@@ -435,6 +437,7 @@ class AutoLightsAgent(AutoLightsBase):
                 f"    luminance: {zone.luminance} "
                 f"(minimum: {zone.minimum_luminance}, dark: {zone.is_dark()})"
             )
+            self.logger.info(f"    adjust_brightness: {zone.adjust_brightness}")
             # Print each zone light’s current and target brightness
             for dev_id in zone.on_lights_dev_ids + zone.off_lights_dev_ids:
                 dev = indigo.devices[dev_id]
