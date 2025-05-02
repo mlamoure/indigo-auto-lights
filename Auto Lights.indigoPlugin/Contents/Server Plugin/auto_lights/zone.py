@@ -3,6 +3,19 @@ import logging
 import math
 import threading
 from typing import List, Union, Optional, TYPE_CHECKING
+from typing import Tuple
+from dataclasses import dataclass
+
+@dataclass
+class BrightnessPlan:
+    # A list of (emoji, message) explaining WHY we did this
+    contributions: List[Tuple[str, str]]
+    # A list of (emoji, message) for devices excluded from the period
+    exclusions:      List[Tuple[str, str]]
+    # The new raw target_brightness list you will apply to zone.target_brightness
+    new_targets:     List[dict]
+    # A list of (emoji, message) describing the DEVICE‐level differences
+    device_changes:  List[Tuple[str, str]]
 
 from .auto_lights_base import AutoLightsBase
 
@@ -867,98 +880,72 @@ class Zone(AutoLightsBase):
                 lines.append(f"{key}: {repr(value)}")
         return "\n".join(lines)
 
-    def calculate_target_brightness(self) -> str:
-        """Calculate and set the target brightness for the zone.
-
-        Returns:
-            action_reason (str): Explanation of the action taken.
+    def calculate_target_brightness(self) -> BrightnessPlan:
         """
-        action_reason = ""
+        Build and return a BrightnessPlan instead of logging directly.
+        """
+        self._debug_log("calculate_target_brightness called")
+        plan_contribs: List[Tuple[str,str]] = []
+        plan_exclusions: List[Tuple[str,str]] = []
 
-        self._debug_log(f"calculate_target_brightness called")
-        mode = (
-            self.current_lighting_period.mode if self.current_lighting_period else None
-        )
-        presence_detected = self.has_presence_detected()
-        dark_condition = self.is_dark()
-        # avoid None.current_lighting_period.limit_brightness
-        cp = self.current_lighting_period
-        lb = cp.limit_brightness if cp is not None else None
-        self._debug_log(f"Current lighting period mode: {mode}, limit_brightness={lb}, adjust_brightness={self.adjust_brightness}")
-        self._debug_log(f"Presence detected: {presence_detected}")
-        self._debug_log(f"Is dark: {dark_condition}")
+        period = self.current_lighting_period
+        presence = self.has_presence_detected()
+        darkness = self.is_dark()
+        limit_b = getattr(period, "limit_brightness", None)
 
-        if self.current_lighting_period is None:
-            self._debug_log(f"no lighting periods available")
-            return "No lighting periods available"
+        plan_contribs.append(("📶", f"presence_detected = {presence}"))
+        plan_contribs.append(("🌙", f"is_dark = {darkness} (luminance={self.luminance}, threshold={self.minimum_luminance})"))
+        if not period:
+            plan_contribs.append(("⏰", "no active lighting period"))
+        else:
+            plan_contribs.append(("⏰", f"period '{period.name}' mode='{period.mode}' from {period.from_time.strftime('%H:%M')} to {period.to_time.strftime('%H:%M')}"))
+            if limit_b is not None:
+                plan_contribs.append(("⚖️", f"limit_brightness override = {limit_b}"))
 
-        # Check if the zone is in "On and Off" mode, has presence detected, and is dark.
-        if (
-            self.current_lighting_period.mode == "On and Off"
-            and self.has_presence_detected()
-            and self.is_dark()
-        ):
-            action_reason = (
-                "Presence is detected for a On and Off Zone, the zone is dark"
-            )
+        new_targets: List[dict] = []
 
-            new_target_brightness = []
-            for dev_id in self.on_lights_dev_ids:
-                self._debug_log(f"Processing device {dev_id}")
-                # Skip devices excluded from this lighting period
-                is_excluded = self.has_dev_lighting_mapping_exclusion(
-                    dev_id, self.current_lighting_period
-                )
-                self._debug_log(
-                    f"Device {dev_id} excluded: {is_excluded} because of has_dev_lighting_mapping_exclusion"
-                )
-                if is_excluded:
-                    if self._config.log_non_events:
-                        device = indigo.devices[dev_id]
-                        self.logger.info(
-                            f"      🚫 did not make changes to '{device.name}' because it is excluded from the current period ({self.current_lighting_period.name})"
-                        )
-                    continue
-                if not is_excluded:
+        if not period:
+            if presence:
+                plan_contribs.append(("🚫", "skipping period logic, turning all off"))
+            else:
+                plan_contribs.append(("🔇", "no presence detected → all off"))
+            new_targets = [{"dev_id": d["dev_id"], "brightness": 0} for d in self.current_lights_status()]
+
+        else:
+            if period.mode == "On and Off" and presence and darkness:
+                plan_contribs.append(("💡", "presence & dark → turning on lights"))
+                for dev_id in self.on_lights_dev_ids:
+                    excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
+                    if excluded:
+                        plan_exclusions.append(("❌", f"device {dev_id} excluded by period map"))
+                        continue
                     if not self.adjust_brightness:
                         brightness = 100
                     else:
-                        # Calculate brightness based on luminance
-                        delta = math.ceil(
-                            (1 - (self.luminance / self.minimum_luminance)) * 100
-                        )
-                        # Apply limit_brightness override if set
-                        if (
-                            self.current_lighting_period.limit_brightness is not None
-                            and self.current_lighting_period.limit_brightness >= 0
-                        ):
-                            delta = min(
-                                delta, self.current_lighting_period.limit_brightness
-                            )
-                        brightness = delta
-                    new_target_brightness.append(
-                        {"dev_id": dev_id, "brightness": brightness}
-                    )
-            self.target_brightness = new_target_brightness
-            self._debug_log(f"Target brightness list set: {new_target_brightness}")
+                        raw = math.ceil((1 - (self.luminance / self.minimum_luminance)) * 100)
+                        brightness = min(raw, limit_b) if limit_b is not None else raw
+                    new_targets.append({"dev_id": dev_id, "brightness": brightness})
+                    plan_contribs.append(("🔢", f"device {dev_id} target={brightness}"))
+            else:
+                plan_contribs.append(("🔇", "either bright or no presence → turning all off"))
+                new_targets = [{"dev_id": d["dev_id"], "brightness": 0} for d in self.current_lights_status()]
 
-        # If no presence detected, record action reason.
-        elif self.current_lighting_period.mode == "On and Off" and not self.is_dark():
-            if self._config.log_non_events and presence_detected:
-                self.logger.info(
-                    f"🔇 Presence detected in Zone '{self.name}', but room is not dark – no lights turned on"
-                )
-            self._debug_log("Zone is bright, setting all lights off")
-            action_reason = "zone is bright, turning lights off"
-            self.target_brightness = 0
-        elif not self.has_presence_detected():
-            self._debug_log("No presence detected, setting all lights off")
-            action_reason = "presence is not detected"
-            self.target_brightness = 0
-            self._debug_log("Target brightness set to off (0)")
+        current = {d["dev_id"]: d["brightness"] for d in self.current_lights_status(include_lock_excluded=True)}
+        device_changes: List[Tuple[str,str]] = []
+        for t in new_targets:
+            did, new_b = t["dev_id"], t["brightness"]
+            old_b = current.get(did)
+            if old_b is not None and old_b != new_b:
+                emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "🔻"
+                device = indigo.devices[did]
+                device_changes.append((emoji, f"{device.name}: {old_b} → {new_b}"))
 
-        self._debug_log(f"calculate_target_brightness result: {action_reason}")
-        return action_reason
+        return BrightnessPlan(
+            contributions=plan_contribs,
+            exclusions=plan_exclusions,
+            new_targets=new_targets,
+            device_changes=device_changes,
+        )
 
     @property
     def device_period_map(self) -> dict:

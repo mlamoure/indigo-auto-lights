@@ -120,13 +120,21 @@ class AutoLightsAgent(AutoLightsBase):
         # Save and write log
         ################################################################
         if zone.has_brightness_changes():
-            indent = "      "
-            self.logger.info(
-                f"{indent}💡 Zone '{zone.name}': applying lighting changes"
-            )
-            self.logger.info(f"{indent}🔄 Triggered by: {triggered_by}")
-            reason_text = action_reason or "no explicit reason provided"
-            self.logger.info(f"{indent}📝 Reason: {reason_text}")
+            plan = zone.calculate_target_brightness()
+            zone.target_brightness = plan.new_targets
+
+            self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
+            self.logger.info(f"\t🔄 Triggered by: {triggered_by}")
+            self.logger.info(f"\t📝 Change logic:")
+            for emoji, msg in plan.contributions:
+                self.logger.info(f"\t\t{emoji} {msg}")
+            if plan.exclusions:
+                self.logger.info(f"\t❌ Exclusions:")
+                for emoji, msg in plan.exclusions:
+                    self.logger.info(f"\t\t{emoji} {msg}")
+            self.logger.info(f"\t⚙️ Changes made:")
+            for emoji, msg in plan.device_changes:
+                self.logger.info(f"\t\t{emoji} {msg}")
             zone.save_brightness_changes()
         else:
             self._debug_log(f"no changes to make, checked in")
