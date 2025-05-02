@@ -112,7 +112,7 @@ class AutoLightsAgent(AutoLightsBase):
             zone.target_brightness = plan.new_targets
 
         ################################################################
-        # Save and write log
+        # Save and write plan to Indigo Event Log
         ################################################################
         if zone.has_brightness_changes():
             self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
