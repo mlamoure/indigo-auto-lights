@@ -196,7 +196,7 @@
               "unlock_when_no_presence": {
                 "type": "boolean",
                 "title": "Unlock When No Presence",
-                "tooltip": "Enable to unlock the zone when no presence is detected.",
+                "tooltip": "Enable to unlock the zone when no presence is detected.  Recommend leaving this off for zones where you may want an override to outlast the presence of the room, like a hallway.",
                 "default": true
               }
             }
