@@ -919,7 +919,7 @@ class Zone(AutoLightsBase):
                     excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
                     if excluded:
                         plan_exclusions.append(
-                            ("❌", f"device {dev_id} excluded by period map")
+                            ("❌", f"{indigo.devices[dev_id].name} is excluded from current period")
                         )
                         continue
                     if not self.adjust_brightness:
