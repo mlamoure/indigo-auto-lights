@@ -885,7 +885,7 @@ class Zone(AutoLightsBase):
         if self.luminance_dev_ids:
             plan_contribs.append(
                 (
-                    "🌙",
+                    "🌝",
                     f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})",
                 )
             )
