@@ -756,7 +756,8 @@ class Zone(AutoLightsBase):
 
         # Build a lookup of current hardware states
         current = {
-            item["dev_id"]: item["brightness"] for item in self.current_lights_status(include_lock_excluded=True)
+            item["dev_id"]: item["brightness"]
+            for item in self.current_lights_status(include_lock_excluded=True)
         }
         # Compare each target to its actual brightness/state
         for tgt in self.target_brightness:
@@ -880,7 +881,7 @@ class Zone(AutoLightsBase):
         darkness = self.is_dark()
         limit_b = getattr(period, "limit_brightness", None)
 
-        plan_contribs.append(("📶", f"presence detected = {presence}"))
+        plan_contribs.append(("👫", f"presence detected = {presence}"))
         if self.luminance_dev_ids:
             plan_contribs.append(
                 (
