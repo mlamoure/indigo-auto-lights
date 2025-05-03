@@ -517,17 +517,21 @@ def create_new_variable():
     Returns the new variable's ID and name as JSON.
     """
     data = request.get_json(force=True)
-    var_name = data.get("name", "")
+    var_name = data.get("name", "").strip()
     schema_property = data.get("schema_property", "")
-    new_var_id = indigo_create_new_variable(var_name)
-    # Refresh indigo variables cache
+    # Check for duplicate
+    existing_vars = current_app.config["config_editor"].get_cached_indigo_variables() or []
+    if any(v.get("name", "").lower() == var_name.lower() for v in existing_vars):
+        return {"error": f"Variable '{var_name}' already exists.", "schema_property": schema_property}, 400
+    try:
+        new_var_id = indigo_create_new_variable(var_name)
+    except Exception as e:
+        current_app.logger.error(f"Error creating variable '{var_name}': {e}")
+        return {"error": str(e), "schema_property": schema_property}, 500
+    # Refresh cache
     current_app.config["config_editor"]._indigo_variables_cache["data"] = None
-    refreshed = current_app.config["config_editor"].get_cached_indigo_variables()
-    return {
-        "var_id": new_var_id,
-        "var_name": var_name,
-        "schema_property": schema_property,
-    }
+    current_app.config["config_editor"].get_cached_indigo_variables()
+    return {"var_id": new_var_id, "var_name": var_name, "schema_property": schema_property}
 
 
 @app.route("/zone/delete/<zone_id>")

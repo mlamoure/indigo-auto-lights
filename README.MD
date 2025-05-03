@@ -30,6 +30,9 @@ like:
 - **Clear Explainability**: Auto Lights tries to be transparent in why changes are being made (or not made) so that you
   can focus on tweaking your configuration to your needs.
 
+Example output:
+![event_log.png](screenshots/event_log.png)
+
 ---
 
 ## Requirements

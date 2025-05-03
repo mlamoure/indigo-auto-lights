@@ -2,9 +2,10 @@ import datetime
 import logging
 import math
 import threading
-from typing import List, Union, Optional, TYPE_CHECKING
+from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
 from .auto_lights_base import AutoLightsBase
+from .auto_lights_base import BrightnessPlan
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
@@ -74,7 +75,6 @@ class Zone(AutoLightsBase):
 
         # Behavior flags and settings
         self._adjust_brightness = True
-        self._perform_confirm = True
         self._lock_duration = None
         self._extend_lock_when_active = True
         self._unlock_when_no_presence = True
@@ -90,6 +90,10 @@ class Zone(AutoLightsBase):
         self._lock_extension_duration = None
 
         self._checked_out = False
+
+        # counter for in-flight write commands
+        self._pending_writes = 0
+        self._write_lock = threading.Lock()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -117,6 +121,10 @@ class Zone(AutoLightsBase):
             mls = cfg["minimum_luminance_settings"]
             if "minimum_luminance" in mls:
                 self.minimum_luminance = mls["minimum_luminance"]
+            if "minimum_luminance_use_variable" in mls:
+                use_var = mls["minimum_luminance_use_variable"]
+                if not use_var:
+                    self._minimum_luminance_var_id = None
             if "minimum_luminance_var_id" in mls:
                 self.minimum_luminance_var_id = mls["minimum_luminance_var_id"]
             if "adjust_brightness" in mls:
@@ -127,8 +135,8 @@ class Zone(AutoLightsBase):
                 self.lock_duration = bs["lock_duration"]
             if "extend_lock_when_active" in bs:
                 self.extend_lock_when_active = bs["extend_lock_when_active"]
-            if "perform_confirm" in bs:
-                self.perform_confirm = bs["perform_confirm"]
+            if "lock_extension_duration" in bs:
+                self.lock_extension_duration = bs["lock_extension_duration"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
             # load the advanced_settings.exclude_from_lock_dev_ids from the config
@@ -148,6 +156,7 @@ class Zone(AutoLightsBase):
     # (4) Properties
     @property
     def name(self) -> str:
+        """Name of the zone."""
         return self._name
 
     @name.setter
@@ -162,7 +171,9 @@ class Zone(AutoLightsBase):
         try:
             return indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self.logger.error(f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}")
+            self.logger.error(
+                f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}"
+            )
             return False
 
     @property
@@ -178,17 +189,10 @@ class Zone(AutoLightsBase):
         try:
             self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         except Exception as e:
-            self.logger.error(f"Zone '{self._name}': enabled_var_id {value} not found: {e}")
+            self.logger.error(
+                f"Zone '{self._name}': enabled_var_id {value} not found: {e}"
+            )
             self._enabled = False
-
-    @property
-    def perform_confirm(self) -> bool:
-        """Returns True if zone actions require confirmation, otherwise False."""
-        return self._perform_confirm
-
-    @perform_confirm.setter
-    def perform_confirm(self, value: bool) -> None:
-        self._perform_confirm = value
 
     @property
     def unlock_when_no_presence(self) -> bool:
@@ -210,8 +214,8 @@ class Zone(AutoLightsBase):
 
     @property
     def last_changed_by(self) -> str:
-        """Returns the name of the device with the most recent lastChanged value or 'lock reset' if triggered by reset."""
-        if self._checked_out:
+        """Returns the name of the device with the most recent lastChanged value, or 'Auto Lights' if we’re currently processing."""
+        if self.checked_out:
             return "Auto Lights"
         return self.last_changed_device.name
 
@@ -255,6 +259,7 @@ class Zone(AutoLightsBase):
 
     @property
     def luminance_dev_ids(self) -> List[int]:
+        """List of device IDs used for luminance measurements."""
         return self._luminance_dev_ids
 
     @luminance_dev_ids.setter
@@ -271,7 +276,9 @@ class Zone(AutoLightsBase):
             try:
                 return indigo.variables[self._minimum_luminance_var_id].getValue(float)
             except Exception as e:
-                self.logger.error(f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}")
+                self.logger.error(
+                    f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}"
+                )
         if self._minimum_luminance is None:
             return 20000
         return self._minimum_luminance
@@ -282,6 +289,7 @@ class Zone(AutoLightsBase):
 
     @property
     def minimum_luminance_var_id(self) -> int:
+        """Indigo variable ID for minimum luminance threshold."""
         return self._minimum_luminance_var_id
 
     @minimum_luminance_var_id.setter
@@ -305,21 +313,29 @@ class Zone(AutoLightsBase):
         self._debug_log(f"computed luminance: {self._luminance}")
         return self._luminance
 
-    @property
-    def current_lights_status(self) -> List[dict]:
-        """Retrieve the current status of on and off lights for the zone."""
+    def current_lights_status(self, include_lock_excluded: bool = False) -> List[dict]:
+        """
+        Retrieve the current status of on and off lights for the zone.
+        By default this skips any device in exclude_from_lock_dev_ids;
+        set include_lock_excluded=True to see *all* devices.
+        """
         status = []
 
         def get_device_status(device):
             if isinstance(device, indigo.DimmerDevice):
                 return int(device.brightness)
+            elif hasattr(device, "brightness"):
+                return int(device.brightness)
             elif "brightness" in device.states:
                 return int(device.states["brightness"])
+            elif "brightnessLevel" in device.states:
+                return int(device.states["brightness"])
+
             return bool(device.onState)
 
         # Gather on_lights
         for dev_id in self.on_lights_dev_ids:
-            if dev_id in self.exclude_from_lock_dev_ids:
+            if not include_lock_excluded and dev_id in self.exclude_from_lock_dev_ids:
                 continue
             status.append(
                 {
@@ -330,7 +346,7 @@ class Zone(AutoLightsBase):
 
         # Gather off_lights
         for dev_id in self.off_lights_dev_ids:
-            if dev_id in self.exclude_from_lock_dev_ids:
+            if not include_lock_excluded and dev_id in self.exclude_from_lock_dev_ids:
                 continue
             status.append(
                 {
@@ -431,6 +447,7 @@ class Zone(AutoLightsBase):
 
     @property
     def _target_brightness_lock_comparison(self) -> List[dict]:
+        """Target brightness entries excluding devices excluded from lock detection."""
         return [
             item
             for item in self.target_brightness
@@ -439,6 +456,7 @@ class Zone(AutoLightsBase):
 
     @property
     def current_lighting_period(self) -> Optional[LightingPeriod]:
+        """Current active lighting period, or None if no period is active."""
         active = None
         for period in self.lighting_periods:
             if period.is_active_period():
@@ -449,11 +467,14 @@ class Zone(AutoLightsBase):
         self._current_lighting_period = active
 
         if not active:
-            self._debug_log(f"Zone '{self._name}': no active lighting period right now.")
+            self._debug_log(
+                f"Zone '{self._name}': no active lighting period right now."
+            )
         return active
 
     @property
     def lighting_periods(self) -> List[LightingPeriod]:
+        """List of LightingPeriod instances configured for the zone."""
         return self._lighting_periods
 
     @lighting_periods.setter
@@ -483,23 +504,9 @@ class Zone(AutoLightsBase):
         return self.last_changed_device.lastChanged
 
     @property
-    def check_out_var(self) -> indigo.Variable:
-        var_name = self._name.replace(" ", "_") + "_autoLights__checkedOut"
-        try:
-            debug_var = indigo.variables[var_name]
-        except KeyError:
-            if "auto_lights_script" not in indigo.variables.folders:
-                pass
-            var_folder = indigo.variables.folders["auto_lights_script"]
-            debug_var = indigo.variable.create(var_name, "false", folder=var_folder)
-            self._debug_log(
-                f"[Zone.check_out_var] check_out_var: created variable {var_name}"
-            )
-        return debug_var
-
-    @property
     def checked_out(self) -> bool:
-        return self.check_out_var.getValue(bool)
+        """True if this zone is currently in the middle of a process_zone run."""
+        return self._checked_out
 
     @property
     def lock_enabled(self) -> bool:
@@ -585,6 +592,7 @@ class Zone(AutoLightsBase):
                 if self._lock_timer:
                     self._lock_timer.cancel()
                 self._lock_timer = threading.Timer(delay, self.process_expired_lock)
+                self._lock_timer.daemon = True
                 self._lock_timer.start()
 
             self.logger.info(
@@ -601,12 +609,14 @@ class Zone(AutoLightsBase):
 
     @property
     def lock_expiration_str(self) -> str:
+        """Formatted lock expiration timestamp, empty if no expiration."""
         if self._lock_expiration is None:
             return ""
         return self._lock_expiration.strftime("%Y-%m-%d %H:%M:%S")
 
     @property
     def lock_expiration(self) -> datetime.datetime:
+        """Datetime when the zone lock expires."""
         return self._lock_expiration
 
     @lock_expiration.setter
@@ -622,9 +632,9 @@ class Zone(AutoLightsBase):
     def target_brightness_all_off(self) -> bool:
         """
         Check if all devices' target brightness indicate an off state.
-        
+
         For dimmer devices, 0 means off; for relay devices, False means off.
-        
+
         Returns:
             bool: True if all devices are set to off, False otherwise.
         """
@@ -637,10 +647,10 @@ class Zone(AutoLightsBase):
     def has_presence_detected(self) -> bool:
         """
         Check if presence is detected in this zone across all presence devices.
-        
+
         Examines the onState and onOffState of all presence devices in the zone.
         If any device indicates presence, returns True.
-        
+
         Returns:
             bool: True if presence is detected, False otherwise.
         """
@@ -693,13 +703,13 @@ class Zone(AutoLightsBase):
     def current_state_any_light_is_on(self) -> bool:
         """
         Check if any device in current_lights_status is on.
-        
+
         A device is considered "on" if its status is True or its brightness is > 0.
-        
+
         Returns:
             bool: True if any light is on, False otherwise.
         """
-        for status in self.current_lights_status:
+        for status in self.current_lights_status():
             if status is True or (isinstance(status, (int, float)) and status > 0):
                 return True
         return False
@@ -709,17 +719,19 @@ class Zone(AutoLightsBase):
         Mark the zone as checked in (not being processed).
         """
         self._checked_out = False
+        self._debug_log(f"Zone '{self.name}' checked in")
 
     def check_out(self):
         """
         Mark the zone as checked out (currently being processed).
         """
         self._checked_out = True
+        self._debug_log(f"Zone '{self.name}' checked out")
 
     def reset_lock(self, reason: str):
         """
         Reset the lock for the zone.
-        
+
         Args:
             reason (str): The reason for resetting the lock, which will be logged.
         """
@@ -729,10 +741,10 @@ class Zone(AutoLightsBase):
     def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
         Check if the current brightness or state of any device differs from its target brightness.
-        
+
         Args:
             exclude_lock_devices (bool): If True, devices in exclude_from_lock_dev_ids will be ignored.
-            
+
         Returns:
             bool: True if any device's current state differs from its target, False otherwise.
         """
@@ -744,20 +756,30 @@ class Zone(AutoLightsBase):
 
         # Build a lookup of current hardware states
         current = {
-            item["dev_id"]: item["brightness"] for item in self.current_lights_status
+            item["dev_id"]: item["brightness"]
+            for item in self.current_lights_status(include_lock_excluded=True)
         }
         # Compare each target to its actual brightness/state
         for tgt in self.target_brightness:
             dev_id = tgt["dev_id"]
             if exclude_lock_devices and dev_id in self.exclude_from_lock_dev_ids:
                 continue
+
             desired = tgt["brightness"]
-            actual = current.get(dev_id)
+            if dev_id not in current:
+                # skip devices that aren’t reported in the current status
+                self._debug_log(
+                    f"has_brightness_changes: skipping missing device {dev_id}"
+                )
+                continue
+
+            actual = current[dev_id]
             self._debug_log(
                 f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}"
             )
             if actual != desired:
                 return True
+
         self._debug_log("has_brightness_changes: no brightness changes detected")
         return False
 
@@ -765,34 +787,64 @@ class Zone(AutoLightsBase):
         """
         Apply and confirm the target brightness changes for this zone's devices.
 
-        This method updates devices based on their target brightness settings.
-        For devices that should be off, it sends an off command.
-        For on devices, it looks up the intended brightness value and sends the update.
-        If a device lacks a corresponding target, a warning is logged.
+        We batch up all writes, set pending_writes once, then
+        spawn one thread per write. The final thread to complete
+        will call check_in(), so we don’t prematurely check in.
         """
-        # If all devices are targeted to be off, process off-lights first.
+        # 1) Gather all writes
+        writes: List[tuple[int, Union[int, bool]]] = []
+
+        # If all devices are off, write off-lights first
         if self.target_brightness_all_off:
             for dev_id in self.off_lights_dev_ids:
                 self._debug_log(
                     f"Setting device {dev_id} off as per target_brightness_all_off"
                 )
-                self._send_to_indigo(dev_id, 0)
+                writes.append((dev_id, 0))
 
-        # Build a mapping from device ID to its target brightness for quick lookup.
+        # Then map on-lights
         target_map = {
             item["dev_id"]: item["brightness"] for item in self.target_brightness
         }
-
-        # Process on-lights devices using the target brightness mapping.
         for dev_id in self.on_lights_dev_ids:
-            target_value = target_map.get(dev_id)
-            if target_value is not None:
-                self._debug_log(f"Setting device {dev_id} brightness to {target_value}")
-                self._send_to_indigo(dev_id, target_value)
+            brightness = target_map.get(dev_id)
+            if brightness is not None:
+                self._debug_log(f"Setting device {dev_id} brightness to {brightness}")
+                writes.append((dev_id, brightness))
             else:
-                self.logger.warning(
+                self._debug_log(
                     f"No target brightness found for device {dev_id}. Skipping update."
                 )
+
+        # If there’s nothing to do, check in immediately
+        if not writes:
+            self._debug_log("save_brightness_changes: nothing to write, checking in")
+            self.check_in()
+            return
+
+        # 2) Set the pending-write count up front
+        with self._write_lock:
+            self._pending_writes = len(writes)
+
+        # 3) Spawn one thread per write
+        for dev_id, desired in writes:
+
+            def _writer(dev_id=dev_id, desired_brightness=desired):
+                self._debug_log(
+                    f"starting write for device {dev_id}, value {desired_brightness}"
+                )
+                utils.send_to_indigo(dev_id, desired_brightness)
+                # when done, decrement; if zero, check in
+                with self._write_lock:
+                    self._pending_writes -= 1
+                    self._debug_log(
+                        f"completed write for device {dev_id}, pending_writes={self._pending_writes}"
+                    )
+                    if self._pending_writes == 0:
+                        self.check_in()
+
+            t = threading.Thread(target=_writer, daemon=True)
+            t.start()
 
     def write_debug_output(self, config) -> str:
         """
@@ -816,87 +868,120 @@ class Zone(AutoLightsBase):
                 lines.append(f"{key}: {repr(value)}")
         return "\n".join(lines)
 
-    def calculate_target_brightness(self) -> str:
-        """Calculate and set the target brightness for the zone.
-
-        Returns:
-            action_reason (str): Explanation of the action taken.
+    def calculate_target_brightness(self) -> BrightnessPlan:
         """
-        action_reason = ""
+        Build and return a BrightnessPlan instead of logging directly.
+        """
+        self._debug_log("calculate_target_brightness called")
+        plan_contribs: List[Tuple[str, str]] = []
+        plan_exclusions: List[Tuple[str, str]] = []
 
-        self._debug_log(f"calculate_target_brightness called")
-        mode = (
-            self.current_lighting_period.mode if self.current_lighting_period else None
-        )
-        presence_detected = self.has_presence_detected()
-        dark_condition = self.is_dark()
-        self._debug_log(f"Current lighting period mode: {mode}")
-        self._debug_log(f"Presence detected: {presence_detected}")
-        self._debug_log(f"Is dark: {dark_condition}")
+        period = self.current_lighting_period
+        presence = self.has_presence_detected()
+        darkness = self.is_dark()
+        limit_b = getattr(period, "limit_brightness", None)
 
-        if self.current_lighting_period is None:
-            self._debug_log(f"no lighting periods available")
-            return "No lighting periods available"
-
-        # Check if the zone is in "On and Off" mode, has presence detected, and is dark.
-        if (
-            self.current_lighting_period.mode == "On and Off"
-            and self.has_presence_detected()
-            and self.is_dark()
-        ):
-            action_reason = (
-                "Presence is detected for a On and Off Zone, the zone is dark"
+        plan_contribs.append(("👫", f"presence detected = {presence}"))
+        if self.luminance_dev_ids:
+            plan_contribs.append(
+                (
+                    "🌝",
+                    f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})",
+                )
             )
+        if not period:
+            plan_contribs.append(("⏰", "no active lighting period"))
+        else:
+            plan_contribs.append(
+                (
+                    "⏰",
+                    f"period '{period.name}' mode='{period.mode}' from {period.from_time.strftime('%H:%M')} to {period.to_time.strftime('%H:%M')}",
+                )
+            )
+            if limit_b is not None:
+                plan_contribs.append(("⚖️", f"limit_brightness override = {limit_b}"))
 
-            new_target_brightness = []
-            for dev_id in self.on_lights_dev_ids:
-                self._debug_log(f"Processing device {dev_id}")
-                # Skip devices excluded from this lighting period
-                is_excluded = self.has_dev_lighting_mapping_exclusion(
-                    dev_id, self.current_lighting_period
-                )
-                self._debug_log(
-                    f"Device {dev_id} excluded: {is_excluded} because of has_dev_lighting_mapping_exclusion"
-                )
-                if not is_excluded:
+        new_targets: List[dict] = []
+
+        if not period:
+            if presence:
+                plan_contribs.append(("🚫", "skipping period logic, turning all off"))
+            else:
+                plan_contribs.append(("💤", "no presence detected → all off"))
+            # include *all* lights (even those excluded from locks) in our off-targets
+            new_targets = [
+                {"dev_id": d["dev_id"], "brightness": 0}
+                for d in self.current_lights_status(include_lock_excluded=True)
+            ]
+
+        else:
+            if period.mode == "On and Off" and presence and darkness:
+                plan_contribs.append(("💡", "presence & dark → turning on lights"))
+                for dev_id in self.on_lights_dev_ids:
+                    excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
+                    if excluded:
+                        plan_exclusions.append(
+                            (
+                                "❌",
+                                f"{indigo.devices[dev_id].name} is excluded from current period",
+                            )
+                        )
+                        continue
                     if not self.adjust_brightness:
                         brightness = 100
                     else:
-                        # Calculate brightness based on luminance
-                        delta = math.ceil(
+                        raw = math.ceil(
                             (1 - (self.luminance / self.minimum_luminance)) * 100
                         )
-                        # Apply limit_brightness override if set
-                        if (
-                            self.current_lighting_period.limit_brightness is not None
-                            and self.current_lighting_period.limit_brightness >= 0
-                        ):
-                            delta = min(
-                                delta, self.current_lighting_period.limit_brightness
-                            )
-                        brightness = delta
-                    new_target_brightness.append(
-                        {"dev_id": dev_id, "brightness": brightness}
+                        brightness = min(raw, limit_b) if limit_b is not None else raw
+                    new_targets.append({"dev_id": dev_id, "brightness": brightness})
+            else:
+                if not presence:
+                    plan_contribs.append(("👥", "no presence → turning all off"))
+                elif not darkness:
+                    plan_contribs.append(
+                        ("☀️", "zone is bright enough → turning all off")
                     )
-            self.target_brightness = new_target_brightness
-            self._debug_log(f"Target brightness list set: {new_target_brightness}")
 
-        # If no presence detected, record action reason.
-        elif self.current_lighting_period.mode == "On and Off" and not self.is_dark():
-            self._debug_log("Zone is bright, setting all lights off")
-            action_reason = "zone is bright, turning lights off"
-            self.target_brightness = 0
-        elif not self.has_presence_detected():
-            self._debug_log("No presence detected, setting all lights off")
-            action_reason = "presence is not detected"
-            self.target_brightness = 0
-            self._debug_log("Target brightness set to off (0)")
+                # include *all* lights (even those excluded from locks) in our off-targets
+                new_targets = [
+                    {"dev_id": d["dev_id"], "brightness": 0}
+                    for d in self.current_lights_status(include_lock_excluded=True)
+                ]
 
-        self._debug_log(f"calculate_target_brightness result: {action_reason}")
-        return action_reason
+        current = {
+            d["dev_id"]: d["brightness"]
+            for d in self.current_lights_status(include_lock_excluded=True)
+        }
+        device_changes: List[Tuple[str, str]] = []
+        for t in new_targets:
+            did, new_b = t["dev_id"], t["brightness"]
+            old_b = current.get(did)
+            if old_b is not None and old_b != new_b:
+                device = indigo.devices[did]
+                # Non-dimmer devices: use on/off logging
+                if not isinstance(device, indigo.DimmerDevice):
+                    if new_b:
+                        emoji = "💡"
+                        action = "turned on"
+                    else:
+                        emoji = "🔌"
+                        action = "turned off"
+                    device_changes.append((emoji, f"{action} '{device.name}'"))
+                else:
+                    emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
+                    device_changes.append((emoji, f"{device.name}: {old_b} → {new_b}"))
+
+        return BrightnessPlan(
+            contributions=plan_contribs,
+            exclusions=plan_exclusions,
+            new_targets=new_targets,
+            device_changes=device_changes,
+        )
 
     @property
     def device_period_map(self) -> dict:
+        """Mapping of device IDs to lighting period inclusion/exclusion."""
         return self._device_period_map
 
     @device_period_map.setter
@@ -908,33 +993,36 @@ class Zone(AutoLightsBase):
     ) -> bool:
         """
         Determines if a device is excluded from a specific lighting period.
-        
+
         This method checks the device-to-period mapping to see if a device
         should be excluded from a particular lighting period's control.
-        
+
         Args:
             dev_id (int): The Indigo device ID to check
             lighting_period (LightingPeriod): The lighting period to check against
-            
+
         Returns:
             bool: True if the device is excluded from the lighting period,
                   False if the device should be controlled by the lighting period
         """
         device_map = self.device_period_map.get(str(dev_id), {})
         result = device_map.get(str(lighting_period.id), True) is False
-        self._debug_log(f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}")
+        self._debug_log(
+            f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}"
+        )
+        self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
 
     def has_device(self, dev_id: int) -> str:
         """
         Check if the given device ID exists in this zone's device lists.
-        
+
         Args:
             dev_id (int): The Indigo device ID to check.
-            
+
         Returns:
             str: The name of the list containing the device ID, or an empty string if not found.
-                 Possible values: "exclude_from_lock_dev_ids", "on_lights_dev_ids", 
+                 Possible values: "exclude_from_lock_dev_ids", "on_lights_dev_ids",
                  "off_lights_dev_ids", "presence_dev_ids", "luminance_dev_ids", or "".
         """
         if dev_id in self.exclude_from_lock_dev_ids:
@@ -950,6 +1038,8 @@ class Zone(AutoLightsBase):
         else:
             result = ""
 
+        if result:
+            self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
 
     def schedule_next_transition(self):
@@ -959,7 +1049,9 @@ class Zone(AutoLightsBase):
          - otherwise: fire at the next-from_time among all periods
         """
         if not self.lighting_periods:
-            self._debug_log(f"Zone '{self._name}' has no lighting periods; skipping scheduling")
+            self._debug_log(
+                f"Zone '{self._name}' has no lighting periods; skipping scheduling"
+            )
             return
         # 1) cancel old
         if self._transition_timer:
@@ -1035,7 +1127,7 @@ class Zone(AutoLightsBase):
             )
             self.lock_expiration = new_expiration
             self.logger.info(
-                f"Lock extended for zone '{self._name}' until {self.lock_expiration_str}"
+                f"🔁Lock extended for zone '{self._name}' until {self.lock_expiration_str}"
             )
         else:
             self.locked = False
@@ -1068,21 +1160,15 @@ class Zone(AutoLightsBase):
 
         return result
 
-    # (6) Private methods
-    def _send_to_indigo(self, device_id: int, desired_brightness: int | bool) -> None:
-        """
-        Send a command to update an Indigo device and ensure it is confirmed if self.perform_confirm is True.
-        """
-        utils.send_to_indigo(device_id, desired_brightness, self._perform_confirm)
-
     def has_lock_occurred(self) -> bool:
-        if self._checked_out:
+        """Determine if an external change should create a new zone lock."""
+        # if we’re in the middle of our own process_zone run, don’t treat our device writes as
+        # an external change that should create a new lock.
+        if self.checked_out:
             return False
 
         result = self.has_brightness_changes(exclude_lock_devices=True)
         self._debug_log(f"has_lock_occurred result: {result}")
-
         if self.locked != result:
             self.locked = result
-
         return result

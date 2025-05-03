@@ -104,6 +104,8 @@ class LightingPeriod(AutoLightsBase):
         instance = cls(cfg.get("name"), cfg.get("mode"), from_time, to_time)
         if "lock_duration" in cfg:
             instance._lock_duration = cfg["lock_duration"]
+        if "limit_brightness" in cfg:
+            instance.limit_brightness = cfg["limit_brightness"]
         if "id" in cfg:
             instance.id = cfg["id"]
         return instance

@@ -187,16 +187,10 @@
                 "tooltip": "Overrides the plugin configuration for how long the lock is extended when the zone has presence detected.",
                 "default": -1
               },
-              "perform_confirm": {
-                "type": "boolean",
-                "title": "Perform Confirm",
-                "tooltip": "Plugin will confirm that the change will be applied to the device, and continue to retry if failed.",
-                "default": true
-              },
               "unlock_when_no_presence": {
                 "type": "boolean",
                 "title": "Unlock When No Presence",
-                "tooltip": "Enable to unlock the zone when no presence is detected.",
+                "tooltip": "Enable to unlock the zone when no presence is detected.  Recommend leaving this off for zones where you may want an override to outlast the presence of the room, like a hallway.",
                 "default": true
               }
             }

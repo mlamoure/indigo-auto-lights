@@ -59,6 +59,7 @@ class Plugin(indigo.PluginBase):
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
+        self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
 
         # Configure logging levels based on plugin preferences.
         self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
@@ -114,6 +115,18 @@ class Plugin(indigo.PluginBase):
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
 
+    def runConcurrentThread(self):
+        # sleep at first to let first-run go through.
+        self.sleep(15)
+
+        try:
+            while True:
+                if self._agent is not None:
+                    self._agent.debug_zone_states()
+                self.sleep(60)  # in seconds
+        except self.StopThread:
+            pass  # Optionally catch the StopThread exception and do any needed cleanup.
+
     def shutdown(self: indigo.PluginBase) -> None:
         """
         Any cleanup logic needed before the plugin is completely shut down.
@@ -121,6 +134,8 @@ class Plugin(indigo.PluginBase):
         :return:
         """
         self.logger.debug("shutdown called")
+        if hasattr(self, "_agent") and self._agent is not None:
+            self._agent.shutdown()
         self.stop_configuration_web_server()
 
     def deviceUpdated(
@@ -260,6 +275,8 @@ class Plugin(indigo.PluginBase):
             self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
 
             self._disable_web_server = values_dict.get("disable_web_server")
+            self._log_non_events = bool(values_dict.get("log_non_events", False))
+            self._agent.config.log_non_events = self._log_non_events
 
             self.test_connections()
             # Restart or stop the configuration web server based on new settings.
@@ -301,6 +318,7 @@ class Plugin(indigo.PluginBase):
         self._config_path = conf_path
         self._config_mtime = os.path.getmtime(conf_path)
         config = AutoLightsConfig(conf_path)
+        config.log_non_events = self._log_non_events
         self._agent = AutoLightsAgent(config)
         self._agent.process_all_zones()
 
@@ -362,25 +380,24 @@ class Plugin(indigo.PluginBase):
             "date_string": str(datetime.now()),  # Used in the config.html template
             "prefs": self.pluginPrefs,
         }
-        if props_dict.get("incoming_request_method", "GET") == "POST":
-            post_params = json.loads(props_dict["request_body"])
-            var_name = post_params.get("var_name", None)
+        if props_dict.get("incoming_request_method") == "POST":
+            post_params = json.loads(props_dict.get("request_body", "{}"))
+            var_name = post_params.get("var_name", "").strip()
+            # Validate input
             if not var_name:
                 context = {"error": "var_name must be provided"}
+                status = 400
             else:
-                newVar = indigo.variable.create(var_name, "default value")
-                context = {"var_id": newVar.id}
-            reply["status"] = 200
+                try:
+                    newVar = indigo.variable.create(var_name, "true")
+                    context = {"var_id": newVar.id}
+                    status = 200
+                except Exception as e:
+                    # Log failure and return error message
+                    self.logger.error(f"Failed to create variable '{var_name}': {e}")
+                    context = {"error": str(e)}
+                    status = 500
+            reply["status"] = status
             reply["headers"] = indigo.Dict({"Content-Type": "application/json"})
             reply["content"] = json.dumps(context)
-            return reply
-        try:
-            template = self.templates.get_template("config.html")
-            reply["status"] = 200
-            reply["headers"] = indigo.Dict({"Content-Type": "text/html"})
-            reply["content"] = template.render(context)
-        except Exception as exc:
-            # some error happened
-            self.logger.error(f"some error occurred: {exc}")
-            reply["status"] = 500
         return reply
