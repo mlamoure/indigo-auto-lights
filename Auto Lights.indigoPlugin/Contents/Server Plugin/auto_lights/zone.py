@@ -756,7 +756,7 @@ class Zone(AutoLightsBase):
 
         # Build a lookup of current hardware states
         current = {
-            item["dev_id"]: item["brightness"] for item in self.current_lights_status()
+            item["dev_id"]: item["brightness"] for item in self.current_lights_status(include_lock_excluded=True)
         }
         # Compare each target to its actual brightness/state
         for tgt in self.target_brightness:
