@@ -907,9 +907,10 @@ class Zone(AutoLightsBase):
                 plan_contribs.append(("🚫", "skipping period logic, turning all off"))
             else:
                 plan_contribs.append(("💤", "no presence detected → all off"))
+            # include *all* lights (even those excluded from locks) in our off-targets
             new_targets = [
                 {"dev_id": d["dev_id"], "brightness": 0}
-                for d in self.current_lights_status()
+                for d in self.current_lights_status(include_lock_excluded=True)
             ]
 
         else:
@@ -941,9 +942,10 @@ class Zone(AutoLightsBase):
                         ("☀️", "zone is bright enough → turning all off")
                     )
 
+                # include *all* lights (even those excluded from locks) in our off-targets
                 new_targets = [
                     {"dev_id": d["dev_id"], "brightness": 0}
-                    for d in self.current_lights_status()
+                    for d in self.current_lights_status(include_lock_excluded=True)
                 ]
 
         current = {

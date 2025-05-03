@@ -46,9 +46,10 @@ class AutoLightsAgent(AutoLightsBase):
 
         # Initialize baseline if needed
         if zone._target_brightness is None:
+            # include all lights in the initial baseline, too
             baseline = [
                 {"dev_id": s["dev_id"], "brightness": s["brightness"]}
-                for s in zone.current_lights_status()
+                for s in zone.current_lights_status(include_lock_excluded=True)
             ]
             zone.target_brightness = baseline
 
