@@ -213,7 +213,7 @@ class Zone(AutoLightsBase):
         self._adjust_brightness = value
 
     @property
-    def last_changed_by(self) -> str:
+    def _last_changed_by(self) -> str:
         """Returns the name of the device with the most recent lastChanged value, or 'Auto Lights' if we’re currently processing."""
         if self.checked_out:
             return "Auto Lights"
@@ -499,7 +499,7 @@ class Zone(AutoLightsBase):
         return latest_device
 
     @property
-    def last_changed(self) -> datetime.datetime:
+    def _last_changed(self) -> datetime.datetime:
         """Returns the last changed timestamp from the last_changed_device property."""
         return self.last_changed_device.lastChanged
 
@@ -591,7 +591,7 @@ class Zone(AutoLightsBase):
             if delay > 0:
                 if self._lock_timer:
                     self._lock_timer.cancel()
-                self._lock_timer = threading.Timer(delay, self.process_expired_lock)
+                self._lock_timer = threading.Timer(delay, self._process_expired_lock)
                 self._lock_timer.daemon = True
                 self._lock_timer.start()
 
@@ -700,7 +700,7 @@ class Zone(AutoLightsBase):
         )
         return avg < self.minimum_luminance
 
-    def current_state_any_light_is_on(self) -> bool:
+    def _current_state_any_light_is_on(self) -> bool:
         """
         Check if any device in current_lights_status is on.
 
@@ -846,7 +846,7 @@ class Zone(AutoLightsBase):
             t = threading.Thread(target=_writer, daemon=True)
             t.start()
 
-    def write_debug_output(self, config) -> str:
+    def _write_debug_output(self, config) -> str:
         """
         Dynamically construct debug output by iterating over the zone's attributes.
         For list attributes, if the key is lighting_periods, print them in detail.
@@ -918,7 +918,7 @@ class Zone(AutoLightsBase):
             if period.mode == "On and Off" and presence and darkness:
                 plan_contribs.append(("💡", "presence & dark → turning on lights"))
                 for dev_id in self.on_lights_dev_ids:
-                    excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
+                    excluded = self._has_dev_lighting_mapping_exclusion(dev_id, period)
                     if excluded:
                         plan_exclusions.append(
                             (
@@ -988,7 +988,7 @@ class Zone(AutoLightsBase):
     def device_period_map(self, value: dict) -> None:
         self._device_period_map = value
 
-    def has_dev_lighting_mapping_exclusion(
+    def _has_dev_lighting_mapping_exclusion(
         self, dev_id: int, lighting_period: LightingPeriod
     ) -> bool:
         """
@@ -1013,7 +1013,7 @@ class Zone(AutoLightsBase):
         self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
 
-    def has_device(self, dev_id: int) -> str:
+    def _has_device(self, dev_id: int) -> str:
         """
         Check if the given device ID exists in this zone's device lists.
 
@@ -1114,7 +1114,7 @@ class Zone(AutoLightsBase):
         # 2) schedule the next transition
         self.schedule_next_transition()
 
-    def process_expired_lock(self) -> None:
+    def _process_expired_lock(self) -> None:
         """
         Processes the expiration of the zone lock. If the zone is still locked,
         and extend_lock_when_active is True and presence is detected,

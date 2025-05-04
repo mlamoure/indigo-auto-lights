@@ -130,7 +130,7 @@ class AutoLightsAgent(AutoLightsBase):
         """
         processed = []
         for zone in self.config.zones:
-            device_prop = zone.has_device(orig_dev.id)
+            device_prop = zone._has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 if not zone.enabled:
                     if any(k in diff for k in ["brightness", "onState", "onOffState"]) and self.config.log_non_events:
