@@ -136,6 +136,9 @@ class AutoLightsConfig(AutoLightsBase):
             # Assign ordered LightingPeriod instances
             z.lighting_periods = [period_map[i] for i in ordered_ids if i in period_map]
             self._zones.append(z)
+        # assign zone_index to each zone
+        for idx, z in enumerate(self._zones):
+            z.zone_index = idx
 
         for zone in self._zones:
             zone.calculate_target_brightness()

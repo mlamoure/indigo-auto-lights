@@ -19,6 +19,19 @@ except ImportError:
 
 
 class Zone(AutoLightsBase):
+    _SYNC_ATTRS = {
+        "locked",
+        "on_lights_dev_ids",
+        "off_lights_dev_ids",
+        "presence_dev_ids",
+        "luminance_dev_ids",
+        "minimum_luminance",
+        "adjust_brightness",
+        "lock_duration",
+        "extend_lock_when_active",
+        "lock_extension_duration",
+        "unlock_when_no_presence",
+    }
     """
     Represents an AutoLights zone.
 
@@ -52,9 +65,9 @@ class Zone(AutoLightsBase):
             config (AutoLightsConfig): The global auto lights configuration.
         """
         self.logger = logging.getLogger("Plugin")
+        self._suppress_sync = True
         self._name = name
-        self._enabled = False
-        self._enabled_var_id = None
+        self._zone_index = None
 
         self._lighting_periods = []
         self._current_lighting_period = None
@@ -94,6 +107,9 @@ class Zone(AutoLightsBase):
         # counter for in-flight write commands
         self._pending_writes = 0
         self._write_lock = threading.Lock()
+
+        self._suppress_sync = False
+        self._sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -165,34 +181,13 @@ class Zone(AutoLightsBase):
 
     @property
     def enabled(self) -> bool:
-        """Indicates whether the zone is enabled."""
-        if self._enabled_var_id is None:
-            return False
+        """Indicates whether the zone is enabled via its Indigo Relay device."""
         try:
-            return indigo.variables[self._enabled_var_id].getValue(bool)
+            return bool(self.indigo_dev.onState)
         except Exception as e:
-            self.logger.error(
-                f"Zone '{self._name}': enabled_var_id {self._enabled_var_id} not found when accessing enabled property: {e}"
-            )
+            self.logger.error(f"Zone '{self._name}': failed to read onState: {e}")
             return False
 
-    @property
-    def enabled_var_id(self) -> int:
-        """
-        The Indigo variable ID that controls whether this zone is enabled.
-        """
-        return self._enabled_var_id
-
-    @enabled_var_id.setter
-    def enabled_var_id(self, value: int) -> None:
-        self._enabled_var_id = value
-        try:
-            self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
-        except Exception as e:
-            self.logger.error(
-                f"Zone '{self._name}': enabled_var_id {value} not found: {e}"
-            )
-            self._enabled = False
 
     @property
     def unlock_when_no_presence(self) -> bool:
@@ -1012,6 +1007,56 @@ class Zone(AutoLightsBase):
         )
         self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if not getattr(self, "_suppress_sync", True) and name in self._SYNC_ATTRS:
+            self._sync_indigo_device()
+
+    @property
+    def zone_index(self) -> int:
+        return self._zone_index
+
+    @zone_index.setter
+    def zone_index(self, value: int) -> None:
+        self._zone_index = value
+
+    @property
+    def indigo_dev(self) -> indigo.Device:
+        for d in indigo.devices:
+            if (
+                d.pluginId == "com.vtmikel.autolights"
+                and d.deviceTypeId == "auto_lights_zone"
+                and int(d.pluginProps.get("zoneIndex", -1)) == self.zone_index
+            ):
+                return d
+        newd = indigo.device.create(
+            protocol=indigo.kProtocol.Plugin,
+            name=self.name,
+            deviceTypeId="auto_lights_zone",
+            props={"zoneIndex": self.zone_index},
+        )
+        return newd
+
+    def _sync_indigo_device(self) -> None:
+        on_names = [indigo.devices[d].name for d in self.on_lights_dev_ids]
+        off_names = [indigo.devices[d].name for d in self.off_lights_dev_ids]
+        presence_names = [indigo.devices[d].name for d in self.presence_dev_ids]
+        lum_names = [indigo.devices[d].name for d in self.luminance_dev_ids]
+        state_list = [
+            {"key": "locked", "value": self.locked},
+            {"key": "on_off_lights", "value": ";".join(on_names)},
+            {"key": "off_lights", "value": ";".join(off_names)},
+            {"key": "presence_devices", "value": ";".join(presence_names)},
+            {"key": "luminance_devices", "value": ";".join(lum_names)},
+            {"key": "minimum_luminance", "value": self.minimum_luminance},
+            {"key": "adjust_brightness", "value": self.adjust_brightness},
+            {"key": "lock_duration", "value": self.lock_duration},
+            {"key": "extend_lock_when_active", "value": self.extend_lock_when_active},
+            {"key": "lock_extension_duration", "value": self.lock_extension_duration},
+            {"key": "unlock_when_no_presence", "value": self.unlock_when_no_presence},
+        ]
+        self.indigo_dev.updateStatesOnServer(state_list)
 
     def _has_device(self, dev_id: int) -> str:
         """

@@ -401,3 +401,16 @@ class Plugin(indigo.PluginBase):
             reply["headers"] = indigo.Dict({"Content-Type": "application/json"})
             reply["content"] = json.dumps(context)
         return reply
+
+    def actionControlRelay(self, action, dev):
+        if dev.deviceTypeId == "auto_lights_zone":
+            act = action.deviceAction
+            if act == indigo.kDeviceAction.TurnOn or act == indigo.kDeviceAction.Toggle:
+                dev.updateStateOnServer("onOffState", True)
+            else:
+                dev.updateStateOnServer("onOffState", False)
+            zi = int(dev.pluginProps.get("zoneIndex", -1))
+            zone = next(z for z in self._agent.config.zones if z.zone_index == zi)
+            self._agent.process_zone(zone)
+        else:
+            super().actionControlRelay(action, dev)
