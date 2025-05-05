@@ -1031,19 +1031,6 @@ class Zone(AutoLightsBase):
                 deviceTypeId="auto_lights_zone",
                 props={"zoneIndex": self.zone_index},
             )
-        except indigo.NameNotUniqueError:
-            self.logger.warning(
-                f"Device '{name}' already exists; locating by zoneIndex"
-            )
-            # second pass in case props didn't match exactly
-            for d in indigo.devices:
-                if (
-                    d.pluginId == "com.vtmikel.autolights"
-                    and d.deviceTypeId == "auto_lights_zone"
-                    and int(d.address) == self.zone_index
-                ):
-                    return d
-            return None
         except Exception as e:
             self.logger.error(f"error creating new indigo device: {e}")
             return None
