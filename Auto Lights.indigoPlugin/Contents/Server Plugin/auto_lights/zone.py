@@ -1027,6 +1027,8 @@ class Zone(AutoLightsBase):
                 deviceTypeId="auto_lights_zone",
                 props={"zoneIndex": self.zone_index},
             )
+            # turn on the new zone device by default
+            new_device.updateStateOnServer("onOffState", True)
             return new_device
         except Exception as e:
             self.logger.error(f"error creating new indigo device: {e}")
