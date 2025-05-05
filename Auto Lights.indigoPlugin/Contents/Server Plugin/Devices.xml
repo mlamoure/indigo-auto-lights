@@ -25,7 +25,7 @@
 -->
 
 <Devices>
-    <Device type="custom" id="auto_lights_zone">
+    <Device type="relay" id="auto_lights_zone">
         <Name>Auto Lights Zone</Name>
         <!-- States removed in favor of dynamic device states -->
     </Device>
