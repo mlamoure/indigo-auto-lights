@@ -416,23 +416,29 @@ class Plugin(indigo.PluginBase):
             super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
-        # if the agent/config isn't ready yet, or it isn't one of our zone devices,
-        # just fall back to the default state list
+        # if we’re not ready yet or it isn’t one of our Zone devices,
+        # fall back to Indigo’s default behavior
         if self._agent is None or dev.deviceTypeId != "auto_lights_zone":
             return super().getDeviceStateList(dev)
+
         raw = dev.pluginProps.get("zoneIndex")
-        if raw is None:
-            return super().getDeviceStateList(dev)
         try:
             zi = int(raw)
         except (TypeError, ValueError):
             return super().getDeviceStateList(dev)
-        zone = self._agent.config.zones[zi]
+
+        # grab the Zone and its shared config
+        zone   = self._agent.config.zones[zi]
+        config = self._agent.config
+
         stateList = []
-        for attr in zone._sync_attrs:
-            sf = zone._schema_fields[attr]
-            title = sf.get("title", attr)
-            t = sf.get("type", "string")
+        # iterate in schema order (or whatever order config.sync_zone_attrs holds)
+        for attr in config.sync_zone_attrs:
+            schema = config.zone_field_schemas.get(attr, {})
+            title  = schema.get("title", attr)
+            t      = schema.get("type", "string")
+
+            # pick the right helper based on JSON-schema type
             if t == "boolean":
                 stateList.append(
                     self.getDeviceStateDictForBoolTrueFalseType(attr, title, title)

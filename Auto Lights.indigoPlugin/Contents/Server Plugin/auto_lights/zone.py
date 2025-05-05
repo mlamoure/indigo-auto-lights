@@ -19,20 +19,6 @@ except ImportError:
 
 
 class Zone(AutoLightsBase):
-    # Map zone attribute names to Indigo state IDs
-    _STATE_KEY_MAP = {
-        "locked": "locked",
-        "on_lights_dev_ids": "on_off_lights",
-        "off_lights_dev_ids": "off_lights",
-        "presence_dev_ids": "presence_devices",
-        "luminance_dev_ids": "luminance_devices",
-        "minimum_luminance": "minimum_luminance",
-        "adjust_brightness": "adjust_brightness",
-        "lock_duration": "lock_duration",
-        "extend_lock_when_active": "extend_lock_when_active",
-        "lock_extension_duration": "lock_extension_duration",
-        "unlock_when_no_presence": "unlock_when_no_presence",
-    }
     """
     Represents an AutoLights zone.
 
@@ -1058,13 +1044,19 @@ class Zone(AutoLightsBase):
 
     def _sync_indigo_device(self) -> None:
         """
-        Dynamically sync Indigo device states based on schema-driven sync_attrs.
+        Dynamically sync Indigo device states based on the JSON-schema
+        x-sync_to_indigo flags in the AutoLightsConfig.
         """
-        state_list = []
-        for attr in getattr(self, "_sync_attrs", ()):
-            key = self._STATE_KEY_MAP.get(attr, attr)
-            val = getattr(self, attr)
-            state_list.append({"key": key, "value": val})
+        # grab the set of attribute names from our config
+        sync_attrs = self._config.sync_zone_attrs
+
+        # build the state list: each key is the same as the attribute name
+        state_list = [
+            {"key": attr, "value": getattr(self, attr)}
+            for attr in sync_attrs
+        ]
+
+        # push them all up to the Indigo device in one go
         self.indigo_dev.updateStatesOnServer(state_list)
 
     def _has_device(self, dev_id: int) -> str:
