@@ -1029,11 +1029,16 @@ class Zone(AutoLightsBase):
     @property
     def indigo_dev(self) -> indigo.Device:
         for d in indigo.devices:
-            if (
-                d.pluginId == "com.vtmikel.autolights"
-                and d.deviceTypeId == "auto_lights_zone"
-                and int(d.pluginProps.get("zoneIndex", -1)) == self.zone_index
-            ):
+            if d.pluginId != "com.vtmikel.autolights" or d.deviceTypeId != "auto_lights_zone":
+                continue
+            raw = d.pluginProps.get("zoneIndex")
+            if raw is None:
+                continue
+            try:
+                idx = int(raw)
+            except (TypeError, ValueError):
+                continue
+            if idx == self.zone_index:
                 return d
         newd = indigo.device.create(
             protocol=indigo.kProtocol.Plugin,

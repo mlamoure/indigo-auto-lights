@@ -418,7 +418,13 @@ class Plugin(indigo.PluginBase):
     def getDeviceStateList(self, dev):
         if dev.deviceTypeId != "auto_lights_zone":
             return super().getDeviceStateList(dev)
-        zi = int(dev.pluginProps.get("zoneIndex", -1))
+        raw = dev.pluginProps.get("zoneIndex")
+        if raw is None:
+            return super().getDeviceStateList(dev)
+        try:
+            zi = int(raw)
+        except (TypeError, ValueError):
+            return super().getDeviceStateList(dev)
         zone = self._agent.config.zones[zi]
         stateList = []
         for attr in zone._sync_attrs:
