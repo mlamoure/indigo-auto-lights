@@ -97,7 +97,8 @@ class Zone(AutoLightsBase):
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
-        self._sync_indigo_device()
+        if hasattr(self, "_config"):
+            self._sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
