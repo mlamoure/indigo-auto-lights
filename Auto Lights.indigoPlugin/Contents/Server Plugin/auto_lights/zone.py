@@ -1043,9 +1043,10 @@ class Zone(AutoLightsBase):
             if idx == self.zone_index:
                 return d
         try:
+            new_device_name = f"Auto Lights Zone – {self.zone_index + 1}: {self.name}"
             new_device = indigo.device.create(
                 protocol=indigo.kProtocol.Plugin,
-                name=self.name,
+                name=new_device_name,
                 deviceTypeId="auto_lights_zone",
                 props={"zoneIndex": self.zone_index},
             )
