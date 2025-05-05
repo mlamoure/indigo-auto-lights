@@ -1027,13 +1027,15 @@ class Zone(AutoLightsBase):
         # didn't find it, so attempt to create one
         try:
             name = f"Auto Lights Zone - {self.name}"
-            return indigo.device.create(
+            dev = indigo.device.create(
                 protocol=indigo.kProtocol.Plugin,
                 name=name,
                 address=self.zone_index,
                 deviceTypeId="auto_lights_zone",
                 props={"zone_index": self.zone_index},
             )
+            indigo.device.turnOn(dev.id, delay=0)
+            return dev
         except Exception as e:
             self.logger.error(f"error creating new indigo device: {e}")
             return None
