@@ -1177,26 +1177,14 @@ class Zone(AutoLightsBase):
         """
         Check if the provided variable id is associated with this zone.
 
-        This method determines if the given variable id matches the zone's minimum luminance variable id
-        or the enabled variable id.
-
-        Args:
-            var_id (int): The variable id to check.
-
-        Returns:
-            bool: True if the variable is used by this zone, False otherwise.
+        This method determines if the given variable id matches the zone's minimum luminance variable id.
         """
         if (
             self._minimum_luminance_var_id is not None
             and var_id == self._minimum_luminance_var_id
         ):
-            result = True
-        elif var_id == self._enabled_var_id:
-            result = True
-        else:
-            result = False
-
-        return result
+            return True
+        return False
 
     def has_lock_occurred(self) -> bool:
         """Determine if an external change should create a new zone lock."""
