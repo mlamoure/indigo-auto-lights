@@ -96,12 +96,15 @@ class Zone(AutoLightsBase):
         self._write_lock = threading.Lock()
 
     def __setattr__(self, name, value):
+        # always let Python store the attribute
         super().__setattr__(name, value)
 
-        # only sync once we have a real _config, and only for
-        # attributes that appear in the schema's x-sync_to_indigo list
+        # --- BROAD GUARD: don't even think about syncing until after zone_index is set ---
+        if getattr(self, "_zone_index", None) is None:
+            return
+
+        # now, if this is one of the fields we want to mirror back into Indigo, do it
         if hasattr(self, "_config"):
-            # strip leading underscore so "_lock_duration" → "lock_duration"
             key = name[1:] if name.startswith("_") else name
             if key in self._config.sync_zone_attrs:
                 self._sync_indigo_device()
@@ -1012,6 +1015,10 @@ class Zone(AutoLightsBase):
 
     @property
     def indigo_dev(self) -> indigo.Device:
+        # if we don’t yet have a real zone_index, do not even create or look one up
+        if getattr(self, "_zone_index", None) is None:
+            return None
+
         # first try to find an existing plugin device with our zoneIndex
         for d in indigo.devices:
             if (
