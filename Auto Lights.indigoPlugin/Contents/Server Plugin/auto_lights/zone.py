@@ -1020,7 +1020,7 @@ class Zone(AutoLightsBase):
             if (
                 d.pluginId == "com.vtmikel.autolights"
                 and d.deviceTypeId == "auto_lights_zone"
-                and d.pluginProps.get("zone_index") == str(self.zone_index)
+                and str(d.pluginProps.get("zone_index")) == str(self.zone_index)
             ):
                 return d
 
@@ -1038,7 +1038,9 @@ class Zone(AutoLightsBase):
             self._sync_indigo_device()
             return dev
         except Exception as e:
-            self.logger.error(f"error creating new indigo device: {e}")
+            self.logger.error(
+                f"error creating new indigo device for Zone '{self.name}': {e}"
+            )
             return None
 
     def _sync_indigo_device(self) -> None:
