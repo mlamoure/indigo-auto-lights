@@ -1015,16 +1015,12 @@ class Zone(AutoLightsBase):
 
     @property
     def indigo_dev(self) -> indigo.Device:
-        # if we don’t yet have a real zone_index, do not even create or look one up
-        if getattr(self, "_zone_index", None) is None:
-            return None
-
-        # first try to find an existing plugin device with our zoneIndex
+        # first try to find an existing plugin device with our zone_index
         for d in indigo.devices:
             if (
                 d.pluginId == "com.vtmikel.autolights"
                 and d.deviceTypeId == "auto_lights_zone"
-                and d.pluginProps.get("zoneIndex") == str(self.zone_index)
+                and d.pluginProps.get("zone_index") == str(self.zone_index)
             ):
                 return d
 
@@ -1036,7 +1032,7 @@ class Zone(AutoLightsBase):
                 name=name,
                 address=self.zone_index,
                 deviceTypeId="auto_lights_zone",
-                props={"zoneIndex": self.zone_index},
+                props={"zone_index": self.zone_index},
             )
         except Exception as e:
             self.logger.error(f"error creating new indigo device: {e}")
