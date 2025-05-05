@@ -1048,14 +1048,16 @@ class Zone(AutoLightsBase):
                 props={"zoneIndex": self.zone_index},
             )
             return newd
-        except indigo.NameNotUniqueError:
-            # a device with this name already exists; use it
-            for existing in indigo.devices:
-                if existing.name == self.name and existing.deviceTypeId == "auto_lights_zone":
-                    props = existing.pluginProps.copy()
-                    props["zoneIndex"] = self.zone_index
-                    existing.replacePluginPropsOnServer(props)
-                    return existing
+        except Exception as e:
+            # Indigo NameNotUniqueError is raised when a device name already exists.
+            if e.__class__.__name__ == "NameNotUniqueError":
+                for existing in indigo.devices:
+                    if existing.name == self.name and existing.deviceTypeId == "auto_lights_zone":
+                        props = existing.pluginProps.copy()
+                        props["zoneIndex"] = self.zone_index
+                        existing.replacePluginPropsOnServer(props)
+                        return existing
+            # re-raise any other exceptions or if no matching device found
             raise
 
     def _sync_indigo_device(self) -> None:
