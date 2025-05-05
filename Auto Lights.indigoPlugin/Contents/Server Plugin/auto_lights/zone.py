@@ -2,6 +2,7 @@ import datetime
 import logging
 import math
 import threading
+import json
 from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
 from .auto_lights_base import AutoLightsBase
@@ -1047,16 +1048,18 @@ class Zone(AutoLightsBase):
         Dynamically sync Indigo device states based on the JSON-schema
         x-sync_to_indigo flags in the AutoLightsConfig.
         """
-        # grab the set of attribute names from our config
         sync_attrs = self._config.sync_zone_attrs
 
-        # build the state list: each key is the same as the attribute name
-        state_list = [
-            {"key": attr, "value": getattr(self, attr)}
-            for attr in sync_attrs
-        ]
+        state_list = []
+        for attr in sync_attrs:
+            val = getattr(self, attr)
+            # Indigo only accepts bool, int, float or string:
+            if isinstance(val, list):
+                # turn list into a JSON string (or you could do ','.join(...))
+                val = json.dumps(val)
+            state_list.append({"key": attr, "value": val})
 
-        # push them all up to the Indigo device in one go
+        # Push them all up to the Indigo device in one go
         self.indigo_dev.updateStatesOnServer(state_list)
 
     def _has_device(self, dev_id: int) -> str:

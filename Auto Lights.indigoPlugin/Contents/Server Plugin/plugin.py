@@ -160,8 +160,9 @@ class Plugin(indigo.PluginBase):
             if k in new_dict and orig_dict[k] != new_dict[k]
         }
 
-        # process the change
-        self._agent.process_device_change(orig_dev, diff)
+        # process the change if the agent exists
+        if self._agent is not None:
+            self._agent.process_device_change(orig_dev, diff)
 
     def variableUpdated(
         self, orig_var: indigo.Variable, new_var: indigo.Variable
