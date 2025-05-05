@@ -1043,13 +1043,13 @@ class Zone(AutoLightsBase):
             if idx == self.zone_index:
                 return d
         try:
-            newd = indigo.device.create(
+            new_device = indigo.device.create(
                 protocol=indigo.kProtocol.Plugin,
                 name=self.name,
                 deviceTypeId="auto_lights_zone",
                 props={"zoneIndex": self.zone_index},
             )
-            return newd
+            return new_device
         except Exception as e:
             self.logger.error(f"error creating new indigo device: {e}")
             return None
