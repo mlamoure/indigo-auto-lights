@@ -109,7 +109,6 @@ class Zone(AutoLightsBase):
         self._write_lock = threading.Lock()
 
         self._suppress_sync = False
-        self._sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -1010,7 +1009,12 @@ class Zone(AutoLightsBase):
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
-        if not getattr(self, "_suppress_sync", True) and name in self._SYNC_ATTRS:
+        # only sync after we've been assigned a valid zone_index
+        if (
+            not getattr(self, "_suppress_sync", True)
+            and name in self._SYNC_ATTRS
+            and getattr(self, "_zone_index", None) is not None
+        ):
             self._sync_indigo_device()
 
     @property

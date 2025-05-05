@@ -140,6 +140,10 @@ class AutoLightsConfig(AutoLightsBase):
         for idx, z in enumerate(self._zones):
             z.zone_index = idx
 
+        # now that every zone has a valid zone_index, push its initial states to Indigo
+        for z in self._zones:
+            z._sync_indigo_device()
+
         for zone in self._zones:
             zone.calculate_target_brightness()
 
