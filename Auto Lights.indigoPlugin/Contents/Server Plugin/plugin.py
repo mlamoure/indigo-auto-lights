@@ -416,7 +416,9 @@ class Plugin(indigo.PluginBase):
             super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
-        if dev.deviceTypeId != "auto_lights_zone":
+        # if the agent/config isn't ready yet, or it isn't one of our zone devices,
+        # just fall back to the default state list
+        if self._agent is None or dev.deviceTypeId != "auto_lights_zone":
             return super().getDeviceStateList(dev)
         raw = dev.pluginProps.get("zoneIndex")
         if raw is None:
