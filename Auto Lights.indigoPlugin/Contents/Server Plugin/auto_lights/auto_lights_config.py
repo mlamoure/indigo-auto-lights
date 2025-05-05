@@ -66,10 +66,6 @@ class AutoLightsConfig(AutoLightsBase):
 
         self.load_config()
 
-    def __setattr__(self, name, value):
-        super().__setattr__(name, value)
-        self._sync_indigo_device()
-
     @property
     def enabled(self):
         return self._enabled

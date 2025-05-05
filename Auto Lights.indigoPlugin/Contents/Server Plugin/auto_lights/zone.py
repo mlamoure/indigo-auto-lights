@@ -1,8 +1,8 @@
 import datetime
+import json
 import logging
 import math
 import threading
-import json
 from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
 from .auto_lights_base import AutoLightsBase
@@ -95,6 +95,9 @@ class Zone(AutoLightsBase):
         self._pending_writes = 0
         self._write_lock = threading.Lock()
 
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        self._sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -991,7 +994,6 @@ class Zone(AutoLightsBase):
         )
         self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
-
 
     @property
     def zone_index(self) -> int:
