@@ -53,7 +53,6 @@ class Zone(AutoLightsBase):
             config (AutoLightsConfig): The global auto lights configuration.
         """
         self.logger = logging.getLogger("Plugin")
-        self._suppress_sync = True
         self._name = name
         self._zone_index = None
 
@@ -96,7 +95,6 @@ class Zone(AutoLightsBase):
         self._pending_writes = 0
         self._write_lock = threading.Lock()
 
-        self._suppress_sync = False
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -994,15 +992,6 @@ class Zone(AutoLightsBase):
         self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
 
-    def __setattr__(self, name, value):
-        super().__setattr__(name, value)
-        # only sync after we've been assigned a valid zone_index
-        if (
-            not getattr(self, "_suppress_sync", True)
-            and name in getattr(self, "_sync_attrs", ())
-            and getattr(self, "_zone_index", None) is not None
-        ):
-            self._sync_indigo_device()
 
     @property
     def zone_index(self) -> int:
