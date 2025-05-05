@@ -97,8 +97,14 @@ class Zone(AutoLightsBase):
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
+
+        # only sync once we have a real _config, and only for
+        # attributes that appear in the schema's x-sync_to_indigo list
         if hasattr(self, "_config"):
-            self._sync_indigo_device()
+            # strip leading underscore so "_lock_duration" → "lock_duration"
+            key = name[1:] if name.startswith("_") else name
+            if key in self._config.sync_zone_attrs:
+                self._sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
