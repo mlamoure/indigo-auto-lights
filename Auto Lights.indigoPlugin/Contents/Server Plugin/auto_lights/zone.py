@@ -1012,33 +1012,38 @@ class Zone(AutoLightsBase):
 
     @property
     def indigo_dev(self) -> indigo.Device:
+        # first try to find an existing plugin device with our zoneIndex
         for d in indigo.devices:
             if (
-                d.pluginId != "com.vtmikel.autolights"
-                or d.deviceTypeId != "auto_lights_zone"
+                d.pluginId == "com.vtmikel.autolights"
+                and d.deviceTypeId == "auto_lights_zone"
+                and d.pluginProps.get("zoneIndex") == str(self.zone_index)
             ):
-                continue
-            raw = d.pluginProps.get("zoneIndex")
-            if raw is None:
-                continue
-            try:
-                idx = int(raw)
-            except (TypeError, ValueError):
-                continue
-            if idx == self.zone_index:
                 return d
+
+        # didn't find it, so attempt to create one
         try:
-            new_device_name = f"Auto Lights Zone - {self.name}"
-            new_device = indigo.device.create(
+            name = f"Auto Lights Zone - {self.name}"
+            return indigo.device.create(
                 protocol=indigo.kProtocol.Plugin,
-                name=new_device_name,
+                name=name,
                 address=self.zone_index,
                 deviceTypeId="auto_lights_zone",
                 props={"zoneIndex": self.zone_index},
             )
-            # turn on the new zone device by default
-            new_device.updateStateOnServer("onOffState", True)
-            return new_device
+        except indigo.NameNotUniqueError:
+            self.logger.warning(
+                f"Device '{name}' already exists; locating by zoneIndex"
+            )
+            # second pass in case props didn't match exactly
+            for d in indigo.devices:
+                if (
+                    d.pluginId == "com.vtmikel.autolights"
+                    and d.deviceTypeId == "auto_lights_zone"
+                    and int(d.address) == self.zone_index
+                ):
+                    return d
+            return None
         except Exception as e:
             self.logger.error(f"error creating new indigo device: {e}")
             return None
@@ -1048,19 +1053,26 @@ class Zone(AutoLightsBase):
         Dynamically sync Indigo device states based on the JSON-schema
         x-sync_to_indigo flags in the AutoLightsConfig.
         """
+        dev = self.indigo_dev
+        if dev is None:
+            self.logger.error(
+                f"Zone '{self._name}': no Indigo device found, skipping sync"
+            )
+            return
+
         sync_attrs = self._config.sync_zone_attrs
 
         state_list = []
         for attr in sync_attrs:
             val = getattr(self, attr)
-            # Indigo only accepts bool, int, float or string:
             if isinstance(val, list):
-                # turn list into a JSON string (or you could do ','.join(...))
                 val = json.dumps(val)
             state_list.append({"key": attr, "value": val})
 
-        # Push them all up to the Indigo device in one go
-        self.indigo_dev.updateStatesOnServer(state_list)
+        try:
+            dev.updateStatesOnServer(state_list)
+        except Exception as e:
+            self.logger.error(f"Failed to sync states for zone '{self._name}': {e}")
 
     def _has_device(self, dev_id: int) -> str:
         """
