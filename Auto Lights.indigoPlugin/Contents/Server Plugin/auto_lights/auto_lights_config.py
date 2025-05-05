@@ -1,8 +1,8 @@
 import json
 from typing import List, Tuple
-from .auto_lights_base import BrightnessPlan
 
 from .auto_lights_base import AutoLightsBase
+from .auto_lights_base import BrightnessPlan
 from .lighting_period import LightingPeriod
 from .zone import Zone
 
@@ -41,12 +41,19 @@ class AutoLightsConfig(AutoLightsBase):
         # Load JSON schema to identify which zone fields to sync
         from pathlib import Path
         import json
-        schema_path = Path(__file__).parent.parent / "config_web_editor" / "config" / "config_schema.json"
+
+        schema_path = (
+            Path(__file__).parent.parent
+            / "config_web_editor"
+            / "config"
+            / "config_schema.json"
+        )
         with open(schema_path) as f:
             schema = json.load(f)
         zone_props = schema["properties"]["zones"]["items"]["properties"]
         self.zone_field_schemas = {}
         self.sync_zone_attrs = set()
+
         def _collect(p):
             for k, v in p.items():
                 self.zone_field_schemas[k] = v
@@ -54,9 +61,14 @@ class AutoLightsConfig(AutoLightsBase):
                     self.sync_zone_attrs.add(k)
                 if v.get("type") == "object" and "properties" in v:
                     _collect(v["properties"])
+
         _collect(zone_props)
 
         self.load_config()
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        self._sync_indigo_device()
 
     @property
     def enabled(self):
@@ -75,9 +87,6 @@ class AutoLightsConfig(AutoLightsBase):
         self._enabled_var_id = value
         self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
         # indigo.server.log("AutoLightsConfig: enabled set to: " + str(self._enabled))
-
-
-
 
     @property
     def default_lock_duration(self) -> int:
@@ -184,7 +193,7 @@ class AutoLightsConfig(AutoLightsBase):
         Check global behavior variables to determine if global lights should be turned off.
         Returns a BrightnessPlan with any triggers contributing to global off.
         """
-        plan_contribs: List[Tuple[str,str]] = []
+        plan_contribs: List[Tuple[str, str]] = []
         for behavior in self._global_behavior_variables:
             var_id = behavior.get("var_id")
             var_value = behavior.get("var_value")
@@ -197,15 +206,24 @@ class AutoLightsConfig(AutoLightsBase):
             lc_current = str(current_value).lower()
             lc_var_value = str(var_value).lower()
             if comp_type == "is equal to (str, lower())" and lc_current == lc_var_value:
-                plan_contribs.append(("🌐", f"Variable {var_name} equals expected value '{var_value}'"))
-            elif comp_type == "is not equal to (str, lower())" and lc_current != lc_var_value:
-                plan_contribs.append(("🌐", f"Variable {var_name} does not equal '{var_value}'"))
+                plan_contribs.append(
+                    ("🌐", f"Variable {var_name} equals expected value '{var_value}'")
+                )
+            elif (
+                comp_type == "is not equal to (str, lower())"
+                and lc_current != lc_var_value
+            ):
+                plan_contribs.append(
+                    ("🌐", f"Variable {var_name} does not equal '{var_value}'")
+                )
             elif comp_type == "is TRUE (bool)" and lc_current in ["true", "1"]:
                 plan_contribs.append(("🌐", f"Variable {var_name} evaluated as True"))
             elif comp_type == "is FALSE (bool)" and lc_current in ["false", "0"]:
                 plan_contribs.append(("🌐", f"Variable {var_name} evaluated as False"))
             elif comp_type is None and lc_current == lc_var_value:
-                plan_contribs.append(("🌐", f"Variable {var_name} equals (default) '{var_value}'"))
+                plan_contribs.append(
+                    ("🌐", f"Variable {var_name} equals (default) '{var_value}'")
+                )
         return BrightnessPlan(
             contributions=plan_contribs,
             exclusions=[],
