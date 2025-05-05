@@ -188,7 +188,6 @@ class Zone(AutoLightsBase):
             self.logger.error(f"Zone '{self._name}': failed to read onState: {e}")
             return False
 
-
     @property
     def unlock_when_no_presence(self) -> bool:
         """Indicates whether the zone should automatically unlock when no presence is detected."""
@@ -1029,7 +1028,10 @@ class Zone(AutoLightsBase):
     @property
     def indigo_dev(self) -> indigo.Device:
         for d in indigo.devices:
-            if d.pluginId != "com.vtmikel.autolights" or d.deviceTypeId != "auto_lights_zone":
+            if (
+                d.pluginId != "com.vtmikel.autolights"
+                or d.deviceTypeId != "auto_lights_zone"
+            ):
                 continue
             raw = d.pluginProps.get("zoneIndex")
             if raw is None:
@@ -1049,16 +1051,8 @@ class Zone(AutoLightsBase):
             )
             return newd
         except Exception as e:
-            # Indigo NameNotUniqueError is raised when a device name already exists.
-            if e.__class__.__name__ == "NameNotUniqueError":
-                for existing in indigo.devices:
-                    if existing.name == self.name and existing.deviceTypeId == "auto_lights_zone":
-                        props = existing.pluginProps.copy()
-                        props["zoneIndex"] = self.zone_index
-                        existing.replacePluginPropsOnServer(props)
-                        return existing
-            # re-raise any other exceptions or if no matching device found
-            raise
+            self.logger.error(f"error creating new indigo device: {e}")
+            return None
 
     def _sync_indigo_device(self) -> None:
         """
