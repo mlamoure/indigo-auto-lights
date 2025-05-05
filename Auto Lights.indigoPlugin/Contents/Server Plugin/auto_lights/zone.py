@@ -1040,13 +1040,23 @@ class Zone(AutoLightsBase):
                 continue
             if idx == self.zone_index:
                 return d
-        newd = indigo.device.create(
-            protocol=indigo.kProtocol.Plugin,
-            name=self.name,
-            deviceTypeId="auto_lights_zone",
-            props={"zoneIndex": self.zone_index},
-        )
-        return newd
+        try:
+            newd = indigo.device.create(
+                protocol=indigo.kProtocol.Plugin,
+                name=self.name,
+                deviceTypeId="auto_lights_zone",
+                props={"zoneIndex": self.zone_index},
+            )
+            return newd
+        except indigo.NameNotUniqueError:
+            # a device with this name already exists; use it
+            for existing in indigo.devices:
+                if existing.name == self.name and existing.deviceTypeId == "auto_lights_zone":
+                    props = existing.pluginProps.copy()
+                    props["zoneIndex"] = self.zone_index
+                    existing.replacePluginPropsOnServer(props)
+                    return existing
+            raise
 
     def _sync_indigo_device(self) -> None:
         """
