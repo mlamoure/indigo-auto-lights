@@ -27,62 +27,6 @@
 <Devices>
     <Device type="relay" id="auto_lights_zone">
         <Name>Auto Lights Zone</Name>
-        <States>
-            <State id="locked">
-                <ValueType>Boolean</ValueType>
-                <TriggerLabel>Locked</TriggerLabel>
-                <ControlPageLabel>Locked</ControlPageLabel>
-            </State>
-            <State id="on_off_lights">
-                <ValueType>String</ValueType>
-                <TriggerLabel>On/Off Lights</TriggerLabel>
-                <ControlPageLabel>On/Off Lights</ControlPageLabel>
-            </State>
-            <State id="off_lights">
-                <ValueType>String</ValueType>
-                <TriggerLabel>Off Lights</TriggerLabel>
-                <ControlPageLabel>Off Lights</ControlPageLabel>
-            </State>
-            <State id="presence_devices">
-                <ValueType>String</ValueType>
-                <TriggerLabel>Presence Devices</TriggerLabel>
-                <ControlPageLabel>Presence Devices</ControlPageLabel>
-            </State>
-            <State id="luminance_devices">
-                <ValueType>String</ValueType>
-                <TriggerLabel>Luminance Devices</TriggerLabel>
-                <ControlPageLabel>Luminance Devices</ControlPageLabel>
-            </State>
-            <State id="minimum_luminance">
-                <ValueType>Number</ValueType>
-                <TriggerLabel>Minimum Luminance</TriggerLabel>
-                <ControlPageLabel>Minimum Luminance</ControlPageLabel>
-            </State>
-            <State id="adjust_brightness">
-                <ValueType>Boolean</ValueType>
-                <TriggerLabel>Adjust Brightness</TriggerLabel>
-                <ControlPageLabel>Adjust Brightness</ControlPageLabel>
-            </State>
-            <State id="lock_duration">
-                <ValueType>Number</ValueType>
-                <TriggerLabel>Lock Duration</TriggerLabel>
-                <ControlPageLabel>Lock Duration</ControlPageLabel>
-            </State>
-            <State id="extend_lock_when_active">
-                <ValueType>Boolean</ValueType>
-                <TriggerLabel>Extend Lock When Active</TriggerLabel>
-                <ControlPageLabel>Extend Lock When Active</ControlPageLabel>
-            </State>
-            <State id="lock_extension_duration">
-                <ValueType>Number</ValueType>
-                <TriggerLabel>Lock Extension Duration</TriggerLabel>
-                <ControlPageLabel>Lock Extension Duration</ControlPageLabel>
-            </State>
-            <State id="unlock_when_no_presence">
-                <ValueType>Boolean</ValueType>
-                <TriggerLabel>Unlock When No Presence</TriggerLabel>
-                <ControlPageLabel>Unlock When No Presence</ControlPageLabel>
-            </State>
-        </States>
+        <!-- States removed in favor of dynamic device states -->
     </Device>
 </Devices>

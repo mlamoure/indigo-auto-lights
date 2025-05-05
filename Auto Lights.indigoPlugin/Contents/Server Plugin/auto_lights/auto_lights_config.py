@@ -38,6 +38,24 @@ class AutoLightsConfig(AutoLightsBase):
 
         self._config_file = config
 
+        # Load JSON schema to identify which zone fields to sync
+        from pathlib import Path
+        import json
+        schema_path = Path(__file__).parent.parent / "config_web_editor" / "config" / "config_schema.json"
+        with open(schema_path) as f:
+            schema = json.load(f)
+        zone_props = schema["properties"]["zones"]["items"]["properties"]
+        self.zone_field_schemas = {}
+        self.sync_zone_attrs = set()
+        def _collect(p):
+            for k, v in p.items():
+                self.zone_field_schemas[k] = v
+                if v.get("x-sync_to_indigo"):
+                    self.sync_zone_attrs.add(k)
+                if v.get("type") == "object" and "properties" in v:
+                    _collect(v["properties"])
+        _collect(zone_props)
+
         self.load_config()
 
     @property

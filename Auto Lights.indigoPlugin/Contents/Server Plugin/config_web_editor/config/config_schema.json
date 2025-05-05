@@ -82,6 +82,7 @@
             "properties": {
               "on_lights_dev_ids": {
                 "type": "array",
+                "x-sync_to_indigo": true,
                 "items": {
                   "type": "integer"
                 },
@@ -92,6 +93,7 @@
               },
               "off_lights_dev_ids": {
                 "type": "array",
+                "x-sync_to_indigo": true,
                 "items": {
                   "type": "integer"
                 },
@@ -102,6 +104,7 @@
               },
               "luminance_dev_ids": {
                 "type": "array",
+                "x-sync_to_indigo": true,
                 "items": {
                   "type": "integer"
                 },
@@ -112,6 +115,7 @@
               },
               "presence_dev_ids": {
                 "type": "array",
+                "x-sync_to_indigo": true,
                 "items": {
                   "type": "integer"
                 },
@@ -132,6 +136,7 @@
             "properties": {
               "minimum_luminance": {
                 "type": "integer",
+                "x-sync_to_indigo": true,
                 "title": "Minimum Luminance",
                 "tooltip": "Provide minimum luminance for the zone."
               },
@@ -148,6 +153,7 @@
               },
               "adjust_brightness": {
                 "type": "boolean",
+                "x-sync_to_indigo": true,
                 "title": "Adjust Dimmer Brightness",
                 "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.",
                 "default": true
@@ -160,24 +166,28 @@
             "properties": {
               "lock_duration": {
                 "type": "integer",
+                "x-sync_to_indigo": true,
                 "title": "Lock Duration",
                 "tooltip": "A lock occurs when a lighting change occurs on any of the on lights, or off lights outside of the Auto Lights script. The zone becomes locked for a duration, and optionally the lock is extended until no presence is detected in the zone.",
                 "default": -1
               },
               "extend_lock_when_active": {
                 "type": "boolean",
+                "x-sync_to_indigo": true,
                 "title": "Extend Lock When Presence is Active",
                 "tooltip": "Enable to extend the lock duration when the zone is active.",
                 "default": true
               },
               "lock_extension_duration": {
                 "type": "integer",
+                "x-sync_to_indigo": true,
                 "title": "Lock Extension Duration",
                 "tooltip": "Overrides the plugin configuration for how long the lock is extended when the zone has presence detected.",
                 "default": -1
               },
               "unlock_when_no_presence": {
                 "type": "boolean",
+                "x-sync_to_indigo": true,
                 "title": "Unlock When No Presence",
                 "tooltip": "Enable to unlock the zone when no presence is detected.  Recommend leaving this off for zones where you may want an override to outlast the presence of the room, like a hallway.",
                 "default": true

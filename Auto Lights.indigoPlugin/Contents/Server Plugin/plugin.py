@@ -414,3 +414,32 @@ class Plugin(indigo.PluginBase):
             self._agent.process_zone(zone)
         else:
             super().actionControlRelay(action, dev)
+
+    def getDeviceStateList(self, dev):
+        if dev.deviceTypeId != "auto_lights_zone":
+            return super().getDeviceStateList(dev)
+        zi = int(dev.pluginProps.get("zoneIndex", -1))
+        zone = self._agent.config.zones[zi]
+        stateList = []
+        for attr in zone._sync_attrs:
+            sf = zone._schema_fields[attr]
+            title = sf.get("title", attr)
+            t = sf.get("type", "string")
+            if t == "boolean":
+                stateList.append(
+                    self.getDeviceStateDictForBoolTrueFalseType(attr, title, title)
+                )
+            elif t in ("integer", "number"):
+                stateList.append(
+                    self.getDeviceStateDictForNumberType(attr, title, title)
+                )
+            else:
+                stateList.append(
+                    self.getDeviceStateDictForStringType(attr, title, title)
+                )
+        return stateList
+
+    def deviceStartComm(self, dev):
+        super().deviceStartComm(dev)
+        if dev.deviceTypeId == "auto_lights_zone":
+            dev.stateListOrDisplayStateIdChanged()

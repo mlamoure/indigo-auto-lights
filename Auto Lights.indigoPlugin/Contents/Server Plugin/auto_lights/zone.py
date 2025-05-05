@@ -19,18 +19,19 @@ except ImportError:
 
 
 class Zone(AutoLightsBase):
-    _SYNC_ATTRS = {
-        "locked",
-        "on_lights_dev_ids",
-        "off_lights_dev_ids",
-        "presence_dev_ids",
-        "luminance_dev_ids",
-        "minimum_luminance",
-        "adjust_brightness",
-        "lock_duration",
-        "extend_lock_when_active",
-        "lock_extension_duration",
-        "unlock_when_no_presence",
+    # Map zone attribute names to Indigo state IDs
+    _STATE_KEY_MAP = {
+        "locked": "locked",
+        "on_lights_dev_ids": "on_off_lights",
+        "off_lights_dev_ids": "off_lights",
+        "presence_dev_ids": "presence_devices",
+        "luminance_dev_ids": "luminance_devices",
+        "minimum_luminance": "minimum_luminance",
+        "adjust_brightness": "adjust_brightness",
+        "lock_duration": "lock_duration",
+        "extend_lock_when_active": "extend_lock_when_active",
+        "lock_extension_duration": "lock_extension_duration",
+        "unlock_when_no_presence": "unlock_when_no_presence",
     }
     """
     Represents an AutoLights zone.
@@ -1012,7 +1013,7 @@ class Zone(AutoLightsBase):
         # only sync after we've been assigned a valid zone_index
         if (
             not getattr(self, "_suppress_sync", True)
-            and name in self._SYNC_ATTRS
+            and name in getattr(self, "_sync_attrs", ())
             and getattr(self, "_zone_index", None) is not None
         ):
             self._sync_indigo_device()
@@ -1043,23 +1044,14 @@ class Zone(AutoLightsBase):
         return newd
 
     def _sync_indigo_device(self) -> None:
-        on_names = [indigo.devices[d].name for d in self.on_lights_dev_ids]
-        off_names = [indigo.devices[d].name for d in self.off_lights_dev_ids]
-        presence_names = [indigo.devices[d].name for d in self.presence_dev_ids]
-        lum_names = [indigo.devices[d].name for d in self.luminance_dev_ids]
-        state_list = [
-            {"key": "locked", "value": self.locked},
-            {"key": "on_off_lights", "value": ";".join(on_names)},
-            {"key": "off_lights", "value": ";".join(off_names)},
-            {"key": "presence_devices", "value": ";".join(presence_names)},
-            {"key": "luminance_devices", "value": ";".join(lum_names)},
-            {"key": "minimum_luminance", "value": self.minimum_luminance},
-            {"key": "adjust_brightness", "value": self.adjust_brightness},
-            {"key": "lock_duration", "value": self.lock_duration},
-            {"key": "extend_lock_when_active", "value": self.extend_lock_when_active},
-            {"key": "lock_extension_duration", "value": self.lock_extension_duration},
-            {"key": "unlock_when_no_presence", "value": self.unlock_when_no_presence},
-        ]
+        """
+        Dynamically sync Indigo device states based on schema-driven sync_attrs.
+        """
+        state_list = []
+        for attr in getattr(self, "_sync_attrs", ()):
+            key = self._STATE_KEY_MAP.get(attr, attr)
+            val = getattr(self, attr)
+            state_list.append({"key": key, "value": val})
         self.indigo_dev.updateStatesOnServer(state_list)
 
     def _has_device(self, dev_id: int) -> str:
