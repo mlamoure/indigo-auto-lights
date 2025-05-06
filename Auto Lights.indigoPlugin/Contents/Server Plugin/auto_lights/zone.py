@@ -181,7 +181,7 @@ class Zone(AutoLightsBase):
         """Indicates whether the zone is enabled via its Indigo Relay device."""
         try:
             result = bool(self.indigo_dev.onState)
-            self._debug_log(f"Zone '{self._name}': enabled={result}")
+            self._debug_log(f"enabled={result}")
             return result
         except Exception as e:
             self.logger.error(f"Zone '{self._name}': failed to read onState: {e}")
@@ -1055,7 +1055,9 @@ class Zone(AutoLightsBase):
                 props={"zone_index": self.zone_index},
             )
             indigo.device.turnOn(dev.id, delay=0)
-            self.logger.info(f"🆕 Created new Indigo device for Zone '{self.name}' (id: {dev.id})")
+            self.logger.info(
+                f"🆕 Created new Indigo device for Zone '{self.name}' (id: {dev.id})"
+            )
             self._indigo_dev = dev
             return self._indigo_dev
         except Exception as e:
