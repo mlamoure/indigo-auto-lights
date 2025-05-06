@@ -417,22 +417,18 @@ class Plugin(indigo.PluginBase):
             super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
-        state_list = indigo.PluginBase.getDeviceStateList(self, dev)
+        state_list = super().getDeviceStateList(dev) or []
 
-        if state_list is None:
-            return
+        # only for our zone devices
+        if dev.deviceTypeId != "auto_lights_zone" or not getattr(self, "_agent", None):
+            return state_list
 
-        if self._agent is None:
-            return
-
-        state_list = []
-        # iterate in schema order (or whatever order config.sync_zone_attrs holds)
+        # config-driven state definitions
         for attr in self._agent.config.sync_zone_attrs:
             schema = self._agent.config.zone_field_schemas.get(attr, {})
             title = schema.get("title", attr)
             t = schema.get("type", "string")
 
-            # pick the right helper based on JSON-schema type
             if t == "boolean":
                 state_list.append(
                     self.getDeviceStateDictForBoolTrueFalseType(attr, title, title)
@@ -445,6 +441,25 @@ class Plugin(indigo.PluginBase):
                 state_list.append(
                     self.getDeviceStateDictForStringType(attr, title, title)
                 )
+
+        # runtime-defined state definitions
+        for entry in self._agent.config.runtime_states:
+            key   = entry["key"]
+            stype = entry["type"]
+            label = entry["label"]
+            if stype in ("boolean", "bool"):
+                state_list.append(
+                    self.getDeviceStateDictForBoolTrueFalseType(key, label, label)
+                )
+            elif stype in ("integer", "number", "numeric"):
+                state_list.append(
+                    self.getDeviceStateDictForNumberType(key, label, label)
+                )
+            else:
+                state_list.append(
+                    self.getDeviceStateDictForStringType(key, label, label)
+                )
+
         return state_list
 
     def deviceStartComm(self, dev):
