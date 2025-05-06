@@ -414,7 +414,7 @@ class Plugin(indigo.PluginBase):
             return
 
         action_type = action.deviceAction
-        if action_type == indigo.kDeviceAction.StatusRequest:
+        if action_type == indigo.kDeviceAction.RequestStatus:
             pass
         elif action_type == indigo.kDeviceAction.Toggle:
             new_state = not dev.onOffState
