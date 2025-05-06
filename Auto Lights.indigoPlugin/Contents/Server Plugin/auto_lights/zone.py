@@ -1058,10 +1058,49 @@ class Zone(AutoLightsBase):
             )
             return None
 
+    def _get_runtime_state_value(self, key: str):
+        """
+        Return the computed runtime state value for a given key.
+        """
+        runtime_mapping = {
+            "current_period_name": lambda: (self.current_lighting_period.name if self.current_lighting_period else ""),
+            "current_period_mode": lambda: (self.current_lighting_period.mode if self.current_lighting_period else ""),
+            "current_period_from": lambda: (self.current_lighting_period.from_time.strftime("%H:%M") if self.current_lighting_period else ""),
+            "current_period_to": lambda: (self.current_lighting_period.to_time.strftime("%H:%M") if self.current_lighting_period else ""),
+            "presence_detected": self.has_presence_detected,
+            "luminance_value": lambda: self.luminance,
+            "is_dark": self.is_dark,
+            "zone_locked": lambda: self.locked,
+        }
+        func = runtime_mapping.get(key)
+        return func() if func else None
+
+    def _build_schema_states(self, dev):
+        """Collect states based on schema-driven sync attributes."""
+        states = []
+        for attr in self._config.sync_zone_attrs:
+            if attr in dev.states:
+                val = getattr(self, attr)
+                states.append({"key": attr, "value": json.dumps(val) if isinstance(val, list) else val})
+        return states
+
+    def _build_runtime_states(self, dev):
+        """Collect dynamic runtime states for Indigo device."""
+        states = []
+        for entry in self._config.runtime_states:
+            key = entry["key"]
+            if key in dev.states:
+                val = self._get_runtime_state_value(key)
+                if val is not None:
+                    states.append({"key": key, "value": val})
+        return states
+
     def sync_indigo_device(self) -> None:
         """
-        Dynamically sync Indigo device states based on the JSON-schema
-        x-sync_to_indigo flags in the AutoLightsConfig.
+        Sync Indigo device states based on schema-driven and dynamic runtime values.
+
+        Combines configured sync attributes and runtime state mappings
+        into a single update to the Indigo server.
         """
         dev = self.indigo_dev
         if dev is None:
@@ -1070,43 +1109,11 @@ class Zone(AutoLightsBase):
             )
             return
 
-        sync_attrs = self._config.sync_zone_attrs
+        # Build list from schema-driven attributes
+        state_list = self._build_schema_states(dev)
 
-        state_list = []
-        for attr in sync_attrs:
-            if attr in dev.states:
-                val = getattr(self, attr)
-                if isinstance(val, list):
-                    val = json.dumps(val)
-                state_list.append({"key": attr, "value": val})
-
-        # append runtime-defined status states
-        for entry in self._config.runtime_states:
-            key = entry["key"]
-            if key in dev.states:
-                if key == "current_period_name":
-                    p = self.current_lighting_period
-                    val = p.name if p else ""
-                elif key == "current_period_mode":
-                    p = self.current_lighting_period
-                    val = p.mode if p else ""
-                elif key == "current_period_from":
-                    p = self.current_lighting_period
-                    val = p.from_time.strftime("%H:%M") if p else ""
-                elif key == "current_period_to":
-                    p = self.current_lighting_period
-                    val = p.to_time.strftime("%H:%M") if p else ""
-                elif key == "presence_detected":
-                    val = self.has_presence_detected()
-                elif key == "luminance_value":
-                    val = self.luminance
-                elif key == "is_dark":
-                    val = self.is_dark()
-                elif key == "zone_locked":
-                    val = self.locked
-                else:
-                    continue
-                state_list.append({"key": key, "value": val})
+        # Append dynamic runtime states
+        state_list.extend(self._build_runtime_states(dev))
 
         try:
             dev.updateStatesOnServer(state_list)
