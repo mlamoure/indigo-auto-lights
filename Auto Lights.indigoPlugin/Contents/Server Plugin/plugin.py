@@ -410,15 +410,20 @@ class Plugin(indigo.PluginBase):
     def actionControlDevice(self, action, dev):
         if dev.deviceTypeId == "auto_lights_zone":
             act = action.deviceAction
-            if act == indigo.kDeviceAction.TurnOn or act == indigo.kDeviceAction.Toggle:
-                dev.updateStateOnServer("onOffState", True)
+            if act == indigo.kDeviceAction.Toggle:
+                dev.updateStateOnServer(
+                    "onOffState", act == indigo.kDeviceAction.TurnOn
+                )
+            elif act == indigo.kDeviceAction.StatusRequest:
+                dev.updateStateOnServer(
+                    "onOffState", act == indigo.kDeviceAction.TurnOn
+                )
             else:
-                dev.updateStateOnServer("onOffState", False)
+                dev.updateStateOnServer("onOffState", not dev.onOffState)
+
             zi = int(dev.pluginProps.get("zone_index", -1))
             zone = next(z for z in self._agent.config.zones if z.zone_index == zi)
             self._agent.process_zone(zone)
-        else:
-            super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
         # Start with base state definitions
