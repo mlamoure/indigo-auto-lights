@@ -296,3 +296,12 @@ class AutoLightsConfig(AutoLightsBase):
             new_targets=[],
             device_changes=[],
         )
+
+    @property
+    def agent(self):
+        """Reference to the AutoLightsAgent controlling this config."""
+        return getattr(self, '_agent', None)
+
+    @agent.setter
+    def agent(self, value):
+        self._agent = value
