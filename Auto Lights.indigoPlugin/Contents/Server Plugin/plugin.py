@@ -408,21 +408,36 @@ class Plugin(indigo.PluginBase):
         return reply
 
     def actionControlDevice(self, action, dev):
-        if dev.deviceTypeId == "auto_lights_zone":
-            act = action.deviceAction
-            if act == indigo.kDeviceAction.Toggle:
-                dev.updateStateOnServer("onOffState", not dev.onOffState)
-            elif act == indigo.kDeviceAction.StatusRequest:
-                pass
-            else:
-                # TurnOn or TurnOff
-                dev.updateStateOnServer(
-                    "onOffState", act == indigo.kDeviceAction.TurnOn
-                )
+        """Handle zone device toggle and process zone lighting."""
+        # Only handle our zone devices.
+        if dev.deviceTypeId != "auto_lights_zone":
+            return
 
-            zi = int(dev.pluginProps.get("zone_index", -1))
-            zone = next(z for z in self._agent.config.zones if z.zone_index == zi)
+        action_type = action.deviceAction
+        if action_type == indigo.kDeviceAction.Toggle:
+            new_state = not dev.onOffState
+            dev.updateStateOnServer("onOffState", new_state)
+        elif action_type == indigo.kDeviceAction.StatusRequest:
+            return
+        elif action_type in (indigo.kDeviceAction.TurnOn, indigo.kDeviceAction.TurnOff):
+            new_state = action_type == indigo.kDeviceAction.TurnOn
+            dev.updateStateOnServer("onOffState", new_state)
+        else:
+            self.logger.warning(
+                f"Unrecognized device action {action_type} for {dev.name}"
+            )
+            return
+
+        # Process the zone logic after the device state change.
+        zone_index = int(dev.pluginProps.get("zone_index", -1))
+        zone = next(
+            (z for z in self._agent.config.zones if z.zone_index == zone_index),
+            None,
+        )
+        if zone:
             self._agent.process_zone(zone)
+        else:
+            self.logger.error(f"Zone with index {zone_index} not found.")
 
     def getDeviceStateList(self, dev):
         # Start with base state definitions
