@@ -418,7 +418,7 @@ class Plugin(indigo.PluginBase):
             new_state = not dev.onOffState
             dev.updateStateOnServer("onOffState", new_state)
         elif action_type == indigo.kDeviceAction.StatusRequest:
-            return
+            pass
         elif action_type in (indigo.kDeviceAction.TurnOn, indigo.kDeviceAction.TurnOff):
             new_state = action_type == indigo.kDeviceAction.TurnOn
             dev.updateStateOnServer("onOffState", new_state)
