@@ -106,6 +106,12 @@ class AutoLightsConfig(AutoLightsBase):
                 "label": "Locked",
                 "getter": lambda zone: zone.locked,
             },
+            {
+                "key": "device_states",
+                "type": "string",
+                "label": "Device States",
+                "getter": lambda zone: zone.get_device_states_string(),
+            },
         ]
 
         schema_path = (
