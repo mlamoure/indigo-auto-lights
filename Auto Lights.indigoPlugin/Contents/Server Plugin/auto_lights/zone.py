@@ -1058,14 +1058,18 @@ class Zone(AutoLightsBase):
             )
             return None
 
-
     def _build_schema_states(self, dev):
         """Collect states based on schema-driven sync attributes."""
         states = []
         for attr in self._config.sync_zone_attrs:
             if attr in dev.states:
                 val = getattr(self, attr)
-                states.append({"key": attr, "value": json.dumps(val) if isinstance(val, list) else val})
+                states.append(
+                    {
+                        "key": attr,
+                        "value": json.dumps(val) if isinstance(val, list) else val,
+                    }
+                )
         return states
 
     def _get_runtime_state_value(self, key):
@@ -1107,8 +1111,11 @@ class Zone(AutoLightsBase):
         if dev.name != expected_name:
             try:
                 dev.name = expected_name
+                dev.replaceOnServer()
             except Exception as e:
-                self.logger.error(f"Failed to rename Indigo device for Zone '{self._name}': {e}")
+                self.logger.error(
+                    f"Failed to rename Indigo device for Zone '{self._name}': {e}"
+                )
         # Build list from schema-driven attributes
         state_list = self._build_schema_states(dev)
 
@@ -1266,7 +1273,10 @@ class Zone(AutoLightsBase):
         # make a single call to current_lights_status so we don’t re-query Indigo every time
         all_status = self.current_lights_status(include_lock_excluded=True)
         status_map = {item["dev_id"]: item["brightness"] for item in all_status}
-        target_map = {item["dev_id"]: item["brightness"] for item in (self.target_brightness or [])}
+        target_map = {
+            item["dev_id"]: item["brightness"]
+            for item in (self.target_brightness or [])
+        }
 
         for dev_id in self.on_lights_dev_ids + self.off_lights_dev_ids:
             try:
@@ -1285,8 +1295,7 @@ class Zone(AutoLightsBase):
                 excluded = " (excluded from Lighting Period)"
 
             lines.append(
-                f"{light_type} '{dev.name}': current={curr}, "
-                f"target={tgt}{excluded}"
+                f"{light_type} '{dev.name}': current={curr}, " f"target={tgt}{excluded}"
             )
 
         return "\n".join(lines)
