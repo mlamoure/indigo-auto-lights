@@ -114,7 +114,7 @@ class Zone(AutoLightsBase):
         Updates the zone configuration based on a provided dictionary.
 
         Args:
-            cfg (dict): Configuration dictionary with keys such as 'enabled_var_id',
+            cfg (dict): Configuration dictionary with keys
                         'device_settings', 'minimum_luminance_settings', and 'behavior_settings'.
         """
         if "enabled_var_id" in cfg:
