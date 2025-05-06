@@ -133,7 +133,10 @@ class AutoLightsAgent(AutoLightsBase):
             device_prop = zone._has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 if not zone.enabled:
-                    if any(k in diff for k in ["brightness", "onState", "onOffState"]) and self.config.log_non_events:
+                    if (
+                        any(k in diff for k in ["brightness", "onState", "onOffState"])
+                        and self.config.log_non_events
+                    ):
                         self.logger.info(
                             f"🚫 Ignored device change from '{orig_dev.name}' for disabled zone '{zone.name}'."
                         )
@@ -413,7 +416,9 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.info(f"    current period: None")
             self.logger.info("    lighting_periods:")
             for period in zone.lighting_periods:
-                self.logger.info(f"        {period.name} ({period.mode}) {period.from_time.strftime('%H:%M')}-{period.to_time.strftime('%H:%M')}")
+                self.logger.info(
+                    f"        {period.name} ({period.mode}) {period.from_time.strftime('%H:%M')}-{period.to_time.strftime('%H:%M')}"
+                )
             self.logger.info(f"    presence: {zone.has_presence_detected()}")
             self.logger.info(
                 f"    luminance: {zone.luminance} "
@@ -530,3 +535,8 @@ class AutoLightsAgent(AutoLightsBase):
         """
         for zone in self.config.zones:
             zone.sync_indigo_device()
+
+    def refresh_indigo_device(self, dev_id: int) -> None:
+        for zone in self.config.zones:
+            if zone.indigo_dev.id == dev_id:
+                zone.sync_indigo_device()

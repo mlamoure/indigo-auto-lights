@@ -449,3 +449,4 @@ class Plugin(indigo.PluginBase):
 
     def deviceStartComm(self, dev):
         dev.stateListOrDisplayStateIdChanged()
+        self._agent.refresh_indigo_device(dev.id)
