@@ -1239,6 +1239,42 @@ class Zone(AutoLightsBase):
             return True
         return False
 
+    def get_device_states_string(self) -> str:
+        """
+        Returns a multi-line string showing each 'On' and 'Off' light in this zone,
+        with its current brightness/state, its target brightness/state, and an
+        optional note when it is excluded from the active lighting period.
+        """
+        lines: list[str] = []
+
+        # make a single call to current_lights_status so we don’t re-query Indigo every time
+        all_status = self.current_lights_status(include_lock_excluded=True)
+        status_map = {item["dev_id"]: item["brightness"] for item in all_status}
+        target_map = {item["dev_id"]: item["brightness"] for item in (self.target_brightness or [])}
+
+        for dev_id in self.on_lights_dev_ids + self.off_lights_dev_ids:
+            try:
+                dev = indigo.devices[dev_id]
+            except Exception:
+                # device may have been removed
+                continue
+
+            curr = status_map.get(dev_id, None)
+            tgt = target_map.get(dev_id, None)
+
+            light_type = "On Light" if dev_id in self.on_lights_dev_ids else "Off Light"
+            excluded = ""
+            period = self.current_lighting_period
+            if period and self.has_dev_lighting_mapping_exclusion(dev_id, period):
+                excluded = " (excluded from Lighting Period)"
+
+            lines.append(
+                f"{light_type} '{dev.name}': current={curr}, "
+                f"target={tgt}{excluded}"
+            )
+
+        return "\n".join(lines)
+
     def has_lock_occurred(self) -> bool:
         """Determine if an external change should create a new zone lock."""
         # if we’re in the middle of our own process_zone run, don’t treat our device writes as
