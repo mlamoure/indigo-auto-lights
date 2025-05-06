@@ -1035,7 +1035,6 @@ class Zone(AutoLightsBase):
                 props={"zone_index": self.zone_index},
             )
             indigo.device.turnOn(dev.id, delay=0)
-            self._sync_indigo_device()
             return dev
         except Exception as e:
             self.logger.error(
@@ -1059,10 +1058,11 @@ class Zone(AutoLightsBase):
 
         state_list = []
         for attr in sync_attrs:
-            val = getattr(self, attr)
-            if isinstance(val, list):
-                val = json.dumps(val)
-            state_list.append({"key": attr, "value": val})
+            if attr in dev.states:
+                val = getattr(self, attr)
+                if isinstance(val, list):
+                    val = json.dumps(val)
+                state_list.append({"key": attr, "value": val})
 
         try:
             dev.updateStatesOnServer(state_list)

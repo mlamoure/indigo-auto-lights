@@ -422,7 +422,7 @@ class Plugin(indigo.PluginBase):
         if state_list is None:
             return
 
-        if self._agent.config is None:
+        if self._agent is None:
             return
 
         state_list = []
