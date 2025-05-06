@@ -1035,7 +1035,6 @@ class Zone(AutoLightsBase):
                 props={"zone_index": self.zone_index},
             )
             indigo.device.turnOn(dev.id, delay=0)
-            self._sync_indigo_device()
             return dev
         except Exception as e:
             self.logger.error(
