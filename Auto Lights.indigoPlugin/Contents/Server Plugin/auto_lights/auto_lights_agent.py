@@ -40,9 +40,11 @@ class AutoLightsAgent(AutoLightsBase):
 
         # GUARD: plugin globally disabled
         if not self.config.enabled:
+            self._debug_log("Skipping process_zone: plugin globally DISABLED")
             return False
 
         # GUARD: zone disabled
+        self._debug_log(f"process_zone: zone.enabled={zone.enabled}")
         if not zone.enabled:
             self._debug_log(f"Skipping process_zone for '{zone.name}' – zone disabled")
             return False
