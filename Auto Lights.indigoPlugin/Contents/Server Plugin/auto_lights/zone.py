@@ -1306,7 +1306,7 @@ class Zone(AutoLightsBase):
                 f"{light_type} '{dev.name}': current={curr}, " f"target={tgt}{excluded}"
             )
 
-        return "\n".join(lines)
+        return ";".join(lines)
 
     def has_lock_occurred(self) -> bool:
         """Determine if an external change should create a new zone lock."""
