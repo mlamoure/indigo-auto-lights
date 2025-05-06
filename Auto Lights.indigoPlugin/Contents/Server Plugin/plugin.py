@@ -417,50 +417,55 @@ class Plugin(indigo.PluginBase):
             super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
-        state_list = indigo.PluginBase.getDeviceStateList(self, dev)
+        # Start with base state definitions
+        states = super().getDeviceStateList(dev)
 
         # only for our zone devices
-        if self._agent is None:
-            return state_list
+        # If agent not initialized, return base state definitions
+        if not self._agent:
+            return states
 
-        # config-driven state definitions
-        for attr in self._agent.config.sync_zone_attrs:
-            schema = self._agent.config.zone_field_schemas.get(attr, {})
-            title = schema.get("title", attr)
-            t = schema.get("type", "string")
+        # Add configured zone attributes from schema
+        for state_key in self._agent.config.sync_zone_attrs:
+            field_schema = self._agent.config.zone_field_schemas.get(state_key, {})
+            field_title = field_schema.get("title", state_key)
+            field_type = field_schema.get("type", "string")
 
-            if t == "boolean":
-                state_list.append(
-                    self.getDeviceStateDictForBoolTrueFalseType(attr, title, title)
+            if field_type == "boolean":
+                state_dict = self.getDeviceStateDictForBoolTrueFalseType(
+                    state_key, field_title, field_title
                 )
-            elif t in ("integer", "number"):
-                state_list.append(
-                    self.getDeviceStateDictForNumberType(attr, title, title)
+            elif field_type in ("integer", "number"):
+                state_dict = self.getDeviceStateDictForNumberType(
+                    state_key, field_title, field_title
                 )
             else:
-                state_list.append(
-                    self.getDeviceStateDictForStringType(attr, title, title)
+                state_dict = self.getDeviceStateDictForStringType(
+                    state_key, field_title, field_title
                 )
+            states.append(state_dict)
 
-        # runtime-defined state definitions
-        for entry in self._agent.config.runtime_states:
-            key = entry["key"]
-            stype = entry["type"]
-            label = entry["label"]
-            if stype in ("boolean", "bool"):
-                state_list.append(
-                    self.getDeviceStateDictForBoolTrueFalseType(key, label, label)
+        # Add dynamic runtime state attributes
+        for runtime_state in self._agent.config.runtime_states:
+            state_key = runtime_state["key"]
+            state_type = runtime_state["type"]
+            state_label = runtime_state["label"]
+
+            if state_type in ("boolean", "bool"):
+                state_dict = self.getDeviceStateDictForBoolTrueFalseType(
+                    state_key, state_label, state_label
                 )
-            elif stype in ("integer", "number", "numeric"):
-                state_list.append(
-                    self.getDeviceStateDictForNumberType(key, label, label)
+            elif state_type in ("integer", "number", "numeric"):
+                state_dict = self.getDeviceStateDictForNumberType(
+                    state_key, state_label, state_label
                 )
             else:
-                state_list.append(
-                    self.getDeviceStateDictForStringType(key, label, label)
+                state_dict = self.getDeviceStateDictForStringType(
+                    state_key, state_label, state_label
                 )
+            states.append(state_dict)
 
-        return state_list
+        return states
 
     def deviceStartComm(self, dev):
         dev.stateListOrDisplayStateIdChanged()
