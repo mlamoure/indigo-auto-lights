@@ -341,14 +341,6 @@ class Plugin(indigo.PluginBase):
         """
         self._agent.print_locked_zones()
 
-    def print_zone_status(
-        self: indigo.PluginBase, action=None, dev=None, caller_waiting_for_result=None
-    ):
-        """
-        Menu item callback to print status of each zone.
-        """
-        self.logger.info("Zone status report:")
-        self._agent.print_zone_status()
 
     def change_zones_enabled(self, action, dev=None, caller_waiting_for_result=None):
         """
