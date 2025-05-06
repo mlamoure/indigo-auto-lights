@@ -6,7 +6,12 @@
     "plugin_config": {
       "type": "object",
       "properties": {
-        
+        "enabled_var_id": {
+          "type": "integer",
+          "x-drop-down": true,
+          "title": "Enabled Variable",
+          "tooltip": "Set the identifier for the enabled variable."
+        },
         "default_lock_duration": {
           "type": "integer",
           "title": "Default Lock Duration",
@@ -54,6 +59,7 @@
         }
       },
       "required": [
+        "enabled_var_id"
       ]
     },
     "zones": {
@@ -66,7 +72,6 @@
             "title": "Name",
             "tooltip": "Provide a name for the zone.  This is purely for recognition purposes, and will be used in the Indigo log to display actions being taken for the zone."
           },
-          
           "lighting_period_ids": {
             "type": "array",
             "items": {
