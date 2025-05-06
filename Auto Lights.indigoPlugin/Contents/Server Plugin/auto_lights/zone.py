@@ -107,7 +107,7 @@ class Zone(AutoLightsBase):
         if hasattr(self, "_config"):
             key = name[1:] if name.startswith("_") else name
             if key in self._config.sync_zone_attrs:
-                self._sync_indigo_device()
+                self.sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
@@ -1058,7 +1058,7 @@ class Zone(AutoLightsBase):
             )
             return None
 
-    def _sync_indigo_device(self) -> None:
+    def sync_indigo_device(self) -> None:
         """
         Dynamically sync Indigo device states based on the JSON-schema
         x-sync_to_indigo flags in the AutoLightsConfig.

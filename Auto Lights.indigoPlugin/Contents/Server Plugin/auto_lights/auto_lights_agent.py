@@ -523,3 +523,10 @@ class AutoLightsAgent(AutoLightsBase):
             if getattr(zone, "_lock_timer", None):
                 zone._lock_timer.cancel()
                 zone._lock_timer = None
+
+    def refresh_all_indigo_devices(self) -> None:
+        """
+        Refresh all Indigo device states for all zones by syncing each zone's device states.
+        """
+        for zone in self.config.zones:
+            zone.sync_indigo_device()
