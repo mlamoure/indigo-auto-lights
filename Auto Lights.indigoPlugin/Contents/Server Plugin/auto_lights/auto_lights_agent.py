@@ -28,6 +28,9 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Main automation function that processes a single lighting zone.
         """
+        # sync the indigo device for any runtime changes
+        zone.sync_indigo_device()
+
         # GUARD: skip if already running
         if zone.checked_out:
             self._debug_log(
@@ -110,6 +113,9 @@ class AutoLightsAgent(AutoLightsBase):
         else:
             self._debug_log(f"Zone '{zone.name}': no changes to make")
             zone.check_in()
+
+        # sync the indigo device for any runtime changes
+        zone.sync_indigo_device()
 
         return True
 
