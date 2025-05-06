@@ -1068,6 +1068,15 @@ class Zone(AutoLightsBase):
                 states.append({"key": attr, "value": json.dumps(val) if isinstance(val, list) else val})
         return states
 
+    def _get_runtime_state_value(self, key):
+        """
+        Retrieve the runtime state value for the given key using the getter in config.runtime_states.
+        """
+        for entry in self._config.runtime_states:
+            if entry.get("key") == key:
+                return entry["getter"](self)
+        return None
+
     def _build_runtime_states(self, dev):
         """Collect dynamic runtime states for Indigo device."""
         states = []
