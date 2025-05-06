@@ -204,8 +204,6 @@ class AutoLightsConfig(AutoLightsBase):
         # Process plugin_config
         plugin_config = data.get("plugin_config", {})
         for key, value in plugin_config.items():
-            if key == "enabled_var_id":
-                continue
             if hasattr(self, key):
                 setattr(self, key, value)
 
