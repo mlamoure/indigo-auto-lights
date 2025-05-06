@@ -417,10 +417,10 @@ class Plugin(indigo.PluginBase):
             super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
-        state_list = super().getDeviceStateList(dev) or []
+        state_list = indigo.PluginBase.getDeviceStateList(self, dev)
 
         # only for our zone devices
-        if dev.deviceTypeId != "auto_lights_zone" or not getattr(self, "_agent", None):
+        if self._agent is None:
             return state_list
 
         # config-driven state definitions
@@ -444,7 +444,7 @@ class Plugin(indigo.PluginBase):
 
         # runtime-defined state definitions
         for entry in self._agent.config.runtime_states:
-            key   = entry["key"]
+            key = entry["key"]
             stype = entry["type"]
             label = entry["label"]
             if stype in ("boolean", "bool"):

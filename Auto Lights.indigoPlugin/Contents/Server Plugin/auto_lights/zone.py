@@ -1083,29 +1083,30 @@ class Zone(AutoLightsBase):
         # append runtime-defined status states
         for entry in self._config.runtime_states:
             key = entry["key"]
-            if key == "current_period_name":
-                p = self.current_lighting_period
-                val = p.name if p else ""
-            elif key == "current_period_mode":
-                p = self.current_lighting_period
-                val = p.mode if p else ""
-            elif key == "current_period_from":
-                p = self.current_lighting_period
-                val = p.from_time.strftime("%H:%M") if p else ""
-            elif key == "current_period_to":
-                p = self.current_lighting_period
-                val = p.to_time.strftime("%H:%M") if p else ""
-            elif key == "presence_detected":
-                val = self.has_presence_detected()
-            elif key == "luminance_value":
-                val = self.luminance
-            elif key == "is_dark":
-                val = self.is_dark()
-            elif key == "zone_locked":
-                val = self.locked
-            else:
-                continue
-            state_list.append({"key": key, "value": val})
+            if key in dev.states:
+                if key == "current_period_name":
+                    p = self.current_lighting_period
+                    val = p.name if p else ""
+                elif key == "current_period_mode":
+                    p = self.current_lighting_period
+                    val = p.mode if p else ""
+                elif key == "current_period_from":
+                    p = self.current_lighting_period
+                    val = p.from_time.strftime("%H:%M") if p else ""
+                elif key == "current_period_to":
+                    p = self.current_lighting_period
+                    val = p.to_time.strftime("%H:%M") if p else ""
+                elif key == "presence_detected":
+                    val = self.has_presence_detected()
+                elif key == "luminance_value":
+                    val = self.luminance
+                elif key == "is_dark":
+                    val = self.is_dark()
+                elif key == "zone_locked":
+                    val = self.locked
+                else:
+                    continue
+                state_list.append({"key": key, "value": val})
 
         try:
             dev.updateStatesOnServer(state_list)
