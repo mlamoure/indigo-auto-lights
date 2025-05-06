@@ -459,6 +459,18 @@ class AutoLightsAgent(AutoLightsBase):
         for zone in self.config.zones:
             zone.sync_indigo_device()
 
+        # clean up stale zone devices
+        active_indices = {zone.zone_index for zone in self.config.zones}
+        for dev in indigo.devices:
+            if dev.pluginId == "com.vtmikel.autolights" and dev.deviceTypeId == "auto_lights_zone":
+                idx = int(dev.pluginProps.get("zone_index", -1))
+                if idx not in active_indices:
+                    try:
+                        indigo.device.delete(dev)
+                        self.logger.info(f"Deleted stale zone device: {dev.name} (index: {idx})")
+                    except Exception as e:
+                        self.logger.error(f"Failed to delete stale zone device {dev.name}: {e}")
+
     def refresh_indigo_device(self, dev_id: int) -> None:
         for zone in self.config.zones:
             if zone.indigo_dev.id == dev_id:
