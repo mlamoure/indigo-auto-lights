@@ -60,8 +60,12 @@ class Plugin(indigo.PluginBase):
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
         self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
-        self._disable_ssl_validation = bool(plugin_prefs.get("disable_ssl_validation", False))
-        os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(self._disable_ssl_validation)
+        self._disable_ssl_validation = bool(
+            plugin_prefs.get("disable_ssl_validation", False)
+        )
+        os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(
+            self._disable_ssl_validation
+        )
 
         # Configure logging levels based on plugin preferences.
         self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
@@ -116,6 +120,7 @@ class Plugin(indigo.PluginBase):
             self.start_configuration_web_server()
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
+        self._agent.refresh_all_indigo_devices()
 
     def runConcurrentThread(self):
         # sleep at first to let first-run go through.
@@ -280,8 +285,12 @@ class Plugin(indigo.PluginBase):
             self._disable_web_server = values_dict.get("disable_web_server")
             self._log_non_events = bool(values_dict.get("log_non_events", False))
             self._agent.config.log_non_events = self._log_non_events
-            self._disable_ssl_validation = bool(values_dict.get("disable_ssl_validation", False))
-            os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(self._disable_ssl_validation)
+            self._disable_ssl_validation = bool(
+                values_dict.get("disable_ssl_validation", False)
+            )
+            os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(
+                self._disable_ssl_validation
+            )
 
             self.test_connections()
             # Restart or stop the configuration web server based on new settings.
