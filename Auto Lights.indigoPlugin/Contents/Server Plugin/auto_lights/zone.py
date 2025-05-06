@@ -180,7 +180,9 @@ class Zone(AutoLightsBase):
     def enabled(self) -> bool:
         """Indicates whether the zone is enabled via its Indigo Relay device."""
         try:
-            return bool(self.indigo_dev.onState)
+            result = bool(self.indigo_dev.onState)
+            self._debug_log(f"Zone '{self._name}': enabled={result}")
+            return result
         except Exception as e:
             self.logger.error(f"Zone '{self._name}': failed to read onState: {e}")
             return False
