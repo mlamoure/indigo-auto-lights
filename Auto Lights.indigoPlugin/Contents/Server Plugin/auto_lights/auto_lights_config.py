@@ -1,6 +1,6 @@
 import json
-from typing import List, Tuple
 from pathlib import Path
+from typing import List, Tuple
 
 from .auto_lights_base import AutoLightsBase
 from .auto_lights_base import BrightnessPlan
@@ -46,25 +46,41 @@ class AutoLightsConfig(AutoLightsBase):
                 "key": "current_period_name",
                 "type": "string",
                 "label": "Current Period",
-                "getter": lambda zone: zone.current_lighting_period.name if zone.current_lighting_period else "",
+                "getter": lambda zone: (
+                    zone.current_lighting_period.name
+                    if zone.current_lighting_period
+                    else ""
+                ),
             },
             {
                 "key": "current_period_mode",
                 "type": "string",
                 "label": "Mode",
-                "getter": lambda zone: zone.current_lighting_period.mode if zone.current_lighting_period else "",
+                "getter": lambda zone: (
+                    zone.current_lighting_period.mode
+                    if zone.current_lighting_period
+                    else ""
+                ),
             },
             {
                 "key": "current_period_from",
                 "type": "string",
                 "label": "Start Time",
-                "getter": lambda zone: zone.current_lighting_period.from_time.strftime("%H:%M") if zone.current_lighting_period else "",
+                "getter": lambda zone: (
+                    zone.current_lighting_period.from_time.strftime("%H:%M")
+                    if zone.current_lighting_period
+                    else ""
+                ),
             },
             {
                 "key": "current_period_to",
                 "type": "string",
                 "label": "End Time",
-                "getter": lambda zone: zone.current_lighting_period.to_time.strftime("%H:%M") if zone.current_lighting_period else "",
+                "getter": lambda zone: (
+                    zone.current_lighting_period.to_time.strftime("%H:%M")
+                    if zone.current_lighting_period
+                    else ""
+                ),
             },
             {
                 "key": "presence_detected",
@@ -73,7 +89,7 @@ class AutoLightsConfig(AutoLightsBase):
                 "getter": lambda zone: zone.has_presence_detected(),
             },
             {
-                "key": "luminance_value",
+                "key": "luminance",
                 "type": "number",
                 "label": "Luminance",
                 "getter": lambda zone: zone.luminance,
