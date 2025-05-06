@@ -411,15 +411,14 @@ class Plugin(indigo.PluginBase):
         if dev.deviceTypeId == "auto_lights_zone":
             act = action.deviceAction
             if act == indigo.kDeviceAction.Toggle:
-                dev.updateStateOnServer(
-                    "onOffState", act == indigo.kDeviceAction.TurnOn
-                )
-            elif act == indigo.kDeviceAction.StatusRequest:
-                dev.updateStateOnServer(
-                    "onOffState", act == indigo.kDeviceAction.TurnOn
-                )
-            else:
                 dev.updateStateOnServer("onOffState", not dev.onOffState)
+            elif act == indigo.kDeviceAction.StatusRequest:
+                pass
+            else:
+                # TurnOn or TurnOff
+                dev.updateStateOnServer(
+                    "onOffState", act == indigo.kDeviceAction.TurnOn
+                )
 
             zi = int(dev.pluginProps.get("zone_index", -1))
             zone = next(z for z in self._agent.config.zones if z.zone_index == zi)
