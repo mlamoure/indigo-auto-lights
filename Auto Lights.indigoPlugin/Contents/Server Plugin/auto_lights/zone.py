@@ -1051,6 +1051,7 @@ class Zone(AutoLightsBase):
                 props={"zone_index": self.zone_index},
             )
             indigo.device.turnOn(dev.id, delay=0)
+            self.logger.info(f"🆕 Created new Indigo device for Zone '{self.name}' (id: {dev.id})")
             return dev
         except Exception as e:
             self.logger.error(
