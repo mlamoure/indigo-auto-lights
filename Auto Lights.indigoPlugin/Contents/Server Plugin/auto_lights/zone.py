@@ -117,8 +117,6 @@ class Zone(AutoLightsBase):
             cfg (dict): Configuration dictionary with keys
                         'device_settings', 'minimum_luminance_settings', and 'behavior_settings'.
         """
-        if "enabled_var_id" in cfg:
-            self.enabled_var_id = cfg["enabled_var_id"]
         if "device_settings" in cfg:
             ds = cfg["device_settings"]
             if "on_lights_dev_ids" in ds:
