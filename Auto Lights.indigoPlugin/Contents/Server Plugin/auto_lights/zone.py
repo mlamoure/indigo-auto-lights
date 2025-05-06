@@ -926,7 +926,7 @@ class Zone(AutoLightsBase):
             if period.mode == "On and Off" and presence and darkness:
                 plan_contribs.append(("💡", "presence & dark → turning on lights"))
                 for dev_id in self.on_lights_dev_ids:
-                    excluded = self._has_dev_lighting_mapping_exclusion(dev_id, period)
+                    excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
                     if excluded:
                         plan_exclusions.append(
                             (
@@ -996,7 +996,7 @@ class Zone(AutoLightsBase):
     def device_period_map(self, value: dict) -> None:
         self._device_period_map = value
 
-    def _has_dev_lighting_mapping_exclusion(
+    def has_dev_lighting_mapping_exclusion(
         self, dev_id: int, lighting_period: LightingPeriod
     ) -> bool:
         """
