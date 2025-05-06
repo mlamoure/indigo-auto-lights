@@ -422,6 +422,9 @@ class Plugin(indigo.PluginBase):
         if state_list is None:
             return
 
+        if self._agent.config is None:
+            return
+
         state_list = []
         # iterate in schema order (or whatever order config.sync_zone_attrs holds)
         for attr in self._agent.config.sync_zone_attrs:
