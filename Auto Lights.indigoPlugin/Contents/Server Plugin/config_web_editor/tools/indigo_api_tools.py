@@ -117,15 +117,18 @@ def indigo_api_call(
         "Authorization": f'Bearer {os.environ["INDIGO_API_KEY"]}',  # Set the API key in the header
         "Content-Type": "application/json",  # Optional: Specify content type
     }
+    verify = True
+    if os.getenv("INDIGO_API_DISABLE_SSL_VALIDATION", "False").lower() in ("true", "1"):
+        verify = False
 
     try:
         response = None
 
         if api_method == "GET":
-            response = requests.get(api_endpoint, headers=headers)
+            response = requests.get(api_endpoint, headers=headers, verify=verify)
         elif api_method == "POST":
             message_json = json.dumps(message_json).encode("utf8")
-            response = requests.post(api_endpoint, headers=headers, data=message_json)
+            response = requests.post(api_endpoint, headers=headers, data=message_json, verify=verify)
 
         response.raise_for_status()  # Raises an HTTPError for bad responses
 
