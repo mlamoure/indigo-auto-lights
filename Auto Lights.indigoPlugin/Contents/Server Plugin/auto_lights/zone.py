@@ -94,6 +94,7 @@ class Zone(AutoLightsBase):
         # counter for in-flight write commands
         self._pending_writes = 0
         self._write_lock = threading.Lock()
+        self._indigo_dev = None
 
     def __setattr__(self, name, value):
         # always let Python store the attribute
@@ -1029,6 +1030,8 @@ class Zone(AutoLightsBase):
 
     @property
     def indigo_dev(self) -> indigo.Device:
+        if self._indigo_dev is not None:
+            return self._indigo_dev
         # first try to find an existing plugin device with our zone_index
         for d in indigo.devices:
             if (
@@ -1036,7 +1039,8 @@ class Zone(AutoLightsBase):
                 and d.deviceTypeId == "auto_lights_zone"
                 and d.pluginProps.get("zone_index") == self.zone_index
             ):
-                return d
+                self._indigo_dev = d
+                return self._indigo_dev
 
         # didn't find it, so attempt to create one
         try:
@@ -1050,7 +1054,8 @@ class Zone(AutoLightsBase):
             )
             indigo.device.turnOn(dev.id, delay=0)
             self.logger.info(f"🆕 Created new Indigo device for Zone '{self.name}' (id: {dev.id})")
-            return dev
+            self._indigo_dev = dev
+            return self._indigo_dev
         except Exception as e:
             self.logger.error(
                 f"error creating new indigo device for Zone '{self.name}': {e}"
