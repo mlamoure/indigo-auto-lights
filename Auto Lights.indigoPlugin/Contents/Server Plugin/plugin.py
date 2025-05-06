@@ -403,7 +403,7 @@ class Plugin(indigo.PluginBase):
             reply["content"] = json.dumps(context)
         return reply
 
-    def actionControlRelay(self, action, dev):
+    def actionControlDevice(self, action, dev):
         if dev.deviceTypeId == "auto_lights_zone":
             act = action.deviceAction
             if act == indigo.kDeviceAction.TurnOn or act == indigo.kDeviceAction.Toggle:
@@ -445,6 +445,4 @@ class Plugin(indigo.PluginBase):
         return state_list
 
     def deviceStartComm(self, dev):
-        super().deviceStartComm(dev)
-        if dev.deviceTypeId == "auto_lights_zone":
-            dev.stateListOrDisplayStateIdChanged()
+        dev.stateListOrDisplayStateIdChanged()
