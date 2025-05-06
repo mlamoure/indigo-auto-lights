@@ -186,6 +186,22 @@ class Zone(AutoLightsBase):
             self.logger.error(f"Zone '{self._name}': failed to read onState: {e}")
             return False
 
+    @enabled.setter
+    def enabled(self, value: bool) -> None:
+        """
+        Sets the zone's enabled state by toggling the Indigo device on or off.
+        """
+        dev = self.indigo_dev
+        if dev is None:
+            return
+        try:
+            if value:
+                dev.turnOn()
+            else:
+                dev.turnOff()
+        except Exception as e:
+            self.logger.error(f"Zone '{self._name}': failed to set enabled state: {e}")
+
     @property
     def unlock_when_no_presence(self) -> bool:
         """Indicates whether the zone should automatically unlock when no presence is detected."""
