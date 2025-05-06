@@ -1102,6 +1102,13 @@ class Zone(AutoLightsBase):
             )
             return
 
+        # Update device name to match zone name
+        expected_name = f"Auto Lights Zone - {self.name}"
+        if dev.name != expected_name:
+            try:
+                dev.name = expected_name
+            except Exception as e:
+                self.logger.error(f"Failed to rename Indigo device for Zone '{self._name}': {e}")
         # Build list from schema-driven attributes
         state_list = self._build_schema_states(dev)
 
