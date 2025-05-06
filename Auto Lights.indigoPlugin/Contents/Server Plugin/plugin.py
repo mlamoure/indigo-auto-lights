@@ -182,7 +182,7 @@ class Plugin(indigo.PluginBase):
             )
             return
 
-        # Check if custom Indigo API configuration has been provided.
+        # Check if Indigo API configuration is not default
         if (
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
             and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
@@ -340,7 +340,6 @@ class Plugin(indigo.PluginBase):
         Menu item callback to log all locked zones.
         """
         self._agent.print_locked_zones()
-
 
     def change_zones_enabled(self, action, dev=None, caller_waiting_for_result=None):
         """
