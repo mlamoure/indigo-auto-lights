@@ -410,7 +410,7 @@ class Plugin(indigo.PluginBase):
                 dev.updateStateOnServer("onOffState", True)
             else:
                 dev.updateStateOnServer("onOffState", False)
-            zi = int(dev.pluginProps.get("zoneIndex", -1))
+            zi = int(dev.pluginProps.get("zone_index", -1))
             zone = next(z for z in self._agent.config.zones if z.zone_index == zi)
             self._agent.process_zone(zone)
         else:
@@ -422,22 +422,22 @@ class Plugin(indigo.PluginBase):
         if self._agent is None or dev.deviceTypeId != "auto_lights_zone":
             return super().getDeviceStateList(dev)
 
-        raw = dev.pluginProps.get("zoneIndex")
+        raw = dev.pluginProps.get("zone_index")
         try:
             zi = int(raw)
         except (TypeError, ValueError):
             return super().getDeviceStateList(dev)
 
         # grab the Zone and its shared config
-        zone   = self._agent.config.zones[zi]
+        zone = self._agent.config.zones[zi]
         config = self._agent.config
 
         stateList = []
         # iterate in schema order (or whatever order config.sync_zone_attrs holds)
         for attr in config.sync_zone_attrs:
             schema = config.zone_field_schemas.get(attr, {})
-            title  = schema.get("title", attr)
-            t      = schema.get("type", "string")
+            title = schema.get("title", attr)
+            t = schema.get("type", "string")
 
             # pick the right helper based on JSON-schema type
             if t == "boolean":

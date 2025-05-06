@@ -1020,7 +1020,7 @@ class Zone(AutoLightsBase):
             if (
                 d.pluginId == "com.vtmikel.autolights"
                 and d.deviceTypeId == "auto_lights_zone"
-                and d.pluginProps.get("zone_index") == str(self.zone_index)
+                and d.pluginProps.get("zone_index") == self.zone_index
             ):
                 return d
 
