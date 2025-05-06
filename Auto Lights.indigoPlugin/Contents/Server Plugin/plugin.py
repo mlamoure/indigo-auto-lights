@@ -463,5 +463,6 @@ class Plugin(indigo.PluginBase):
         return states
 
     def deviceStartComm(self, dev):
+        self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")
         dev.stateListOrDisplayStateIdChanged()
         self._agent.refresh_indigo_device(dev.id)

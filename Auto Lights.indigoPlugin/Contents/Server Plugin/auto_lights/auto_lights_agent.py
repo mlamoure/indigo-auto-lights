@@ -456,6 +456,7 @@ class AutoLightsAgent(AutoLightsBase):
         """
         Refresh all Indigo device states for all zones by syncing each zone's device states.
         """
+        self.logger.debug("refresh_all_indigo_devices: starting refresh of all Indigo devices")
         for zone in self.config.zones:
             zone.sync_indigo_device()
 
