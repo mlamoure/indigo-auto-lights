@@ -1058,22 +1058,6 @@ class Zone(AutoLightsBase):
             )
             return None
 
-    def _get_runtime_state_value(self, key: str):
-        """
-        Return the computed runtime state value for a given key.
-        """
-        runtime_mapping = {
-            "current_period_name": lambda: (self.current_lighting_period.name if self.current_lighting_period else ""),
-            "current_period_mode": lambda: (self.current_lighting_period.mode if self.current_lighting_period else ""),
-            "current_period_from": lambda: (self.current_lighting_period.from_time.strftime("%H:%M") if self.current_lighting_period else ""),
-            "current_period_to": lambda: (self.current_lighting_period.to_time.strftime("%H:%M") if self.current_lighting_period else ""),
-            "presence_detected": self.has_presence_detected,
-            "luminance_value": lambda: self.luminance,
-            "is_dark": self.is_dark,
-            "zone_locked": lambda: self.locked,
-        }
-        func = runtime_mapping.get(key)
-        return func() if func else None
 
     def _build_schema_states(self, dev):
         """Collect states based on schema-driven sync attributes."""
