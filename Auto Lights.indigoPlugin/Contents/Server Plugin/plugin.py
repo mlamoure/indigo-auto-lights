@@ -417,42 +417,32 @@ class Plugin(indigo.PluginBase):
             super().actionControlRelay(action, dev)
 
     def getDeviceStateList(self, dev):
-        # if we’re not ready yet or it isn’t one of our Zone devices,
-        # fall back to Indigo’s default behavior
-        if self._agent is None or dev.deviceTypeId != "auto_lights_zone":
-            return super().getDeviceStateList(dev)
+        state_list = indigo.PluginBase.getDeviceStateList(self, dev)
 
-        raw = dev.pluginProps.get("zone_index")
-        try:
-            zi = int(raw)
-        except (TypeError, ValueError):
-            return super().getDeviceStateList(dev)
+        if state_list is None:
+            return
 
-        # grab the Zone and its shared config
-        zone = self._agent.config.zones[zi]
-        config = self._agent.config
-
-        stateList = []
+        state_list = []
         # iterate in schema order (or whatever order config.sync_zone_attrs holds)
-        for attr in config.sync_zone_attrs:
-            schema = config.zone_field_schemas.get(attr, {})
+        for attr in self._agent.config.sync_zone_attrs:
+            schema = self._agent.config.zone_field_schemas.get(attr, {})
             title = schema.get("title", attr)
             t = schema.get("type", "string")
 
             # pick the right helper based on JSON-schema type
             if t == "boolean":
-                stateList.append(
+                state_list.append(
                     self.getDeviceStateDictForBoolTrueFalseType(attr, title, title)
                 )
             elif t in ("integer", "number"):
-                stateList.append(
+                state_list.append(
                     self.getDeviceStateDictForNumberType(attr, title, title)
                 )
             else:
-                stateList.append(
+                state_list.append(
                     self.getDeviceStateDictForStringType(attr, title, title)
                 )
-        return stateList
+        return state_list
 
     def deviceStartComm(self, dev):
         super().deviceStartComm(dev)
