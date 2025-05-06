@@ -1,5 +1,6 @@
 import json
 from typing import List, Tuple
+from pathlib import Path
 
 from .auto_lights_base import AutoLightsBase
 from .auto_lights_base import BrightnessPlan
@@ -90,10 +91,6 @@ class AutoLightsConfig(AutoLightsBase):
                 "getter": lambda zone: zone.locked,
             },
         ]
-
-        # Load JSON schema to identify which zone fields to sync
-        from pathlib import Path
-        import json
 
         schema_path = (
             Path(__file__).parent.parent
