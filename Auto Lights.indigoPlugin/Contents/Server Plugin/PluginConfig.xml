@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <PluginConfig>
     <Field id="api_intro_label" type="label" fontSize="small">
-        <Label>Enter the Indigo API URL – your Reflector URL or local server address (include http/https and port). For local secrets (e.g. http://localhost:8176), disable SSL validation below.</Label>
+        <Label>Enter the Indigo API URL – your Reflector URL
+            Alternatively, if using local secrets (check Indigo Documentation), use your local server address, including http/https and port.
+            For local secrets (e.g. http://localhost:8176), disable SSL validation below.
+        </Label>
     </Field>
     <Field id="indigo_api_url" type="textfield" defaultValue="https://myreflector.indigodomo.net" tooltip="">
         <Label>API URL:</Label>
