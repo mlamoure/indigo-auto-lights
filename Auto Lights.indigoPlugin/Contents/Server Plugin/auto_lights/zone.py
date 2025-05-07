@@ -340,7 +340,14 @@ class Zone(AutoLightsBase):
             elif "brightnessLevel" in device.states:
                 return int(device.states["brightness"])
 
-            return bool(device.onState)
+            try:
+                return bool(device.onState)
+            except Exception as e:
+                logging.error(
+                    f"Zone '{self._name}': failed to read onState for device "
+                    f"{getattr(device, 'id', 'unknown')} ('{getattr(device, 'name', 'unknown')}'): {e}"
+                )
+                return False
 
         # Gather on_lights
         for dev_id in self.on_lights_dev_ids:
