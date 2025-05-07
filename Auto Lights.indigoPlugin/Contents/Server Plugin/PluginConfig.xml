@@ -16,6 +16,7 @@
         <Label>API Key:</Label>
     </Field>
 
+
     <Field type="checkbox"
            id="disable_web_server"
            defaultValue="false">
@@ -36,6 +37,7 @@
            tooltip="">
         <Label>Web server port:</Label>
     </Field>
+
 
     <Field id="log_level" type="menu" defaultValue="20">
         <Label>Event Logging Level:</Label>
