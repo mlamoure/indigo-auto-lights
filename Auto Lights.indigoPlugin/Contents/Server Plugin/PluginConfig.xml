@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <PluginConfig>
     <Field id="indigo_api_url" type="textfield" defaultValue="https://myreflector.indigodomo.net" tooltip="">
-        <Label>Reflector URL:</Label>
+        <Label>API URL:</Label>
+        <Description>This can be your refelector URL or localhost if using local secrets.  Be sure to always include http or https and the port if not using 443.  Local secrets should be: http://localhost:8176 or https://localhost:8176.  If using localhost and https, turn off SSL validation, below.</Description>
     </Field>
     <Field id="disable_ssl_validation" type="checkbox" defaultValue="false">
         <Label>Disable SSL/TLS Validation:</Label>
