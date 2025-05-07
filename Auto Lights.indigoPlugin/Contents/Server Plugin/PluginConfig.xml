@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <PluginConfig>
-    <Field id="api_intro_label" type="label" fontSize="small">
+    <Field id="api_intro_label" type="label" fontSize="small" alignWithControl="true">
         <Label>Enter the Indigo API URL – your Reflector URL
             Alternatively, if using local secrets (check Indigo Documentation), use your local server address, including http/https and port.
             For local secrets (e.g. http://localhost:8176), disable SSL validation below.
