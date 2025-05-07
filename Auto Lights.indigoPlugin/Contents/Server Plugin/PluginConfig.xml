@@ -5,7 +5,7 @@
     </Field>
     <Field id="disable_ssl_validation" type="checkbox" defaultValue="false">
         <Label>Disable SSL/TLS Validation:</Label>
-        <Description>Skip SSL/TLS certificate validation for Indigo API calls.</Description>
+        <Description>Skip SSL/TLS certificate validation for Indigo API calls.  Select this if you are using local secrets versus the reflector.</Description>
     </Field>
     <Field id="api_key" type="textfield" defaultValue="xxxxx-xxxxx-xxxxx-xxxxx" tooltip="">
         <Label>API Key:</Label>
