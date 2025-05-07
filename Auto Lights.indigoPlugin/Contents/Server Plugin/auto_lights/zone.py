@@ -344,7 +344,7 @@ class Zone(AutoLightsBase):
                 return bool(device.onState)
             except Exception as e:
                 logging.error(
-                    f"Zone '{self._name}': failed to read onState for device "
+                    f"Zone '{self._name}': failed to read current state for device "
                     f"{getattr(device, 'id', 'unknown')} ('{getattr(device, 'name', 'unknown')}'): {e}"
                 )
                 return False
