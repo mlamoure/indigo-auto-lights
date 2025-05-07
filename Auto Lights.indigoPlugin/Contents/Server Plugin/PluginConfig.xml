@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <PluginConfig>
+    <Field id="api_intro_label" type="label" fontSize="small">
+        <Label>Enter the Indigo API URL – your Reflector URL or local server address (include http/https and port). For local secrets (e.g. http://localhost:8176), disable SSL validation below.</Label>
+    </Field>
     <Field id="indigo_api_url" type="textfield" defaultValue="https://myreflector.indigodomo.net" tooltip="">
         <Label>API URL:</Label>
-        <Description>This can be your refelector URL or localhost if using local secrets.  Be sure to always include http or https and the port if not using 443.  Local secrets should be: http://localhost:8176 or https://localhost:8176.  If using localhost and https, turn off SSL validation, below.</Description>
     </Field>
     <Field id="disable_ssl_validation" type="checkbox" defaultValue="false">
         <Label>Disable SSL/TLS Validation:</Label>
-        <Description>Skip SSL/TLS certificate validation for Indigo API calls.  Select this if you are using local secrets versus the reflector.</Description>
     </Field>
     <Field id="api_key" type="textfield" defaultValue="xxxxx-xxxxx-xxxxx-xxxxx" tooltip="">
         <Label>API Key:</Label>
