@@ -15,7 +15,7 @@
     <Field id="api_key" type="textfield" defaultValue="xxxxx-xxxxx-xxxxx-xxxxx" tooltip="">
         <Label>API Key:</Label>
     </Field>
-
+    <Field id="simpleSeparator1" type="separator" alignWithControl="false"/>
 
     <Field type="checkbox"
            id="disable_web_server"
@@ -37,7 +37,7 @@
            tooltip="">
         <Label>Web server port:</Label>
     </Field>
-
+    <Field id="simpleSeparator2" type="separator" alignWithControl="false"/>
 
     <Field id="log_level" type="menu" defaultValue="20">
         <Label>Event Logging Level:</Label>
