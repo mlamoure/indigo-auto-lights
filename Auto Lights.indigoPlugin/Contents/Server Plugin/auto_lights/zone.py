@@ -126,6 +126,7 @@ class Zone(AutoLightsBase):
             name (str): The name of the zone.
             config (AutoLightsConfig): The global auto lights configuration.
         """
+        super().__init__()
         self.logger = logging.getLogger("Plugin")
         self._name = name
         self._zone_index = None

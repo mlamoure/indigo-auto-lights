@@ -43,6 +43,7 @@ class Plugin(indigo.PluginBase):
             plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs
         )
 
+        self.connection_indigo_api = None
         self._agent = None
         self._web_server_thread = None
         self._web_server = None
