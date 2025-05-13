@@ -189,7 +189,7 @@ class Zone(AutoLightsBase):
         # now, if this is one of the fields we want to mirror back into Indigo, do it
         if hasattr(self, "_config"):
             key = name[1:] if name.startswith("_") else name
-            if key in self._config.sync_zone_attrs:
+            if key in self.zone_indigo_device_config_states:
                 self.sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
@@ -1187,7 +1187,7 @@ class Zone(AutoLightsBase):
     def _build_runtime_states(self, dev):
         """Collect dynamic runtime states for Indigo device."""
         states = []
-        for entry in self._config.zone_indigo_device_runtime_states:
+        for entry in self.zone_indigo_device_runtime_states:
             key = entry["key"]
             if key in dev.states:
                 val = self._get_runtime_state_value(key)
