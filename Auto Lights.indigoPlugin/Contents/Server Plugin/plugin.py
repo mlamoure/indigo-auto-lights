@@ -296,18 +296,19 @@ class Plugin(indigo.PluginBase):
                 self._disable_ssl_validation
             )
 
-            self.test_connections()
-            # Restart or stop the configuration web server based on new settings.
-            if self._disable_web_server:
-                self.stop_configuration_web_server()
-            else:
-                self.start_configuration_web_server()
-
             # Update logging configuration.
             self.log_level = int(values_dict.get("log_level", logging.INFO))
             self.logger.debug(f"{self.log_level=}")
             self.indigo_log_handler.setLevel(self.log_level)
             self.plugin_file_handler.setLevel(self.log_level)
+
+            self.test_connections()
+
+            # Restart or stop the configuration web server based on new settings.
+            if self._disable_web_server:
+                self.stop_configuration_web_server()
+            else:
+                self.start_configuration_web_server()
 
     def get_zone_list(
         self: indigo.PluginBase, filter="", values_dict=None, type_id="", target_id=0
@@ -504,7 +505,10 @@ class Plugin(indigo.PluginBase):
         states = super().getDeviceStateList(dev)
 
         # PLUGIN DEVICES ONLY – guard against calls before our agent/config are constructed
-        if dev.pluginId != "com.vtmikel.autolights" or getattr(self, "_agent", None) is None:
+        if (
+            dev.pluginId != "com.vtmikel.autolights"
+            or getattr(self, "_agent", None) is None
+        ):
             return states
 
         # ---- GLOBAL CONFIG DEVICE ----
