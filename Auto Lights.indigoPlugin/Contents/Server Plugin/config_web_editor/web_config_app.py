@@ -202,19 +202,33 @@ def create_field(field_name, field_schema):
             validators=validators,
         )
 
-    # Example of an enumerated select for lock durations
-    elif field_name in [
-        "lock_duration",
-        "lock_extension_duration",
-        "default_lock_duration",
-        "default_lock_extension_duration",
-    ]:
+    # zone-level override: still allow "Use Plugin Default"
+    elif field_name in ["lock_duration", "lock_extension_duration"]:
+        choices = [
+            ("", "Use Plugin Default"),
+            (1, "1 Minute"),
+            (2, "2 Minutes"),
+            (5, "5 Minutes"),
+            (10, "10 Minutes"),
+            (15, "15 Minutes"),
+            (30, "30 Minutes"),
+            (45, "45 Minutes"),
+            (60, "1 hour"),
+            (120, "2 hours"),
+        ]
         field = SelectField(
             label=label_text,
             description=tooltip_text,
             coerce=lambda x: int(x) if x != "" else None,
+            choices=choices,
+        )
+    # plugin-level defaults: must pick a number, no fallback option
+    elif field_name in ["default_lock_duration", "default_lock_extension_duration"]:
+        field = SelectField(
+            label=label_text,
+            description=tooltip_text,
+            coerce=int,
             choices=[
-                ("", "Use Plugin Default"),
                 (1, "1 Minute"),
                 (2, "2 Minutes"),
                 (5, "5 Minutes"),
@@ -225,6 +239,8 @@ def create_field(field_name, field_schema):
                 (60, "1 hour"),
                 (120, "2 hours"),
             ],
+            validators=[DataRequired()],
+            render_kw={"required": True},
         )
 
     # Basic integer field
