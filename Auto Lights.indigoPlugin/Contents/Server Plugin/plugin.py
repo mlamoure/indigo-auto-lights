@@ -412,34 +412,42 @@ class Plugin(indigo.PluginBase):
 
     def actionControlDevice(self, action, dev):
         """Handle zone device toggle and process zone lighting."""
+
+        action_type = action.deviceAction
+        new_state = False
+
+        if action_type == indigo.kDeviceAction.RequestStatus:
+            return
+
         # Handle global config device toggle
         if dev.deviceTypeId == "auto_lights_config":
-            new_state = (
-                action.deviceAction == indigo.kDeviceAction.TurnOn or not dev.onOffState
-            )
+            if action_type == indigo.kDeviceAction.Toggle:
+                new_state = not dev.onOffState
+            elif action_type in (
+                indigo.kDeviceAction.TurnOn,
+                indigo.kDeviceAction.TurnOff,
+            ):
+                new_state = action_type == indigo.kDeviceAction.TurnOn
+
             dev.updateStateOnServer("onOffState", new_state)
-            self._agent.config.enabled = new_state
             self._agent.process_all_zones()
             return
 
-        # Only handle our zone devices.
-        if dev.deviceTypeId != "auto_lights_zone":
-            return
-
-        action_type = action.deviceAction
-        if action_type == indigo.kDeviceAction.RequestStatus:
-            pass
-        elif action_type == indigo.kDeviceAction.Toggle:
-            new_state = not dev.onOffState
-            dev.updateStateOnServer("onOffState", new_state)
-        elif action_type in (indigo.kDeviceAction.TurnOn, indigo.kDeviceAction.TurnOff):
-            new_state = action_type == indigo.kDeviceAction.TurnOn
-            dev.updateStateOnServer("onOffState", new_state)
-        else:
-            self.logger.warning(
-                f"Unrecognized device action {action_type} for {dev.name}"
-            )
-            return
+        if dev.deviceTypeId == "auto_lights_zone":
+            if action_type == indigo.kDeviceAction.Toggle:
+                new_state = not dev.onOffState
+                dev.updateStateOnServer("onOffState", new_state)
+            elif action_type in (
+                indigo.kDeviceAction.TurnOn,
+                indigo.kDeviceAction.TurnOff,
+            ):
+                new_state = action_type == indigo.kDeviceAction.TurnOn
+                dev.updateStateOnServer("onOffState", new_state)
+            else:
+                self.logger.warning(
+                    f"Unrecognized device action {action_type} for {dev.name}"
+                )
+                return
 
         # Process the zone logic after the device state change.
         zone_index = int(dev.pluginProps.get("zone_index", -1))
@@ -450,7 +458,9 @@ class Plugin(indigo.PluginBase):
         if zone:
             self._agent.process_zone(zone)
         else:
-            self.logger.error(f"Zone with index {zone_index} not found.")
+            self.logger.error(
+                f"actionControlDevice: Zone with index {zone_index} not found."
+            )
 
     def getDeviceStateList(self, dev):
         # Start with base state definitions
