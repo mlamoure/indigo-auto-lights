@@ -3,16 +3,17 @@ import logging
 from dataclasses import dataclass
 from typing import List, Tuple
 
+
 @dataclass
 class BrightnessPlan:
     # A list of (emoji, message) explaining WHY we did this
     contributions: List[Tuple[str, str]]
     # A list of (emoji, message) for devices excluded from the period
-    exclusions:      List[Tuple[str, str]]
+    exclusions: List[Tuple[str, str]]
     # The new raw target_brightness list you will apply to zone.target_brightness
-    new_targets:     List[dict]
+    new_targets: List[dict]
     # A list of (emoji, message) describing the DEVICE-level differences
-    device_changes:  List[Tuple[str, str]]
+    device_changes: List[Tuple[str, str]]
 
 
 class AutoLightsBase:
@@ -23,22 +24,6 @@ class AutoLightsBase:
 
     def __init__(self, logger_name="Plugin"):
         self.logger = logging.getLogger(logger_name)
-
-    def __setattr__(self, name: str, value) -> None:
-        super().__setattr__(name, value)
-        # don't sync on private attributes
-        if name.startswith("_"):
-            return
-        # sync logic for Zone attributes
-        if hasattr(self, "_config") and getattr(self, "_zone_index", None) is not None:
-            key = name[1:] if name.startswith("_") else name
-            if key in self._config.sync_zone_attrs:
-                self.sync_indigo_device()
-        # sync logic for Config attributes
-        elif hasattr(self, "sync_config_attrs"):
-            key = name[1:] if name.startswith("_") else name
-            if key in self.sync_config_attrs:
-                self.sync_indigo_device()
 
     def _debug_log(self, message: str) -> None:
         stack = inspect.stack()
