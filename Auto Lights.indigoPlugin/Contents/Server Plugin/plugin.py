@@ -503,7 +503,8 @@ class Plugin(indigo.PluginBase):
         # Start with base state definitions
         states = super().getDeviceStateList(dev)
 
-        if dev.pluginId != "com.vtmikel.autolights":
+        # PLUGIN DEVICES ONLY – guard against calls before our agent/config are constructed
+        if dev.pluginId != "com.vtmikel.autolights" or getattr(self, "_agent", None) is None:
             return states
 
         # ---- GLOBAL CONFIG DEVICE ----
