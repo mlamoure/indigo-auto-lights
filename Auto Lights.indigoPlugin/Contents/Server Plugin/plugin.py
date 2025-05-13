@@ -409,6 +409,17 @@ class Plugin(indigo.PluginBase):
 
     def actionControlDevice(self, action, dev):
         """Handle zone device toggle and process zone lighting."""
+        # Handle global config device toggle
+        if dev.deviceTypeId == "auto_lights_config":
+            new_state = (
+                action.deviceAction == indigo.kDeviceAction.TurnOn
+                or not dev.onOffState
+            )
+            dev.updateStateOnServer("onOffState", new_state)
+            self._agent.config.enabled = new_state
+            self._agent.process_all_zones()
+            return
+
         # Only handle our zone devices.
         if dev.deviceTypeId != "auto_lights_zone":
             return
@@ -446,6 +457,11 @@ class Plugin(indigo.PluginBase):
         # only for our zone devices
         # If agent not initialized, return base state definitions
         if not self._agent:
+            return states
+
+        # Global config device: sync plugin_config schema-driven states
+        if dev.deviceTypeId == "auto_lights_config":
+            states.extend(self._agent.config._build_schema_states(dev))
             return states
 
         # Add configured zone attributes from schema

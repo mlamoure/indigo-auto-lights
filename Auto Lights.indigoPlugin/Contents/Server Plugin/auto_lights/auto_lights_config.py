@@ -139,22 +139,22 @@ class AutoLightsConfig(AutoLightsBase):
         self.load_config()
 
     @property
-    def enabled(self):
-        return self._enabled
+    def enabled(self) -> bool:
+        """
+        Indicates whether the plugin is enabled via the global config device.
+        """
+        return bool(self.indigo_dev.onState)
 
     @enabled.setter
-    def enabled(self, value):
-        self._enabled = value
+    def enabled(self, value: bool) -> None:
+        """
+        Toggles the global config device to enable/disable the plugin.
+        """
+        if value:
+            indigo.device.turnOn(self.indigo_dev.id)
+        else:
+            indigo.device.turnOff(self.indigo_dev.id)
 
-    @property
-    def enabled_var_id(self):
-        return self._enabled_var_id
-
-    @enabled_var_id.setter
-    def enabled_var_id(self, value):
-        self._enabled_var_id = value
-        self._enabled = indigo.variables[self._enabled_var_id].getValue(bool)
-        # indigo.server.log("AutoLightsConfig: enabled set to: " + str(self._enabled))
 
     @property
     def default_lock_duration(self) -> int:

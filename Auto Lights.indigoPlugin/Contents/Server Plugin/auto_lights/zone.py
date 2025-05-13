@@ -1097,7 +1097,7 @@ class Zone(AutoLightsBase):
         """
         Retrieve the runtime state value for the given key using the getter in config.runtime_states.
         """
-        for entry in self._config.runtime_states:
+        for entry in self._config.zone_indigo_device_runtime_states:
             if entry.get("key") == key:
                 return entry["getter"](self)
         return None
@@ -1105,7 +1105,7 @@ class Zone(AutoLightsBase):
     def _build_runtime_states(self, dev):
         """Collect dynamic runtime states for Indigo device."""
         states = []
-        for entry in self._config.runtime_states:
+        for entry in self._config.zone_indigo_device_runtime_states:
             key = entry["key"]
             if key in dev.states:
                 val = self._get_runtime_state_value(key)

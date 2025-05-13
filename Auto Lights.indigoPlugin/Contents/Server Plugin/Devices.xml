@@ -29,4 +29,7 @@
         <Name>Auto Lights Zone</Name>
         <!-- States removed in favor of dynamic device states -->
     </Device>
+    <Device type="relay" id="auto_lights_config">
+        <Name>Auto Lights Global Config</Name>
+    </Device>
 </Devices>

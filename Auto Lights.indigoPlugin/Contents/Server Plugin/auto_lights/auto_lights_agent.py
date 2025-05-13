@@ -353,17 +353,15 @@ class AutoLightsAgent(AutoLightsBase):
 
     def enable_all_zones(self) -> None:
         """
-        Enable all zones by setting their enabled property to True.
+        Enable plugin by toggling the global config device on.
         """
-        for zone in self.config.zones:
-            zone.enabled = True
+        self.config.enabled = True
 
     def disable_all_zones(self) -> None:
         """
-        Disable all zones by setting their enabled property to False.
+        Disable plugin by toggling the global config device off.
         """
-        for zone in self.config.zones:
-            zone.enabled = False
+        self.config.enabled = False
 
     def enable_zone(self, zone_name: str) -> None:
         """

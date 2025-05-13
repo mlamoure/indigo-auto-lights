@@ -6,24 +6,21 @@
     "plugin_config": {
       "type": "object",
       "properties": {
-        "enabled_var_id": {
-          "type": "integer",
-          "x-drop-down": true,
-          "title": "Enabled Variable",
-          "tooltip": "Set the identifier for the enabled variable."
-        },
         "default_lock_duration": {
           "type": "integer",
+          "x-sync_to_indigo": true,
           "title": "Default Lock Duration",
           "tooltip": "Set the default duration for locks."
         },
         "default_lock_extension_duration": {
           "type": "integer",
+          "x-sync_to_indigo": true,
           "title": "Default Lock Extension Duration",
           "tooltip": "Set the duration by which the lock is extended."
         },
         "global_behavior_variables": {
           "type": "array",
+          "x-sync_to_indigo": true,
           "title": "Global Behavior Variables",
           "tooltip": "A list of variables where if the value of the variable matches the defined value, all lights will be off.  This is an OR condition, so any being true will turn off all lights for all zones.  Use this for if you have a variable defined for someone being home, or if the house is asleep.",
           "items": {
@@ -58,9 +55,7 @@
           }
         }
       },
-      "required": [
-        "enabled_var_id"
-      ]
+      "required": []
     },
     "zones": {
       "type": "array",

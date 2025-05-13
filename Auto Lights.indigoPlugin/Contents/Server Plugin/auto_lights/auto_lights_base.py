@@ -24,6 +24,19 @@ class AutoLightsBase:
     def __init__(self, logger_name="Plugin"):
         self.logger = logging.getLogger(logger_name)
 
+    def __setattr__(self, name: str, value) -> None:
+        super().__setattr__(name, value)
+        # sync logic for Zone attributes
+        if hasattr(self, "_config") and getattr(self, "_zone_index", None) is not None:
+            key = name[1:] if name.startswith("_") else name
+            if key in self._config.sync_zone_attrs:
+                self.sync_indigo_device()
+        # sync logic for Config attributes
+        elif hasattr(self, "sync_config_attrs"):
+            key = name[1:] if name.startswith("_") else name
+            if key in self.sync_config_attrs:
+                self.sync_indigo_device()
+
     def _debug_log(self, message: str) -> None:
         stack = inspect.stack()
         current_fn = stack[1].function if len(stack) > 1 else ""
