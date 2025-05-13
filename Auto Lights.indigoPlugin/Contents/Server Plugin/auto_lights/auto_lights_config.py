@@ -55,8 +55,6 @@ class AutoLightsConfig(AutoLightsBase):
         def _collect(p):
             for k, v in p.items():
                 self.zone_field_schemas[k] = v
-                if v.get("x-sync_to_indigo"):
-                    self.sync_zone_attrs.add(k)
                 if v.get("type") == "object" and "properties" in v:
                     _collect(v["properties"])
 
@@ -256,10 +254,15 @@ class AutoLightsConfig(AutoLightsBase):
     def _build_schema_states(self, dev):
         """Collect schema-driven config states for Indigo device."""
         states = []
-        for attr in self.sync_config_attrs:
-            if attr in dev.states:
-                val = getattr(self, attr)
-                states.append({"key": attr, "value": val})
+        for key, schema in self.zone_field_schemas.items():
+            if not schema.get("x-sync_to_indigo"):
+                continue
+            if key not in dev.states:
+                continue
+            val = getattr(self, key)
+            states.append(
+                {"key": key, "value": json.dumps(val) if isinstance(val, list) else val}
+            )
         return states
 
     def sync_indigo_device(self) -> None:
