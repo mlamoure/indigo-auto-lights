@@ -511,5 +511,8 @@ class Plugin(indigo.PluginBase):
 
     def deviceStartComm(self, dev):
         self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")
+        # ignore our own plugin devices so we don't loop
+        if dev.pluginId == self.pluginId:
+            return
         dev.stateListOrDisplayStateIdChanged()
         self._agent.refresh_indigo_device(dev.id)
