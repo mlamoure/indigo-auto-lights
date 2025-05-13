@@ -48,6 +48,9 @@ class AutoLightsConfig(AutoLightsBase):
         )
         with open(schema_path) as f:
             schema = json.load(f)
+        # capture global plugin_config schema
+        plugin_props = schema["properties"]["plugin_config"]["properties"]
+        self.config_field_schemas = plugin_props
         zone_props = schema["properties"]["zones"]["items"]["properties"]
         self.zone_field_schemas = {}
 
