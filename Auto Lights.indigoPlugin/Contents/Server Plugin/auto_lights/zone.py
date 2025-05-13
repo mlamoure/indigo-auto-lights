@@ -21,24 +21,26 @@ except ImportError:
 
 class Zone(AutoLightsBase):
     """
-    Represents an AutoLights zone.
+    Zone abstraction for Auto Lights.
 
-    This class manages configuration, device lists, lighting periods,
-    and state information used to control the lighting behavior for a zone.
-
-    It includes methods and properties to:
-      - Load and apply configuration from a dictionary.
-      - Compute and update target brightness levels.
-      - Determine lock status based on expiration times.
-      - Process sensor data and presence detection.
-      - Interface with Indigo devices via utility functions.
+    Manages a named group of Indigo devices that respond to lighting periods and presence/luminance sensors.
+    Key responsibilities:
+      - Maintain lists of on/off, luminance, and presence device IDs.
+      - Load and apply configuration settings from a dictionary.
+      - Calculate target brightness using LightingPeriod rules.
+      - Enforce and extend a lock state to avoid rapid toggles.
+      - Sync both configuration and runtime state definitions and values to an Indigo zone device.
 
     Attributes:
-        _name (str): Name of the zone.
-        _enabled (bool): Indicates if the zone is active.
-        _lock_duration (int): Duration in minutes for zone locking.
-        _lock_expiration (datetime): Expiration time for the current lock.
-        ... (other attributes)
+        name (str): Human-readable name of the zone.
+        on_lights_dev_ids (List[int]): IDs of devices to turn on.
+        off_lights_dev_ids (List[int]): IDs of devices to turn off.
+        luminance_dev_ids (List[int]): IDs of luminance sensor devices.
+        presence_dev_ids (List[int]): IDs of presence sensor devices.
+        lighting_periods (List[LightingPeriod]): Configured lighting periods for scheduling.
+        target_brightness (List[dict]): Desired brightness values for each device.
+        locked (bool): Current lock status; True if zone changes are paused.
+        zone_index (int): Index of the zone used for the Indigo device address.
     """
 
     # (2) Class variables or constants would go here if we had any.
