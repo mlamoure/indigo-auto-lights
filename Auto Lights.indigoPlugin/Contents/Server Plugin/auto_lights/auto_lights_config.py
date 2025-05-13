@@ -29,7 +29,8 @@ class AutoLightsConfig(AutoLightsBase):
         self.log_non_events = False
         self._enabled = False
 
-        self._enabled_var_id = -1
+        # Indigo device ID for global config
+        self._indigo_dev_id = None
         self._default_lock_duration = 0
         self._default_lock_extension_duration = 0
         self._global_behavior_variables = []
@@ -296,6 +297,58 @@ class AutoLightsConfig(AutoLightsBase):
             new_targets=[],
             device_changes=[],
         )
+
+    @property
+    def indigo_dev(self) -> indigo.Device:
+        """
+        Retrieve or create the Indigo device for global config.
+        """
+        if getattr(self, "_indigo_dev_id", None) is not None:
+            return indigo.devices[self._indigo_dev_id]
+        for d in indigo.devices:
+            if (
+                d.pluginId == "com.vtmikel.autolights"
+                and d.deviceTypeId == "auto_lights_config"
+            ):
+                self._indigo_dev_id = d.id
+                return d
+        try:
+            dev = indigo.device.create(
+                protocol=indigo.kProtocol.Plugin,
+                name="Auto Lights Global Config",
+                address="",
+                deviceTypeId="auto_lights_config",
+                props={}
+            )
+            indigo.device.turnOn(dev.id)
+            self._indigo_dev_id = dev.id
+            return dev
+        except Exception as e:
+            self.logger.error(f"error creating global config device: {e}")
+            return None
+
+    def _build_schema_states(self, dev):
+        """Collect schema-driven config states for Indigo device."""
+        states = []
+        for attr in self.sync_config_attrs:
+            if attr in dev.states:
+                val = getattr(self, attr)
+                states.append({"key": attr, "value": val})
+        return states
+
+    def sync_indigo_device(self) -> None:
+        """
+        Sync Indigo device states for global config.
+        """
+        dev = self.indigo_dev
+        if dev is None:
+            self.logger.error("AutoLightsConfig: no Indigo device found, skipping sync")
+            return
+        state_list = self._build_schema_states(dev)
+        try:
+            dev.updateStatesOnServer(state_list)
+        except Exception as e:
+            self.logger.error(f"Failed to sync global config device: {e}")
 
     @property
     def agent(self):
