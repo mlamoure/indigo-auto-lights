@@ -430,7 +430,9 @@ class Plugin(indigo.PluginBase):
         elif action_type in (indigo.kDeviceAction.TurnOn, indigo.kDeviceAction.TurnOff):
             desired_state = action_type == indigo.kDeviceAction.TurnOn
         else:
-            self.logger.warning(f"Unrecognized device action {action_type} for {dev.name}")
+            self.logger.warning(
+                f"Unrecognized device action {action_type} for {dev.name}"
+            )
             return
 
         # Apply state change
@@ -456,6 +458,9 @@ class Plugin(indigo.PluginBase):
         # Start with base state definitions
         states = super().getDeviceStateList(dev)
 
+        if dev.pluginId != "com.vtmikel.autolights":
+            return states
+
         # only for our zone devices
         # If agent not initialized, return base state definitions
         if not self._agent:
@@ -464,48 +469,44 @@ class Plugin(indigo.PluginBase):
         # Global config device: sync plugin_config schema-driven states
         if dev.deviceTypeId == "auto_lights_config":
             states.extend(self._agent.config._build_schema_states(dev))
-            return states
 
-        # only zone‐devices from here on
-        if dev.deviceTypeId != "auto_lights_zone":
-            return states
+        elif dev.deviceTypeId == "auto_lights_zone":
+            # find the Zone object by its pluginProps.zone_index
+            zone_index = int(dev.pluginProps.get("zone_index", -1))
+            zone = next(
+                (z for z in self._agent.config.zones if z.zone_index == zone_index),
+                None,
+            )
+            if not zone:
+                return states
 
-        # find the Zone object by its pluginProps.zone_index
-        zone_index = int(dev.pluginProps.get("zone_index", -1))
-        zone = next(
-            (z for z in self._agent.config.zones if z.zone_index == zone_index),
-            None,
-        )
-        if not zone:
-            return states
+            # schema‐driven config states
+            for key in zone.zone_indigo_device_config_states:
+                field_schema = self._agent.config.zone_field_schemas.get(key, {})
+                title = field_schema.get("title", key)
+                ftype = field_schema.get("type", "string")
 
-        # schema‐driven config states
-        for key in zone.zone_indigo_device_config_states:
-            field_schema = self._agent.config.zone_field_schemas.get(key, {})
-            title = field_schema.get("title", key)
-            ftype = field_schema.get("type", "string")
+                if ftype == "boolean":
+                    sd = self.getDeviceStateDictForBoolTrueFalseType(key, title, title)
+                elif ftype in ("integer", "number"):
+                    sd = self.getDeviceStateDictForNumberType(key, title, title)
+                else:
+                    sd = self.getDeviceStateDictForStringType(key, title, title)
+                states.append(sd)
 
-            if ftype == "boolean":
-                sd = self.getDeviceStateDictForBoolTrueFalseType(key, title, title)
-            elif ftype in ("integer", "number"):
-                sd = self.getDeviceStateDictForNumberType(key, title, title)
-            else:
-                sd = self.getDeviceStateDictForStringType(key, title, title)
-            states.append(sd)
+            # dynamic runtime states
+            for rt in zone.zone_indigo_device_runtime_states:
+                key = rt["key"]
+                label = rt["label"]
+                rtype = rt["type"]
 
-        # dynamic runtime states
-        for rt in zone.zone_indigo_device_runtime_states:
-            key = rt["key"]
-            label = rt["label"]
-            rtype = rt["type"]
-
-            if rtype in ("boolean", "bool"):
-                sd = self.getDeviceStateDictForBoolTrueFalseType(key, label, label)
-            elif rtype in ("integer", "number", "numeric"):
-                sd = self.getDeviceStateDictForNumberType(key, label, label)
-            else:
-                sd = self.getDeviceStateDictForStringType(key, label, label)
-            states.append(sd)
+                if rtype in ("boolean", "bool"):
+                    sd = self.getDeviceStateDictForBoolTrueFalseType(key, label, label)
+                elif rtype in ("integer", "number", "numeric"):
+                    sd = self.getDeviceStateDictForNumberType(key, label, label)
+                else:
+                    sd = self.getDeviceStateDictForStringType(key, label, label)
+                states.append(sd)
 
         return states
 
