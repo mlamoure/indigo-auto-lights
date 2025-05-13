@@ -18,6 +18,27 @@ class AutoLightsConfig(AutoLightsBase):
     Configuration handler for the auto_lights script, managing time-of-day logic, presence, and brightness values.
     """
 
+    def __setattr__(self, name: str, value) -> None:
+        # Always let Python store the attribute first
+        super().__setattr__(name, value)
+
+        # Don’t sync until schema is loaded and Indigo device exists
+        if not hasattr(self, "config_field_schemas"):
+            return
+        if getattr(self, "_indigo_dev_id", None) is None:
+            return
+
+        # Strip leading underscore to match schema keys
+        key = name[1:] if name.startswith("_") else name
+
+        if key in self.config_field_schemas:
+            try:
+                self.sync_indigo_device()
+            except Exception:
+                self.logger.exception(
+                    f"AutoLightsConfig: error syncing global config after '{key}' changed"
+                )
+
     def __init__(self, config: str) -> None:
         """
         Initialize the AutoLightsConfig with default numeric values for
