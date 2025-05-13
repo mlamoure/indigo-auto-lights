@@ -26,6 +26,9 @@ class AutoLightsBase:
 
     def __setattr__(self, name: str, value) -> None:
         super().__setattr__(name, value)
+        # don't sync on private attributes
+        if name.startswith("_"):
+            return
         # sync logic for Zone attributes
         if hasattr(self, "_config") and getattr(self, "_zone_index", None) is not None:
             key = name[1:] if name.startswith("_") else name
