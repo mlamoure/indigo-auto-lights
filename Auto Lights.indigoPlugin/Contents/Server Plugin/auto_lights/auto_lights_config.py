@@ -242,11 +242,13 @@ class AutoLightsConfig(AutoLightsBase):
                 deviceTypeId="auto_lights_config",
                 props={},
             )
+            # Immediately cache id to prevent recursive creation in callbacks
+            self._indigo_dev_id = dev.id
             self.logger.info(
-                f"🆕 Created new Indigo device for Auto Lights Global Config (id: {dev.id}, name: {dev.name})"
+                f"🆕 Created new Indigo device for Auto Lights Global Config "
+                f"(id: {dev.id}, name: {dev.name})"
             )
             indigo.device.turnOn(dev.id)
-            self._indigo_dev_id = dev.id
             return dev
         except Exception as e:
             self.logger.error(f"error creating global config device: {e}")
