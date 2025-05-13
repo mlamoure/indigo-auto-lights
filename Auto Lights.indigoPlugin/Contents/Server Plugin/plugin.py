@@ -150,6 +150,9 @@ class Plugin(indigo.PluginBase):
     ) -> None:
         # call base implementation
         indigo.PluginBase.deviceUpdated(self, orig_dev, new_dev)
+        # ignore our own plugin devices (zones & global config)
+        if new_dev.pluginId == "com.vtmikel.autolights":
+            return
 
         # Convert the payload objects from indigo.Dict() objects to Python dict() objects.
         orig_dict = {}
