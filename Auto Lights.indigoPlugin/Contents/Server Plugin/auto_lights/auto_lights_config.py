@@ -73,6 +73,10 @@ class AutoLightsConfig(AutoLightsBase):
         """
         Toggles the global config device to enable/disable the plugin.
         """
+        dev = self.indigo_dev
+        if dev is None:
+            return
+
         if value:
             indigo.device.turnOn(self.indigo_dev.id)
         else:
@@ -242,13 +246,12 @@ class AutoLightsConfig(AutoLightsBase):
                 deviceTypeId="auto_lights_config",
                 props={},
             )
-            # Immediately cache id to prevent recursive creation in callbacks
             self._indigo_dev_id = dev.id
+            indigo.device.turnOn(dev.id)
             self.logger.info(
                 f"🆕 Created new Indigo device for Auto Lights Global Config "
                 f"(id: {dev.id}, name: {dev.name})"
             )
-            indigo.device.turnOn(dev.id)
             return dev
         except Exception as e:
             self.logger.error(f"error creating global config device: {e}")

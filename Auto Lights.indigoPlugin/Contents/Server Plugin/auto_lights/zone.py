@@ -51,9 +51,7 @@ class Zone(AutoLightsBase):
             "type": "string",
             "label": "Current Period",
             "getter": lambda z: (
-                z.current_lighting_period.name
-                if z.current_lighting_period
-                else ""
+                z.current_lighting_period.name if z.current_lighting_period else ""
             ),
         },
         {
@@ -61,9 +59,7 @@ class Zone(AutoLightsBase):
             "type": "string",
             "label": "Mode",
             "getter": lambda z: (
-                z.current_lighting_period.mode
-                if z.current_lighting_period
-                else ""
+                z.current_lighting_period.mode if z.current_lighting_period else ""
             ),
         },
         {
@@ -1149,11 +1145,11 @@ class Zone(AutoLightsBase):
                 deviceTypeId="auto_lights_zone",
                 props={"zone_index": self.zone_index},
             )
+            self._indigo_dev_id = dev.id
             indigo.device.turnOn(dev.id, delay=0)
             self.logger.info(
                 f"🆕 Created new Indigo device for Zone '{self.name}' (id: {dev.id})"
             )
-            self._indigo_dev_id = dev.id
             return dev
         except Exception as e:
             self.logger.error(
