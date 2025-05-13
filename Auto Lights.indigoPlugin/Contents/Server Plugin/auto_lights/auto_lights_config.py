@@ -320,6 +320,7 @@ class AutoLightsConfig(AutoLightsBase):
                 deviceTypeId="auto_lights_config",
                 props={}
             )
+            self.logger.info(f"🆕 Created new Indigo device for Auto Lights Global Config (id: {dev.id}, name: {dev.name})")
             indigo.device.turnOn(dev.id)
             self._indigo_dev_id = dev.id
             return dev
