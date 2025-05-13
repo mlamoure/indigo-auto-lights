@@ -43,6 +43,82 @@ class Zone(AutoLightsBase):
 
     # (2) Class variables or constants would go here if we had any.
 
+    # ----------------------------------------------------------------
+    # Which dynamic runtime‐states we will push into the zone device
+    zone_indigo_device_runtime_states = [
+        {
+            "key": "current_period_name",
+            "type": "string",
+            "label": "Current Period",
+            "getter": lambda z: (
+                z.current_lighting_period.name
+                if z.current_lighting_period
+                else ""
+            ),
+        },
+        {
+            "key": "current_period_mode",
+            "type": "string",
+            "label": "Mode",
+            "getter": lambda z: (
+                z.current_lighting_period.mode
+                if z.current_lighting_period
+                else ""
+            ),
+        },
+        {
+            "key": "current_period_from",
+            "type": "string",
+            "label": "Start Time",
+            "getter": lambda z: (
+                z.current_lighting_period.from_time.strftime("%H:%M")
+                if z.current_lighting_period
+                else ""
+            ),
+        },
+        {
+            "key": "current_period_to",
+            "type": "string",
+            "label": "End Time",
+            "getter": lambda z: (
+                z.current_lighting_period.to_time.strftime("%H:%M")
+                if z.current_lighting_period
+                else ""
+            ),
+        },
+        {
+            "key": "presence_detected",
+            "type": "boolean",
+            "label": "Presence Detected",
+            "getter": lambda z: z.has_presence_detected(),
+        },
+        {
+            "key": "luminance",
+            "type": "number",
+            "label": "Luminance",
+            "getter": lambda z: z.luminance,
+        },
+        {
+            "key": "is_dark",
+            "type": "boolean",
+            "label": "Is Dark",
+            "getter": lambda z: z.is_dark(),
+        },
+        {
+            "key": "zone_locked",
+            "type": "boolean",
+            "label": "Locked",
+            "getter": lambda z: z.locked,
+        },
+        {
+            "key": "device_states_string",
+            "type": "string",
+            "label": "Device States",
+            "getter": lambda z: z.get_device_states_string(),
+        },
+    ]
+    # ----------------------------------------------------------------
+
     # (3) Constructor
     def __init__(self, name: str, config: "AutoLightsConfig"):
         """
@@ -82,6 +158,12 @@ class Zone(AutoLightsBase):
         self._lock_expiration = None
         self._lock_timer = None
         self._config = config
+        # compute which schema-driven fields we sync back to the Indigo zone device
+        self.zone_indigo_device_config_states = {
+            key
+            for key, schema in self._config.zone_field_schemas.items()
+            if schema.get("x-sync_to_indigo")
+        }
 
         # Timer for scheduling next lighting-period transition
         self._transition_timer: Optional[threading.Timer] = None
@@ -1082,7 +1164,7 @@ class Zone(AutoLightsBase):
     def _build_schema_states(self, dev):
         """Collect states based on schema-driven sync attributes."""
         states = []
-        for attr in self._config.sync_zone_attrs:
+        for attr in self.zone_indigo_device_config_states:
             if attr in dev.states:
                 val = getattr(self, attr)
                 states.append(
@@ -1097,7 +1179,7 @@ class Zone(AutoLightsBase):
         """
         Retrieve the runtime state value for the given key using the getter in config.zone_indigo_device_runtime_states.
         """
-        for entry in self._config.zone_indigo_device_runtime_states:
+        for entry in self.zone_indigo_device_runtime_states:
             if entry.get("key") == key:
                 return entry["getter"](self)
         return None

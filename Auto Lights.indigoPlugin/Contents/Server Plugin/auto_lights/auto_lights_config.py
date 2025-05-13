@@ -40,80 +40,6 @@ class AutoLightsConfig(AutoLightsBase):
 
         self._config_file = config
 
-        # Central definition of runtime state keys for zones
-        # Each entry now includes a 'getter' callback to compute its value for a Zone instance
-        self.zone_indigo_device_runtime_states = [
-            {
-                "key": "current_period_name",
-                "type": "string",
-                "label": "Current Period",
-                "getter": lambda zone: (
-                    zone.current_lighting_period.name
-                    if zone.current_lighting_period
-                    else ""
-                ),
-            },
-            {
-                "key": "current_period_mode",
-                "type": "string",
-                "label": "Mode",
-                "getter": lambda zone: (
-                    zone.current_lighting_period.mode
-                    if zone.current_lighting_period
-                    else ""
-                ),
-            },
-            {
-                "key": "current_period_from",
-                "type": "string",
-                "label": "Start Time",
-                "getter": lambda zone: (
-                    zone.current_lighting_period.from_time.strftime("%H:%M")
-                    if zone.current_lighting_period
-                    else ""
-                ),
-            },
-            {
-                "key": "current_period_to",
-                "type": "string",
-                "label": "End Time",
-                "getter": lambda zone: (
-                    zone.current_lighting_period.to_time.strftime("%H:%M")
-                    if zone.current_lighting_period
-                    else ""
-                ),
-            },
-            {
-                "key": "presence_detected",
-                "type": "boolean",
-                "label": "Presence Detected",
-                "getter": lambda zone: zone.has_presence_detected(),
-            },
-            {
-                "key": "luminance",
-                "type": "number",
-                "label": "Luminance",
-                "getter": lambda zone: zone.luminance,
-            },
-            {
-                "key": "is_dark",
-                "type": "boolean",
-                "label": "Is Dark",
-                "getter": lambda zone: zone.is_dark(),
-            },
-            {
-                "key": "zone_locked",
-                "type": "boolean",
-                "label": "Locked",
-                "getter": lambda zone: zone.locked,
-            },
-            {
-                "key": "device_states_string",
-                "type": "string",
-                "label": "Device States",
-                "getter": lambda zone: zone.get_device_states_string(),
-            },
-        ]
 
         schema_path = (
             Path(__file__).parent.parent
@@ -125,7 +51,6 @@ class AutoLightsConfig(AutoLightsBase):
             schema = json.load(f)
         zone_props = schema["properties"]["zones"]["items"]["properties"]
         self.zone_field_schemas = {}
-        self.sync_zone_attrs = set()
 
         def _collect(p):
             for k, v in p.items():

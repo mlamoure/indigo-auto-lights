@@ -466,45 +466,46 @@ class Plugin(indigo.PluginBase):
             states.extend(self._agent.config._build_schema_states(dev))
             return states
 
-        # Add configured zone attributes from schema
-        for state_key in self._agent.config.sync_zone_attrs:
-            field_schema = self._agent.config.zone_field_schemas.get(state_key, {})
-            field_title = field_schema.get("title", state_key)
-            field_type = field_schema.get("type", "string")
+        # only zone‐devices from here on
+        if dev.deviceTypeId != "auto_lights_zone":
+            return states
 
-            if field_type == "boolean":
-                state_dict = self.getDeviceStateDictForBoolTrueFalseType(
-                    state_key, field_title, field_title
-                )
-            elif field_type in ("integer", "number"):
-                state_dict = self.getDeviceStateDictForNumberType(
-                    state_key, field_title, field_title
-                )
+        # find the Zone object by its pluginProps.zone_index
+        zone_index = int(dev.pluginProps.get("zone_index", -1))
+        zone = next(
+            (z for z in self._agent.config.zones if z.zone_index == zone_index),
+            None,
+        )
+        if not zone:
+            return states
+
+        # schema‐driven config states
+        for key in zone.zone_indigo_device_config_states:
+            field_schema = self._agent.config.zone_field_schemas.get(key, {})
+            title = field_schema.get("title", key)
+            ftype = field_schema.get("type", "string")
+
+            if ftype == "boolean":
+                sd = self.getDeviceStateDictForBoolTrueFalseType(key, title, title)
+            elif ftype in ("integer", "number"):
+                sd = self.getDeviceStateDictForNumberType(key, title, title)
             else:
-                state_dict = self.getDeviceStateDictForStringType(
-                    state_key, field_title, field_title
-                )
-            states.append(state_dict)
+                sd = self.getDeviceStateDictForStringType(key, title, title)
+            states.append(sd)
 
-        # Add dynamic runtime state attributes
-        for runtime_state in self._agent.config.zone_indigo_device_runtime_states:
-            state_key = runtime_state["key"]
-            state_type = runtime_state["type"]
-            state_label = runtime_state["label"]
+        # dynamic runtime states
+        for rt in zone.zone_indigo_device_runtime_states:
+            key = rt["key"]
+            label = rt["label"]
+            rtype = rt["type"]
 
-            if state_type in ("boolean", "bool"):
-                state_dict = self.getDeviceStateDictForBoolTrueFalseType(
-                    state_key, state_label, state_label
-                )
-            elif state_type in ("integer", "number", "numeric"):
-                state_dict = self.getDeviceStateDictForNumberType(
-                    state_key, state_label, state_label
-                )
+            if rtype in ("boolean", "bool"):
+                sd = self.getDeviceStateDictForBoolTrueFalseType(key, label, label)
+            elif rtype in ("integer", "number", "numeric"):
+                sd = self.getDeviceStateDictForNumberType(key, label, label)
             else:
-                state_dict = self.getDeviceStateDictForStringType(
-                    state_key, state_label, state_label
-                )
-            states.append(state_dict)
+                sd = self.getDeviceStateDictForStringType(key, label, label)
+            states.append(sd)
 
         return states
 
