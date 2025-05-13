@@ -96,6 +96,19 @@ class Zone(AutoLightsBase):
         self._write_lock = threading.Lock()
         self._indigo_dev_id: Optional[int] = None
 
+    def __setattr__(self, name, value):
+        # always let Python store the attribute
+        super().__setattr__(name, value)
+
+        # --- BROAD GUARD: don't even think about syncing until after zone_index is set ---
+        if getattr(self, "_zone_index", None) is None:
+            return
+
+        # now, if this is one of the fields we want to mirror back into Indigo, do it
+        if hasattr(self, "_config"):
+            key = name[1:] if name.startswith("_") else name
+            if key in self._config.sync_zone_attrs:
+                self.sync_indigo_device()
 
     def from_config_dict(self, cfg: dict) -> None:
         """
