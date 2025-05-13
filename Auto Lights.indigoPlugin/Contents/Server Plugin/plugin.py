@@ -485,7 +485,7 @@ class Plugin(indigo.PluginBase):
             states.append(state_dict)
 
         # Add dynamic runtime state attributes
-        for runtime_state in self._agent.config.runtime_states:
+        for runtime_state in self._agent.config.zone_indigo_device_runtime_states:
             state_key = runtime_state["key"]
             state_type = runtime_state["type"]
             state_label = runtime_state["label"]

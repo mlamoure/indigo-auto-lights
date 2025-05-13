@@ -42,7 +42,7 @@ class AutoLightsConfig(AutoLightsBase):
 
         # Central definition of runtime state keys for zones
         # Each entry now includes a 'getter' callback to compute its value for a Zone instance
-        self.runtime_states = [
+        self.zone_indigo_device_runtime_states = [
             {
                 "key": "current_period_name",
                 "type": "string",
