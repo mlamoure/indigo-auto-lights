@@ -25,8 +25,6 @@ class AutoLightsConfig(AutoLightsBase):
         # Don’t sync until schema is loaded and Indigo device exists
         if not hasattr(self, "config_field_schemas"):
             return
-        if getattr(self, "_indigo_dev_id", None) is None:
-            return
 
         # Strip leading underscore to match schema keys
         key = name[1:] if name.startswith("_") else name
@@ -284,7 +282,7 @@ class AutoLightsConfig(AutoLightsBase):
     def _build_schema_states(self, dev):
         """Collect schema-driven config states for Indigo device."""
         states = []
-        for key, schema in self.zone_field_schemas.items():
+        for key, schema in self.config_field_schemas.items():
             if not schema.get("x-sync_to_indigo"):
                 continue
             if key not in dev.states:
