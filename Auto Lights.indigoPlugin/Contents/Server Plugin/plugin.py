@@ -196,7 +196,7 @@ class Plugin(indigo.PluginBase):
         # Check if Indigo API configuration is not default
         if (
             os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
-            and os.environ.get("API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
+            and os.environ.get("INDIGO_API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
         ):
             urls = []
             # Determine the appropriate URLs based on the bind IP.
@@ -278,7 +278,7 @@ class Plugin(indigo.PluginBase):
             os.environ["INDIGO_API_URL"] = values_dict.get(
                 "indigo_api_url", "https://myreflector.indigodomo.net"
             )
-            os.environ["API_KEY"] = values_dict.get(
+            os.environ["INDIGO_API_KEY"] = values_dict.get(
                 "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
             )
             self._web_config_bind_ip = values_dict.get(
