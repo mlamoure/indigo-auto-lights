@@ -94,7 +94,7 @@ class Zone(AutoLightsBase):
         # counter for in-flight write commands
         self._pending_writes = 0
         self._write_lock = threading.Lock()
-        self._indigo_dev = None
+        self._indigo_dev_id: Optional[int] = None
 
     def __setattr__(self, name, value):
         # always let Python store the attribute
@@ -1039,19 +1039,25 @@ class Zone(AutoLightsBase):
 
     @property
     def indigo_dev(self) -> indigo.Device:
-        if self._indigo_dev is not None:
-            return self._indigo_dev
-        # first try to find an existing plugin device with our zone_index
+        """
+        Retrieve or create the Indigo device for this zone.
+        Caches device via self._indigo_dev_id.
+        """
+        # Return cached device if ID known
+        if self._indigo_dev_id is not None:
+            return indigo.devices[self._indigo_dev_id]
+
+        # Try to find an existing plugin device with our zone_index
         for d in indigo.devices:
             if (
                 d.pluginId == "com.vtmikel.autolights"
                 and d.deviceTypeId == "auto_lights_zone"
                 and d.pluginProps.get("zone_index") == self.zone_index
             ):
-                self._indigo_dev = d
-                return self._indigo_dev
+                self._indigo_dev_id = d.id
+                return d
 
-        # didn't find it, so attempt to create one
+        # Didn't find it, so attempt to create one
         try:
             name = f"Auto Lights Zone - {self.name}"
             dev = indigo.device.create(
@@ -1065,8 +1071,8 @@ class Zone(AutoLightsBase):
             self.logger.info(
                 f"🆕 Created new Indigo device for Zone '{self.name}' (id: {dev.id})"
             )
-            self._indigo_dev = dev
-            return self._indigo_dev
+            self._indigo_dev_id = dev.id
+            return dev
         except Exception as e:
             self.logger.error(
                 f"error creating new indigo device for Zone '{self.name}': {e}"
