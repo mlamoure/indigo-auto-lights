@@ -175,6 +175,10 @@ class Zone(AutoLightsBase):
         self._indigo_dev_id: Optional[int] = None
 
     def __setattr__(self, name, value):
+        """
+        Override __setattr__ to trigger synchronization to Indigo when
+        certain configuration attributes change after zone_index has been set.
+        """
         # always let Python store the attribute
         super().__setattr__(name, value)
 
@@ -943,7 +947,7 @@ class Zone(AutoLightsBase):
     def _write_debug_output(self, config) -> str:
         """
         Dynamically construct debug output by iterating over the zone's attributes.
-        For list attributes, if the key is lighting_periods, print them in detail.
+        For list attributes, if the key is '_lighting_periods' or 'lighting_periods', print them in detail.
         """
         lines = [f"Zone '{self._name}' debug output:"]
         for key, value in self.__dict__.items():
@@ -1363,7 +1367,7 @@ class Zone(AutoLightsBase):
 
     def get_device_states_string(self) -> str:
         """
-        Returns a multi-line string showing each 'On' and 'Off' light in this zone,
+        Returns a semicolon-separated string showing each 'On' and 'Off' light in this zone,
         with its current brightness/state, its target brightness/state, and an
         optional note when it is excluded from the active lighting period.
         """
