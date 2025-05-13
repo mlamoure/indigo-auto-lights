@@ -197,9 +197,9 @@ class Zone(AutoLightsBase):
             return
         try:
             if value:
-                dev.turnOn()
+                indigo.device.turnOn(self.indigo_dev.id)
             else:
-                dev.turnOff()
+                indigo.device.turnOff(self.indigo_dev.id)
         except Exception as e:
             self.logger.error(f"Zone '{self._name}': failed to set enabled state: {e}")
 
