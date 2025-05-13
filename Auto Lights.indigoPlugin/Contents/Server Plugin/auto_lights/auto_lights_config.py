@@ -40,7 +40,6 @@ class AutoLightsConfig(AutoLightsBase):
 
         self._config_file = config
 
-
         schema_path = (
             Path(__file__).parent.parent
             / "config_web_editor"
@@ -78,7 +77,6 @@ class AutoLightsConfig(AutoLightsBase):
             indigo.device.turnOn(self.indigo_dev.id)
         else:
             indigo.device.turnOff(self.indigo_dev.id)
-
 
     @property
     def default_lock_duration(self) -> int:
@@ -235,15 +233,18 @@ class AutoLightsConfig(AutoLightsBase):
             ):
                 self._indigo_dev_id = d.id
                 return d
+
         try:
             dev = indigo.device.create(
                 protocol=indigo.kProtocol.Plugin,
                 name="Auto Lights Global Config",
                 address="",
                 deviceTypeId="auto_lights_config",
-                props={}
+                props={},
             )
-            self.logger.info(f"🆕 Created new Indigo device for Auto Lights Global Config (id: {dev.id}, name: {dev.name})")
+            self.logger.info(
+                f"🆕 Created new Indigo device for Auto Lights Global Config (id: {dev.id}, name: {dev.name})"
+            )
             indigo.device.turnOn(dev.id)
             self._indigo_dev_id = dev.id
             return dev
@@ -282,7 +283,7 @@ class AutoLightsConfig(AutoLightsBase):
     @property
     def agent(self):
         """Reference to the AutoLightsAgent controlling this config."""
-        return getattr(self, '_agent', None)
+        return getattr(self, "_agent", None)
 
     @agent.setter
     def agent(self, value):
