@@ -315,6 +315,12 @@ def generate_form_class_from_schema(schema):
             attrs[prop] = create_field(prop, subschema)
             continue
 
+        # special case for global_behavior_variables_map
+        if prop == "global_behavior_variables_map":
+            subschema["required"] = subschema_is_required
+            attrs[prop] = create_field(prop, subschema)
+            continue
+
         if subschema.get("type") == "object":
             # If the property is itself an object, create a subform
             nested_required = subschema.get("required", [])
