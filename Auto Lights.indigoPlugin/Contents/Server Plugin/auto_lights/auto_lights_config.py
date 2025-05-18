@@ -65,7 +65,7 @@ class AutoLightsConfig(AutoLightsBase):
             / "config"
             / "config_schema.json"
         )
-        with open(schema_path) as f:
+        with open(schema_path, "r", encoding="utf-8") as f:
             schema = json.load(f)
         # capture global plugin_config schema
         plugin_props = schema["properties"]["plugin_config"]["properties"]
@@ -143,7 +143,7 @@ class AutoLightsConfig(AutoLightsBase):
         self._global_behavior_variables = value
 
     def load_config(self) -> None:
-        with open(self._config_file, "r") as f:
+        with open(self._config_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         self.from_config_dict(data)
 
