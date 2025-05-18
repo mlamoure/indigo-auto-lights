@@ -153,6 +153,7 @@ class Zone(AutoLightsBase):
         self._lock_duration = None
         self._extend_lock_when_active = True
         self._unlock_when_no_presence = True
+        self._off_lights_behavior = "do not adjust unless no presence"
 
         self._lock_expiration = None
         self._lock_timer = None
@@ -237,6 +238,8 @@ class Zone(AutoLightsBase):
                 self.lock_extension_duration = bs["lock_extension_duration"]
             if "unlock_when_no_presence" in bs:
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
+            if "off_lights_behavior" in bs:
+                self.off_lights_behavior = bs["off_lights_behavior"]
             # load the advanced_settings.exclude_from_lock_dev_ids from the config
             if "advanced_settings" in cfg:
                 adv = cfg["advanced_settings"]
@@ -305,6 +308,15 @@ class Zone(AutoLightsBase):
     @adjust_brightness.setter
     def adjust_brightness(self, value: bool) -> None:
         self._adjust_brightness = value
+
+    @property
+    def off_lights_behavior(self) -> str:
+        """When to turn off your Off-Lights in On-and-Off periods."""
+        return self._off_lights_behavior
+
+    @off_lights_behavior.setter
+    def off_lights_behavior(self, value: str) -> None:
+        self._off_lights_behavior = value
 
     @property
     def _last_changed_by(self) -> str:
@@ -1036,6 +1048,14 @@ class Zone(AutoLightsBase):
                         )
                         brightness = min(raw, limit_b) if limit_b is not None else raw
                     new_targets.append({"dev_id": dev_id, "brightness": brightness})
+                    # Possibly force off all off-lights during On and Off periods
+                    if (
+                        self.off_lights_behavior == "force off unless zone is locked"
+                        and not self.locked
+                    ):
+                        plan_contribs.append(("🔌", "force-off selected → turning off all off-lights"))
+                        for off_id in self.off_lights_dev_ids:
+                            new_targets.append({"dev_id": off_id, "brightness": 0})
             else:
                 if not presence:
                     plan_contribs.append(("👥", "no presence → turning all off"))

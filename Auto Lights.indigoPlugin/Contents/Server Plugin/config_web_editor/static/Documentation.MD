@@ -73,6 +73,16 @@ A Zone typically includes:
 > **NOTE:** There are Indigo Actions to reset a lock for any given Zone, or all Zones. And the plugin menu has a method
 > to print locks to the Indigo Log.
 
+### Off-Lights Behavior
+
+Controls how your **Off Lights** list is handled during **On and Off** lighting periods:
+
+- **do not adjust unless no presence** (default)  
+  Leaves the devices in your Off Lights list alone while presence and darkness conditions are satisfied—only turns them off when there’s truly no presence.
+
+- **force off unless zone is locked**  
+  Actively issues an off-command to every device in your Off Lights list on each automation run—unless the zone is currently locked by a manual change.
+
 ### Luminance Settings
 
 > **NOTE:** Minimum brightness is only available if a luminance device is added.

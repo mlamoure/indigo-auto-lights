@@ -191,6 +191,17 @@
                 "title": "Unlock When No Presence",
                 "tooltip": "Enable to unlock the zone when no presence is detected.  Recommend leaving this off for zones where you may want an override to outlast the presence of the room, like a hallway.",
                 "default": true
+              },
+              "off_lights_behavior": {
+                "type": "string",
+                "title": "Off-Lights Behavior",
+                "tooltip": "When to turn off devices in your “Off Lights” list during an On-and-Off period: 'do not adjust unless no presence' (default behavior) or 'force off unless zone is locked'.",
+                "enum": [
+                  "do not adjust unless no presence",
+                  "force off unless zone is locked"
+                ],
+                "default": "do not adjust unless no presence",
+                "x-sync_to_indigo": true
               }
             }
           },
