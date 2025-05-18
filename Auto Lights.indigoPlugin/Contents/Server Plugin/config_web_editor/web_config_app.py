@@ -9,8 +9,11 @@ import json
 import os
 import secrets
 import shutil
+import logging
 from collections import OrderedDict
 from datetime import datetime
+
+gbm_logger = logging.getLogger("Plugin")
 
 # --- Third-party imports ---
 from dotenv import load_dotenv
@@ -930,6 +933,9 @@ class GlobalBehaviorMapField(Field):
         return self.data or {}
 
     def process(self, formdata, obj=None, data=None, **kwargs):
+        gbm_logger.debug("process() called: formdata keys=%s, initial data=%r",
+                         list(formdata.keys()) if formdata else None,
+                         data)
         if formdata:
             self.data = {
                 str(v.get("id")): f"global_behavior_variables_map-{v.get('id')}" in formdata
@@ -937,6 +943,7 @@ class GlobalBehaviorMapField(Field):
             }
         else:
             self.data = data or {}
+        gbm_logger.debug("-> self.data after processing = %r", self.data)
 
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):
@@ -968,6 +975,10 @@ def zone_config(zone_id):
         config_schema["properties"]["zones"]["items"]
     )
     zone_form = ZonesFormClass(data=zone)
+    current_app.logger.debug(">>> zone JSON global_behavior_variables_map: %r",
+                             zone.get("global_behavior_variables_map"))
+    current_app.logger.debug(">>> form.global_behavior_variables_map.data: %r",
+                             zone_form.global_behavior_variables_map.data)
 
     # Attempt to update choices for exclude_from_lock_dev_ids
     try:
