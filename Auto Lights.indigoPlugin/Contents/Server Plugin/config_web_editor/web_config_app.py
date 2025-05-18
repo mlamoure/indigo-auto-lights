@@ -929,16 +929,14 @@ class GlobalBehaviorMapField(Field):
     def _value(self):
         return self.data or {}
 
-    def process(self, formdata, obj=None, data=None, extra_filters=None):
-        mapping = {}
+    def process(self, formdata, obj=None, data=None, **kwargs):
         if formdata:
-            for var in self.variables:
-                vid = var.get("id")
-                key = f"global_behavior_variables_map-{vid}"
-                mapping[str(vid)] = key in formdata
+            self.data = {
+                str(v.get("id")): f"global_behavior_variables_map-{v.get('id')}" in formdata
+                for v in self.variables
+            }
         else:
-            mapping = data or {}
-        self.data = mapping
+            self.data = data or {}
 
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):
