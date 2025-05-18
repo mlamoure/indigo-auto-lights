@@ -134,8 +134,17 @@ def create_field(field_name, field_schema):
 
     # Custom field for global_behavior_variables_map
     if field_name == "global_behavior_variables_map":
-        options = current_app.config["config_editor"].get_cached_indigo_variables()
-        field = GlobalBehaviorMapField(label=label_text, description=tooltip_text, variables=options)
+        # Only show the variables that were actually defined
+        cfg = current_app.config["config_editor"].load_config()
+        plugin_globals = cfg.get("plugin_config", {}).get("global_behavior_variables", [])
+        wanted_ids = {g.get("var_id") for g in plugin_globals}
+        all_vars = current_app.config["config_editor"].get_cached_indigo_variables()
+        options = [v for v in all_vars if v.get("id") in wanted_ids]
+        field = GlobalBehaviorMapField(
+            label=label_text,
+            description=tooltip_text,
+            variables=options,
+        )
         return field
 
     # Custom field for device_period_map
