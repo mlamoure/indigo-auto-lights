@@ -809,7 +809,7 @@ def run_flask_app(
 # JSON schema loaded at module level, so it can be referenced by multiple routes
 current_dir = os.path.dirname(os.path.abspath(__file__))
 schema_path = os.path.join(current_dir, "config", "config_schema.json")
-with open(schema_path) as f:
+with open(schema_path, encoding="utf-8") as f:
     config_schema = json.load(f, object_pairs_hook=OrderedDict)
 
 
