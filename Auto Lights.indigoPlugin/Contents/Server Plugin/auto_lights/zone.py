@@ -177,6 +177,8 @@ class Zone(AutoLightsBase):
         self._pending_writes = 0
         self._write_lock = threading.Lock()
         self._indigo_dev_id: Optional[int] = None
+        # global behavior variables map
+        self._global_behavior_variables_map: dict[str, bool] = {}
 
     def __setattr__(self, name, value):
         """
@@ -253,6 +255,14 @@ class Zone(AutoLightsBase):
                     self._device_period_map[str(dev_id)] = {
                         str(period.id): True for period in self.lighting_periods
                     }
+            # load global behavior variables map
+            if "global_behavior_variables_map" in cfg:
+                self._global_behavior_variables_map = cfg["global_behavior_variables_map"]
+            else:
+                self._global_behavior_variables_map = {
+                    str(v["var_id"]): True
+                    for v in self._config.global_behavior_variables
+                }
 
     # (4) Properties
     @property
@@ -1113,6 +1123,18 @@ class Zone(AutoLightsBase):
     def device_period_map(self) -> dict:
         """Mapping of device IDs to lighting period inclusion/exclusion."""
         return self._device_period_map
+
+    @property
+    def global_behavior_variables_map(self) -> dict:
+        """Mapping of global behavior variable IDs to whether they apply to this zone."""
+        return self._global_behavior_variables_map
+
+    @global_behavior_variables_map.setter
+    def global_behavior_variables_map(self, value: dict) -> None:
+        self._global_behavior_variables_map = value
+        # sync to indigo after zone_index set
+        if getattr(self, "_zone_index", None) is not None:
+            self.sync_indigo_device()
 
     @device_period_map.setter
     def device_period_map(self, value: dict) -> None:

@@ -235,6 +235,17 @@
               }
             },
             "default": {}
+          },
+          "global_behavior_variables_map": {
+            "type": "object",
+            "title": "Global Behavior Variables Map",
+            "tooltip": "Enable or disable each global behavior variable for this zone",
+            "patternProperties": {
+              "^[0-9]+$": {
+                "type": "boolean"
+              }
+            },
+            "default": {}
           }
         },
         "required": [

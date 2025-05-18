@@ -149,6 +149,18 @@
         {{ render_field(subfield) }}
       {% endfor %}
     </fieldset>
+  {% elif field.name == 'global_behavior_variables_map' %}
+    <fieldset class="group-box form-field">
+      <legend
+        class="tooltip-label"
+        data-tooltip="{{ field.description }}"
+        style="cursor: pointer;"
+      >
+        {{ field.label.text }}{% if is_required and not has_default %}<span class="required-marker" title="This field is required">*</span>{% endif %}
+      </legend>
+      <div class="tooltip-info" style="display:none;"></div>
+      {{ field() }}
+    </fieldset>
   {% elif field.name == 'device_period_map' %}
     <fieldset class="group-box form-field">
       <legend

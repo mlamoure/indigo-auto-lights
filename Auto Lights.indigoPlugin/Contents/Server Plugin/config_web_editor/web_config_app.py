@@ -132,6 +132,12 @@ def create_field(field_name, field_schema):
 
     field_type = field_schema.get("type")
 
+    # Custom field for global_behavior_variables_map
+    if field_name == "global_behavior_variables_map":
+        options = current_app.config["config_editor"].get_cached_indigo_variables()
+        field = GlobalBehaviorMapField(label=label_text, description=tooltip_text, variables=options)
+        return field
+
     # Custom field for device_period_map
     if field_name == "device_period_map":
         # We will set devices and lighting_periods later when creating the form instance
@@ -882,6 +888,42 @@ class DevicePeriodMapField(Field):
         else:
             self.data = data or {}
 
+
+class GlobalBehaviorMapWidget:
+    def __init__(self, variables):
+        self.variables = variables
+
+    def __call__(self, field, **kwargs):
+        html = ['<table class="global-behavior-map"><thead><tr><th>Variable</th><th>Zone applies</th></tr></thead><tbody>']
+        for var in self.variables:
+            vid = var.get("id")
+            name = var.get("name")
+            checked = 'checked' if field.data.get(str(vid), True) else ''
+            html.append(f'<tr><td>{name}</td><td><input type="checkbox" name="global_behavior_variables_map-{vid}" {checked}></td></tr>')
+        html.append('</tbody></table>')
+        return Markup(''.join(html))
+
+class GlobalBehaviorMapField(Field):
+    widget = None
+
+    def __init__(self, label="", validators=None, variables=None, **kwargs):
+        super().__init__(label, validators, **kwargs)
+        self.variables = variables or []
+        self.widget = GlobalBehaviorMapWidget(self.variables)
+
+    def _value(self):
+        return self.data or {}
+
+    def process(self, formdata, obj=None, data=None, extra_filters=None):
+        mapping = {}
+        if formdata:
+            for var in self.variables:
+                vid = var.get("id")
+                key = f"global_behavior_variables_map-{vid}"
+                mapping[str(vid)] = key in formdata
+        else:
+            mapping = data or {}
+        self.data = mapping
 
 @app.route("/zone/<zone_id>", methods=["GET", "POST"])
 def zone_config(zone_id):

@@ -72,7 +72,7 @@ class AutoLightsAgent(AutoLightsBase):
             return False
 
         # Determine plan
-        plan_global = self.config.has_global_lights_off()
+        plan_global = self.config.has_global_lights_off(zone)
         if plan_global.contributions:
             plan = plan_global
             zone.target_brightness = 0

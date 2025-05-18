@@ -202,7 +202,7 @@ class AutoLightsConfig(AutoLightsBase):
                 return True
         return False
 
-    def has_global_lights_off(self) -> BrightnessPlan:
+    def has_global_lights_off(self, zone) -> BrightnessPlan:
         """
         Check global behavior variables to determine if global lights should be turned off.
         Returns a BrightnessPlan with any triggers contributing to global off.
@@ -210,6 +210,9 @@ class AutoLightsConfig(AutoLightsBase):
         plan_contribs: List[Tuple[str, str]] = []
         for behavior in self._global_behavior_variables:
             var_id = behavior.get("var_id")
+            # skip globals that are disabled for this zone
+            if not zone.global_behavior_variables_map.get(str(var_id), True):
+                continue
             var_value = behavior.get("var_value")
             comp_type = behavior.get("comparison_type")
             try:
@@ -221,22 +224,22 @@ class AutoLightsConfig(AutoLightsBase):
             lc_var_value = str(var_value).lower()
             if comp_type == "is equal to (str, lower())" and lc_current == lc_var_value:
                 plan_contribs.append(
-                    ("🌐", f"Variable {var_name} equals expected value '{var_value}'")
+                    ("🌐", f"Global Variable '{var_name}' is True and applies to Zone")
                 )
             elif (
                 comp_type == "is not equal to (str, lower())"
                 and lc_current != lc_var_value
             ):
                 plan_contribs.append(
-                    ("🌐", f"Variable {var_name} does not equal '{var_value}'")
+                    ("🌐", f"Global Variable '{var_name}' is True and applies to Zone")
                 )
             elif comp_type == "is TRUE (bool)" and lc_current in ["true", "1"]:
-                plan_contribs.append(("🌐", f"Variable {var_name} evaluated as True"))
+                plan_contribs.append(("🌐", f"Global Variable '{var_name}' is True and applies to Zone"))
             elif comp_type == "is FALSE (bool)" and lc_current in ["false", "0"]:
-                plan_contribs.append(("🌐", f"Variable {var_name} evaluated as False"))
+                plan_contribs.append(("🌐", f"Global Variable '{var_name}' is True and applies to Zone"))
             elif comp_type is None and lc_current == lc_var_value:
                 plan_contribs.append(
-                    ("🌐", f"Variable {var_name} equals (default) '{var_value}'")
+                    ("🌐", f"Global Variable '{var_name}' is True and applies to Zone")
                 )
         return BrightnessPlan(
             contributions=plan_contribs,
