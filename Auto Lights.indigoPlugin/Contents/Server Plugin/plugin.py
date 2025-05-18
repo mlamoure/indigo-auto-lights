@@ -123,18 +123,6 @@ class Plugin(indigo.PluginBase):
         self._init_config_and_agent()
         self._agent.refresh_all_indigo_devices()
 
-    def runConcurrentThread(self):
-        # sleep at first to let first-run go through.
-        self.sleep(15)
-
-        try:
-            while True:
-                if self._agent is not None:
-                    self._agent.debug_zone_states()
-                self.sleep(60)  # in seconds
-        except self.StopThread:
-            pass  # Optionally catch the StopThread exception and do any needed cleanup.
-
     def shutdown(self: indigo.PluginBase) -> None:
         """
         Any cleanup logic needed before the plugin is completely shut down.
