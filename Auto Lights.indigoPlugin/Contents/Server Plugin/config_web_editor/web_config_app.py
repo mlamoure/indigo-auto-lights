@@ -932,16 +932,19 @@ class GlobalBehaviorMapField(Field):
     def _value(self):
         return self.data or {}
 
-    def process(self, formdata, obj=None, data=None, **kwargs):
-        gbm_logger.debug("process() called: formdata keys=%s, initial data=%r",
+    # WTForms Field.process signature is process(self, formdata, data=None)
+    def process(self, formdata, data=None, **kwargs):
+        gbm_logger.debug("GBM.process() called: formdata keys=%r, initial data=%r",
                          list(formdata.keys()) if formdata else None,
                          data)
         if formdata:
+            # build map from which checkboxes were present
             self.data = {
-                str(v.get("id")): f"global_behavior_variables_map-{v.get('id')}" in formdata
+                str(v["id"]): f"global_behavior_variables_map-{v['id']}" in formdata
                 for v in self.variables
             }
         else:
+            # use the passed-in dict
             self.data = data or {}
         gbm_logger.debug("-> self.data after processing = %r", self.data)
 
