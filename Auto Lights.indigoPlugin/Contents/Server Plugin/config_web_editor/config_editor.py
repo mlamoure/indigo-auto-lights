@@ -52,7 +52,7 @@ class WebConfigEditor:
         """
         Load and return the JSON schema as a dict.
         """
-        with self.schema_file.open() as f:
+        with self.schema_file.open(mode="r", encoding="utf-8") as f:
             return json.load(f)
 
     def load_config(self):
