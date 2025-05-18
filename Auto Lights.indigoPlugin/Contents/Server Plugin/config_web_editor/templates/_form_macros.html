@@ -21,21 +21,21 @@
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-var_id">
                   {% for var in get_cached_indigo_variables() %}
-                    <option value="{{ var.id }}" {% if var.id == entry.var_id %}selected{% endif %}>{{ var.name }}</option>
+                    <option value="{{ var.id }}" {% if var.id == entry['var_id'] %}selected{% endif %}>{{ var.name }}</option>
                   {% endfor %}
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <select name="global_behavior_variables-{{ idx }}-comparison_type" onchange="toggleVarValue(this)">
                   <option value="" {% if not entry.comparison_type %}selected{% endif %}>Select Comparison Type</option>
-                  <option value="is TRUE (bool)" {% if entry.comparison_type == 'is TRUE (bool)' %}selected{% endif %}>is TRUE (bool)</option>
-                  <option value="is FALSE (bool)" {% if entry.comparison_type == 'is FALSE (bool)' %}selected{% endif %}>is FALSE (bool)</option>
-                  <option value="is equal to (str, lower())" {% if entry.comparison_type == 'is equal to (str, lower())' %}selected{% endif %}>is equal to (str, lower())</option>
-                  <option value="is not equal to (str, lower())" {% if entry.comparison_type == 'is not equal to (str, lower())' %}selected{% endif %}>is not equal to (str, lower())</option>
+                  <option value="is TRUE (bool)" {% if entry['comparison_type'] == 'is TRUE (bool)' %}selected{% endif %}>is TRUE (bool)</option>
+                  <option value="is FALSE (bool)" {% if entry['comparison_type'] == 'is FALSE (bool)' %}selected{% endif %}>is FALSE (bool)</option>
+                  <option value="is equal to (str, lower())" {% if entry['comparison_type'] == 'is equal to (str, lower())' %}selected{% endif %}>is equal to (str, lower())</option>
+                  <option value="is not equal to (str, lower())" {% if entry['comparison_type'] == 'is not equal to (str, lower())' %}selected{% endif %}>is not equal to (str, lower())</option>
                 </select>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
-                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry.var_value or '' }}" {% if 'str' not in ((entry.comparison_type or '')|lower) %}disabled{% endif %}>
+                <input type="text" name="global_behavior_variables-{{ idx }}-var_value" value="{{ entry['var_value'] or '' }}" {% if 'str' not in ((entry['comparison_type'] or '')|lower) %}disabled{% endif %}/>
               </td>
               <td style="border:1px solid #ccc; padding:4px;">
                 <button type="button" class="remove-row">Remove</button>
