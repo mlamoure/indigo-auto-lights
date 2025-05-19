@@ -241,11 +241,19 @@ class AutoLightsConfig(AutoLightsBase):
                 plan_contribs.append(
                     ("🌐", f"Global Variable '{var_name}' is True and applies to Zone")
                 )
+        # Build global-off targets and device_changes so “⚙️ Changes made:” logs are populated
+        current = zone.current_lights_status(include_lock_excluded=True)
+        new_targets = [{"dev_id": d["dev_id"], "brightness": 0} for d in current]
+        device_changes: List[Tuple[str, str]] = []
+        for d in current:
+            if d["brightness"] != 0:
+                dev = indigo.devices[d["dev_id"]]
+                device_changes.append(("🔌", f"turned off '{dev.name}'"))
         return BrightnessPlan(
             contributions=plan_contribs,
             exclusions=[],
-            new_targets=[],
-            device_changes=[],
+            new_targets=new_targets,
+            device_changes=device_changes,
         )
 
     @property
