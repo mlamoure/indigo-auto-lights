@@ -60,7 +60,7 @@ class Zone(AutoLightsBase):
             "type": "string",
             "label": "Mode",
             "getter": lambda z: (
-                z.current_lighting_period.mode if z.current_lighting_period else ""
+                z.current_lighting_period.mode.value if z.current_lighting_period else ""
             ),
         },
         {
