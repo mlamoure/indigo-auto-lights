@@ -996,6 +996,13 @@ class Zone(AutoLightsBase):
         Build and return a BrightnessPlan instead of logging directly.
         """
         self._debug_log("calculate_target_brightness called")
+        # 1) Global behavior override: if any global-off variable triggers, return that plan
+        global_plan = self._config.has_global_lights_off(self)
+        if global_plan.contributions:
+            return global_plan
+        # 2) If no active lighting period and no global override, do nothing
+        if self.current_lighting_period is None:
+            return BrightnessPlan(contributions=[], exclusions=[], new_targets=[], device_changes=[])
         plan_contribs: List[Tuple[str, str]] = []
         plan_exclusions: List[Tuple[str, str]] = []
 
