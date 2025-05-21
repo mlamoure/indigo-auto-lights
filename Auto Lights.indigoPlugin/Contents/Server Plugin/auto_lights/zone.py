@@ -5,8 +5,7 @@ import math
 import threading
 from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
-from .auto_lights_base import AutoLightsBase
-from .auto_lights_base import BrightnessPlan
+from .auto_lights_base import AutoLightsBase, BrightnessPlan, LightingPeriodMode
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
@@ -1046,7 +1045,7 @@ class Zone(AutoLightsBase):
         new_targets: List[dict] = []
 
         # -- Handle 'On and Off' mode when presence is detected and it's dark
-        if period.mode == "On and Off" and presence and darkness:
+        if period.mode is LightingPeriodMode.ON_AND_OFF and presence and darkness:
             plan_contribs.append(("💡", "presence & dark → turning on lights"))
             for dev_id in self.on_lights_dev_ids:
                 excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)

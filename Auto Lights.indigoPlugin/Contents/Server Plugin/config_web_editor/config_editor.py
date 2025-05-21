@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from flask import Flask
+from auto_lights.auto_lights_base import LightingPeriodMode
 
 from .tools.indigo_api_tools import (
     indigo_get_all_house_devices,
@@ -56,11 +57,26 @@ class WebConfigEditor:
             return json.load(f)
 
     def load_config(self):
+        """
+        Load the JSON config and normalize any legacy lighting period modes.
+        """
         try:
             with open(self.config_file, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
         except Exception:
-            return {"plugin_config": {}, "zones": []}
+            data = {"plugin_config": {}, "zones": [], "lighting_periods": []}
+
+        # Normalize legacy mode strings in lighting periods
+        from auto_lights.auto_lights_base import LightingPeriodMode
+
+        for period in data.get("lighting_periods", []):
+            raw_mode = period.get("mode", "")
+            try:
+                period["mode"] = LightingPeriodMode.from_string(raw_mode).value
+            except ValueError:
+                period["mode"] = LightingPeriodMode.OFF_ONLY.value
+
+        return data
 
     def save_config(self, config_data: Dict[str, Any]) -> None:
         """

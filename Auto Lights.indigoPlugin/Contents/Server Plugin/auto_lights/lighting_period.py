@@ -1,6 +1,6 @@
 import datetime
 import logging
-from .auto_lights_base import AutoLightsBase
+from .auto_lights_base import AutoLightsBase, LightingPeriodMode
 
 try:
     import indigo
@@ -32,7 +32,8 @@ class LightingPeriod(AutoLightsBase):
         self._name = name
         self._from_time = from_time
         self._to_time = to_time
-        self._mode = mode
+        # normalize any legacy mode string into our enum
+        self._mode = LightingPeriodMode.from_string(mode)
         self._limit_brightness = None
         self._lock_duration = None
         self._id = None
@@ -66,7 +67,7 @@ class LightingPeriod(AutoLightsBase):
         self._to_time = value
 
     @property
-    def mode(self) -> str:
+    def mode(self) -> LightingPeriodMode:
         return self._mode
 
     @mode.setter
