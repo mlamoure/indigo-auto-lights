@@ -67,7 +67,7 @@ class WebConfigEditor:
             data = {"plugin_config": {}, "zones": [], "lighting_periods": []}
 
         # Normalize legacy mode strings in lighting periods
-        from auto_lights.auto_lights_base import LightingPeriodMode
+        from auto_lights.lighting_period_mode import LightingPeriodMode
 
         for period in data.get("lighting_periods", []):
             raw_mode = period.get("mode", "")
