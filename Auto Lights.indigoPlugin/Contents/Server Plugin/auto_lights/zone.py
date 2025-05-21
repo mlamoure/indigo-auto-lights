@@ -257,7 +257,9 @@ class Zone(AutoLightsBase):
                     }
             # load global behavior variables map
             if "global_behavior_variables_map" in cfg:
-                self._global_behavior_variables_map = cfg["global_behavior_variables_map"]
+                self._global_behavior_variables_map = cfg[
+                    "global_behavior_variables_map"
+                ]
             else:
                 self._global_behavior_variables_map = {
                     str(v["var_id"]): True
@@ -1006,9 +1008,13 @@ class Zone(AutoLightsBase):
         global_plan = self._config.has_global_lights_off(self)
         if global_plan.contributions:
             return global_plan
+
         # -- No active lighting period: nothing to do
         if self.current_lighting_period is None:
-            return BrightnessPlan(contributions=[], exclusions=[], new_targets=[], device_changes=[])
+            return BrightnessPlan(
+                contributions=[], exclusions=[], new_targets=[], device_changes=[]
+            )
+
         # -- Initialize plan details
         plan_contribs: List[Tuple[str, str]] = []
         plan_exclusions: List[Tuple[str, str]] = []
@@ -1026,6 +1032,7 @@ class Zone(AutoLightsBase):
                     f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})",
                 )
             )
+
         # we know `period` is non-None here, so just log its name/limits
         plan_contribs.append(
             (
@@ -1072,17 +1079,13 @@ class Zone(AutoLightsBase):
                         and not already_logged_off_behavior
                     ):
                         already_logged_off_behavior = True
-                        plan_contribs.append(
-                            ("🔌", "off-lights behavior → force off")
-                        )
+                        plan_contribs.append(("🔌", "off-lights behavior → force off"))
                     new_targets.append({"dev_id": off_id, "brightness": 0})
         else:
             if not presence:
                 plan_contribs.append(("👥", "no presence → turning all off"))
             elif not darkness:
-                plan_contribs.append(
-                    ("☀️", "zone is bright enough → turning all off")
-                )
+                plan_contribs.append(("☀️", "zone is bright enough → turning all off"))
 
             # include *all* lights (even those excluded from locks) in our off-targets
             new_targets = [
@@ -1094,6 +1097,7 @@ class Zone(AutoLightsBase):
             d["dev_id"]: d["brightness"]
             for d in self.current_lights_status(include_lock_excluded=True)
         }
+
         # -- Compare current vs new targets to build device_changes
         device_changes: List[Tuple[str, str]] = []
         for t in new_targets:
@@ -1101,6 +1105,7 @@ class Zone(AutoLightsBase):
             old_b = current.get(did)
             if old_b is not None and old_b != new_b:
                 device = indigo.devices[did]
+
                 # Non-dimmer devices: use on/off logging
                 if not isinstance(device, indigo.DimmerDevice):
                     if new_b:
