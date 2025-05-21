@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from flask import Flask
-from auto_lights.auto_lights_base import LightingPeriodMode
+from auto_lights.lighting_period_mode import LightingPeriodMode
 
 from .tools.indigo_api_tools import (
     indigo_get_all_house_devices,

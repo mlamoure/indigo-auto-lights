@@ -1,6 +1,7 @@
 import datetime
 import logging
-from .auto_lights_base import AutoLightsBase, LightingPeriodMode
+from .auto_lights_base import AutoLightsBase
+from .lighting_period_mode import LightingPeriodMode
 
 try:
     import indigo

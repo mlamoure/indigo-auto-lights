@@ -1,40 +1,10 @@
 import inspect
 import logging
-from dataclasses import dataclass
-from typing import List, Tuple
-
-from enum import Enum
-
-class LightingPeriodMode(Enum):
-    ON_AND_OFF = "On and Off"
-    OFF_ONLY   = "Off Only"
-
-    @classmethod
-    def from_string(cls, raw: str) -> "LightingPeriodMode":
-        """Fold legacy and current mode strings into one enum."""
-        if not isinstance(raw, str):
-            raise ValueError(f"Invalid mode: {raw!r}")
-        norm = raw.strip().lower().replace(" ", "").replace("_", "").replace("-", "")
-        if norm in ("onandoff", "onoffzone"):
-            return cls.ON_AND_OFF
-        if norm in ("offonly", "offonlyzone"):
-            return cls.OFF_ONLY
-        raise ValueError(f"Unknown lighting period mode: {raw!r}")
-
-    def __str__(self):
-        return self.value
+from .lighting_period_mode import LightingPeriodMode
+from .brightness_plan import BrightnessPlan
 
 
-@dataclass
-class BrightnessPlan:
-    # A list of (emoji, message) explaining WHY we did this
-    contributions: List[Tuple[str, str]]
-    # A list of (emoji, message) for devices excluded from the period
-    exclusions: List[Tuple[str, str]]
-    # The new raw target_brightness list you will apply to zone.target_brightness
-    new_targets: List[dict]
-    # A list of (emoji, message) describing the DEVICE-level differences
-    device_changes: List[Tuple[str, str]]
+
 
 
 class AutoLightsBase:

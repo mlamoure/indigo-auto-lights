@@ -5,7 +5,9 @@ import math
 import threading
 from typing import List, Union, Optional, TYPE_CHECKING, Tuple
 
-from .auto_lights_base import AutoLightsBase, BrightnessPlan, LightingPeriodMode
+from .auto_lights_base import AutoLightsBase
+from .brightness_plan import BrightnessPlan
+from .lighting_period_mode import LightingPeriodMode
 
 if TYPE_CHECKING:
     from .auto_lights_config import AutoLightsConfig
