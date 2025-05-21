@@ -608,7 +608,7 @@ class Zone(AutoLightsBase):
         self._lighting_periods = value
 
     @property
-    def last_changed_device(self) -> indigo.Device:
+    def last_changed_device(self) -> "indigo.Device":
         """Returns the indigo.Device with the most recent lastChanged value."""
         latest_device = None
         latest_time = datetime.datetime(1900, 1, 1)
@@ -1182,7 +1182,7 @@ class Zone(AutoLightsBase):
         self._zone_index = value
 
     @property
-    def indigo_dev(self) -> indigo.Device:
+    def indigo_dev(self) -> "indigo.Device":
         """
         Retrieve or create the Indigo device for this zone.
         Caches device via self._indigo_dev_id.
