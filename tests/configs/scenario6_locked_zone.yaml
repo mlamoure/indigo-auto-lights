@@ -1,0 +1,44 @@
+plugin_config:
+  default_lock_duration: 30
+  default_lock_extension_duration: 5
+  global_behavior_variables: []
+lighting_periods:
+  - id: 1
+    name: All Day
+    mode: On and Off
+    from_time_hour: 0
+    from_time_minute: 0
+    to_time_hour: 23
+    to_time_minute: 59
+zones:
+  - name: Zone1
+    lighting_period_ids:
+      - 1
+    device_settings:
+      on_lights_dev_ids:
+        - 101
+      off_lights_dev_ids: []
+      luminance_dev_ids:
+        - 201
+      presence_dev_ids:
+        - 301
+    minimum_luminance_settings:
+      minimum_luminance: null
+      minimum_luminance_use_variable: false
+      minimum_luminance_var_id: null
+      adjust_brightness: false
+    behavior_settings:
+      lock_duration: null
+      extend_lock_when_active: false
+      lock_extension_duration: null
+      off_lights_behavior: ""
+      unlock_when_no_presence: false
+    advanced_settings:
+      exclude_from_lock_dev_ids: []
+device_states:
+  101:
+    brightness: 50
+  201:
+    sensorValue: 0
+  301:
+    onState: true

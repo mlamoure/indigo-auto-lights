@@ -1,0 +1,55 @@
+plugin_config:
+  default_lock_duration: 5
+  default_lock_extension_duration: 2
+  global_behavior_variables: []
+lighting_periods:
+  - id: 2
+    name: Evening
+    mode: Off Only
+    from_time_hour: 0
+    from_time_minute: 0
+    to_time_hour: 23
+    to_time_minute: 59
+zones:
+  - name: Zone1
+    lighting_period_ids:
+      - 2
+    device_settings:
+      on_lights_dev_ids:
+        - 101
+      off_lights_dev_ids:
+        - 102
+      luminance_dev_ids:
+        - 201
+      presence_dev_ids:
+        - 301
+    minimum_luminance_settings:
+      minimum_luminance: 50
+      minimum_luminance_use_variable: false
+      minimum_luminance_var_id: null
+      adjust_brightness: true
+    behavior_settings:
+      lock_duration: null
+      extend_lock_when_active: false
+      lock_extension_duration: null
+      off_lights_behavior: "do not adjust unless no presence"
+      unlock_when_no_presence: false
+    advanced_settings:
+      exclude_from_lock_dev_ids: []
+device_states:
+  101:
+    brightness: 100
+  102:
+    brightness: 50
+  301:
+    onState: true
+expected:
+  new_targets:
+    - dev_id: 101
+      brightness: 0
+    - dev_id: 102
+      brightness: 0
+  exclusions: []
+  device_changes:
+    - ["🔌", "turned off 'Dev-101'"]
+    - ["🔌", "turned off 'Dev-102'"]
