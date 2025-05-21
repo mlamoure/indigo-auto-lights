@@ -993,16 +993,23 @@ class Zone(AutoLightsBase):
 
     def calculate_target_brightness(self) -> BrightnessPlan:
         """
-        Build and return a BrightnessPlan instead of logging directly.
+        Calculate and return a BrightnessPlan explaining lighting actions based on:
+          1. Global behavior variables overriding all zones.
+          2. Active lighting period rules (presence, darkness, period mode).
+          3. Brightness limits and exclusion mappings.
+
+        Returns:
+            BrightnessPlan: Detailed plan with contributions, exclusions, new targets, and device changes.
         """
-        self._debug_log("calculate_target_brightness called")
-        # 1) Global behavior override: if any global-off variable triggers, return that plan
+        self._debug_log("Calculating target brightness plan")
+        # -- Global override: check for global lights-off conditions
         global_plan = self._config.has_global_lights_off(self)
         if global_plan.contributions:
             return global_plan
-        # 2) If no active lighting period and no global override, do nothing
+        # -- No active lighting period: nothing to do
         if self.current_lighting_period is None:
             return BrightnessPlan(contributions=[], exclusions=[], new_targets=[], device_changes=[])
+        # -- Initialize plan details
         plan_contribs: List[Tuple[str, str]] = []
         plan_exclusions: List[Tuple[str, str]] = []
 
@@ -1031,7 +1038,7 @@ class Zone(AutoLightsBase):
 
         new_targets: List[dict] = []
 
-        # period is active—run your existing On/Off logic
+        # -- Handle 'On and Off' mode when presence is detected and it's dark
         if period.mode == "On and Off" and presence and darkness:
             plan_contribs.append(("💡", "presence & dark → turning on lights"))
             for dev_id in self.on_lights_dev_ids:
@@ -1087,6 +1094,7 @@ class Zone(AutoLightsBase):
             d["dev_id"]: d["brightness"]
             for d in self.current_lights_status(include_lock_excluded=True)
         }
+        # -- Compare current vs new targets to build device_changes
         device_changes: List[Tuple[str, str]] = []
         for t in new_targets:
             did, new_b = t["dev_id"], t["brightness"]
