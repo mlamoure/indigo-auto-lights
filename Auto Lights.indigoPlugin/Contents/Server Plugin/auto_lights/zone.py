@@ -1019,33 +1019,20 @@ class Zone(AutoLightsBase):
                     f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})",
                 )
             )
-        if not period:
-            plan_contribs.append(("⏰", "no active lighting period"))
-        else:
-            plan_contribs.append(
-                (
-                    "⏰",
-                    f"period '{period.name}' mode='{period.mode}' from {period.from_time.strftime('%H:%M')} to {period.to_time.strftime('%H:%M')}",
-                )
+        # we know `period` is non-None here, so just log its name/limits
+        plan_contribs.append(
+            (
+                "⏰",
+                f"period '{period.name}' mode='{period.mode}' from {period.from_time.strftime('%H:%M')} to {period.to_time.strftime('%H:%M')}",
             )
-            if limit_b is not None:
-                plan_contribs.append(("⚖️", f"limit_brightness override = {limit_b}"))
+        )
+        if limit_b is not None:
+            plan_contribs.append(("⚖️", f"limit_brightness override = {limit_b}"))
 
         new_targets: List[dict] = []
 
-        if not period:
-            if presence:
-                plan_contribs.append(("🚫", "skipping period logic, turning all off"))
-            else:
-                plan_contribs.append(("💤", "no presence detected → all off"))
-            # include *all* lights (even those excluded from locks) in our off-targets
-            new_targets = [
-                {"dev_id": d["dev_id"], "brightness": 0}
-                for d in self.current_lights_status(include_lock_excluded=True)
-            ]
-
-        else:
-            if period.mode == "On and Off" and presence and darkness:
+        # period is active—run your existing On/Off logic
+        if period.mode == "On and Off" and presence and darkness:
                 plan_contribs.append(("💡", "presence & dark → turning on lights"))
                 for dev_id in self.on_lights_dev_ids:
                     excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
