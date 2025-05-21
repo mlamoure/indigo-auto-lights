@@ -22,8 +22,13 @@ an area. You can share presence and luminance devices across multiple rooms, but
 
 A Zone typically includes:
 
-- **On / Off Lights**: Devices that auto-lights will control (on and off), turning them on under the right conditions (
-  presence,
+- **Linked Lighting Periods**: One or more lighting periods can be assigned to a Zone. Auto Lights  
+  evaluates the configured list in order (top-down) and selects the first active period. If  
+  periods overlap, the first matching period has priority. You can reorder lighting periods in  
+  the Zone configuration to adjust priority. For example, if “Evening” (18:00–23:00) is listed  
+  above “Night” (21:00–06:00), at 21:30 the “Evening” period will match first.  
+- **On / Off Lights**: Devices that auto-lights will control (on and off), turning them on under the right conditions (  
+  presence,  
   darkness, and an active Lighting Period).
     - Supports any device (including plugin devices) that supports .turnOn and .turnOff indigo methods
         - Hue, Hassbridge, and Lutron devices have been thouroughly tested.
