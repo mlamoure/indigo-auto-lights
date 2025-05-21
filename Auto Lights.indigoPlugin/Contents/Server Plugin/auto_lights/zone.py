@@ -1068,19 +1068,19 @@ class Zone(AutoLightsBase):
                     brightness = min(raw, limit_b) if limit_b is not None else raw
                 new_targets.append({"dev_id": dev_id, "brightness": brightness})
 
-            # Possibly force off all off-lights during On and Off periods
-            already_logged_off_behavior = False
+            # force-off any on-lights that are excluded from this period,
+            # then your normal off_lights list when in force-off mode
             if (
                 self.off_lights_behavior == "force off unless zone is locked"
                 and not self.locked
             ):
+                plan_contribs.append(("🔌", "off-lights behavior → force off"))
+                # Turn off excluded on_lights
+                for dev_id in self.on_lights_dev_ids:
+                    if self.has_dev_lighting_mapping_exclusion(dev_id, period):
+                        new_targets.append({"dev_id": dev_id, "brightness": 0})
+                # Then turn off configured off_lights
                 for off_id in self.off_lights_dev_ids:
-                    if (
-                        indigo.devices[off_id].onState
-                        and not already_logged_off_behavior
-                    ):
-                        already_logged_off_behavior = True
-                        plan_contribs.append(("🔌", "off-lights behavior → force off"))
                     new_targets.append({"dev_id": off_id, "brightness": 0})
         else:
             if not presence:
