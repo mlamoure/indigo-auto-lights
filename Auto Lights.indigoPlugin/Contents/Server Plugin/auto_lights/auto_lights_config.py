@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 from .auto_lights_base import AutoLightsBase
-from .auto_lights_base import BrightnessPlan
+from .brightness_plan import BrightnessPlan
 from .lighting_period import LightingPeriod
 from .zone import Zone
 
