@@ -1,6 +1,9 @@
 import sys
 import types
 import pytest
+import os
+# Make plugin code importable by pytest
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "Auto Lights.indigoPlugin", "Contents", "Server Plugin")))
 
 @pytest.fixture(autouse=True)
 def fake_indigo():
