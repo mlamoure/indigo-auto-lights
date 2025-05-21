@@ -1033,55 +1033,55 @@ class Zone(AutoLightsBase):
 
         # period is active—run your existing On/Off logic
         if period.mode == "On and Off" and presence and darkness:
-                plan_contribs.append(("💡", "presence & dark → turning on lights"))
-                for dev_id in self.on_lights_dev_ids:
-                    excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
-                    if excluded:
-                        plan_exclusions.append(
-                            (
-                                "❌",
-                                f"{indigo.devices[dev_id].name} is excluded from current period",
-                            )
+            plan_contribs.append(("💡", "presence & dark → turning on lights"))
+            for dev_id in self.on_lights_dev_ids:
+                excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
+                if excluded:
+                    plan_exclusions.append(
+                        (
+                            "❌",
+                            f"{indigo.devices[dev_id].name} is excluded from current period",
                         )
-                        continue
-                    if not self.adjust_brightness:
-                        brightness = 100
-                    else:
-                        raw = math.ceil(
-                            (1 - (self.luminance / self.minimum_luminance)) * 100
-                        )
-                        brightness = min(raw, limit_b) if limit_b is not None else raw
-                    new_targets.append({"dev_id": dev_id, "brightness": brightness})
-
-                # Possibly force off all off-lights during On and Off periods
-                already_logged_off_behavior = False
-                if (
-                    self.off_lights_behavior == "force off unless zone is locked"
-                    and not self.locked
-                ):
-                    for off_id in self.off_lights_dev_ids:
-                        if (
-                            indigo.devices[off_id].onState
-                            and not already_logged_off_behavior
-                        ):
-                            already_logged_off_behavior = True
-                            plan_contribs.append(
-                                ("🔌", "off-lights behavior → force off")
-                            )
-                        new_targets.append({"dev_id": off_id, "brightness": 0})
-            else:
-                if not presence:
-                    plan_contribs.append(("👥", "no presence → turning all off"))
-                elif not darkness:
-                    plan_contribs.append(
-                        ("☀️", "zone is bright enough → turning all off")
                     )
+                    continue
+                if not self.adjust_brightness:
+                    brightness = 100
+                else:
+                    raw = math.ceil(
+                        (1 - (self.luminance / self.minimum_luminance)) * 100
+                    )
+                    brightness = min(raw, limit_b) if limit_b is not None else raw
+                new_targets.append({"dev_id": dev_id, "brightness": brightness})
 
-                # include *all* lights (even those excluded from locks) in our off-targets
-                new_targets = [
-                    {"dev_id": d["dev_id"], "brightness": 0}
-                    for d in self.current_lights_status(include_lock_excluded=True)
-                ]
+            # Possibly force off all off-lights during On and Off periods
+            already_logged_off_behavior = False
+            if (
+                self.off_lights_behavior == "force off unless zone is locked"
+                and not self.locked
+            ):
+                for off_id in self.off_lights_dev_ids:
+                    if (
+                        indigo.devices[off_id].onState
+                        and not already_logged_off_behavior
+                    ):
+                        already_logged_off_behavior = True
+                        plan_contribs.append(
+                            ("🔌", "off-lights behavior → force off")
+                        )
+                    new_targets.append({"dev_id": off_id, "brightness": 0})
+        else:
+            if not presence:
+                plan_contribs.append(("👥", "no presence → turning all off"))
+            elif not darkness:
+                plan_contribs.append(
+                    ("☀️", "zone is bright enough → turning all off")
+                )
+
+            # include *all* lights (even those excluded from locks) in our off-targets
+            new_targets = [
+                {"dev_id": d["dev_id"], "brightness": 0}
+                for d in self.current_lights_status(include_lock_excluded=True)
+            ]
 
         current = {
             d["dev_id"]: d["brightness"]
