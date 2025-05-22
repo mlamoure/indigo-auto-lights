@@ -1012,7 +1012,7 @@ class Zone(AutoLightsBase):
             device_changes = []
             for d in all_devs:
                 dev = indigo.devices[d]
-                device_changes.append(("🔌", f"turned off '{dev.name}'"))
+                device_changes.append(["🔌", f"turned off '{dev.name}'"])
             return BrightnessPlan(
                 contributions=[],
                 exclusions=[],
@@ -1066,12 +1066,7 @@ class Zone(AutoLightsBase):
             for dev_id in self.on_lights_dev_ids:
                 excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
                 if excluded:
-                    plan_exclusions.append(
-                        (
-                            "❌",
-                            f"{indigo.devices[dev_id].name} is excluded from current period",
-                        )
-                    )
+                    plan_exclusions.append(["❌", f"{indigo.devices[dev_id].name} is excluded from current period"])
                     continue
                 if not self.adjust_brightness:
                     brightness = 100
@@ -1121,18 +1116,16 @@ class Zone(AutoLightsBase):
             if old_b is not None and old_b != new_b:
                 device = indigo.devices[did]
 
-                # Non-dimmer devices: use on/off logging
-                if not isinstance(device, indigo.DimmerDevice):
-                    if new_b:
-                        emoji = "💡"
-                        action = "turned on"
-                    else:
-                        emoji = "🔌"
-                        action = "turned off"
-                    device_changes.append((emoji, f"{action} '{device.name}'"))
+                # Determine change style: off always on/off, on for relays, brightness-up for dimmers
+                if new_b == 0:
+                    emoji = "🔌"
+                    device_changes.append(["🔌", f"turned off '{device.name}'"])
+                elif not isinstance(device, indigo.DimmerDevice):
+                    emoji = "💡"
+                    device_changes.append(["💡", f"turned on '{device.name}'"])
                 else:
                     emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
-                    device_changes.append((emoji, f"{self.name}: {old_b} → {new_b}"))
+                    device_changes.append([emoji, f"{self.name}: {old_b} → {new_b}"])
 
         return BrightnessPlan(
             contributions=plan_contribs,
