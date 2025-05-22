@@ -257,7 +257,7 @@ class AutoLightsConfig(AutoLightsBase):
         )
 
     @property
-    def indigo_dev(self) -> indigo.Device:
+    def indigo_dev(self) -> "indigo.Device":
         """
         Retrieve or create the Indigo device for global config.
         """
