@@ -7,10 +7,22 @@ class Devices(dict):
     def __iter__(self):
         return iter(self.values())
 
+    def __missing__(self, key):
+        # auto‐create a stub Device for unknown IDs
+        dev = indigo_stub.Device(key)
+        self[key] = dev
+        return dev
+
 indigo_stub.devices = Devices()
 class Variables(dict):
     def __iter__(self):
         return iter(self.values())
+
+    def __missing__(self, key):
+        # auto‐create a stub Variable for unknown IDs
+        var = indigo_stub.Variable(key)
+        self[key] = var
+        return var
 
 indigo_stub.variables = Variables()
 indigo_stub.kProtocol = types.SimpleNamespace(Plugin="Plugin")
