@@ -393,7 +393,7 @@ class Zone(AutoLightsBase):
         """
         if self._minimum_luminance_var_id is not None:
             try:
-                return indigo.variables[self._minimum_luminance_var_id].getValue(float)
+                return float(indigo.variables[self._minimum_luminance_var_id].value)
             except Exception as e:
                 self.logger.error(
                     f"Zone '{self._name}': failed to read minimum_luminance_var_id {self._minimum_luminance_var_id}: {e}"
@@ -416,7 +416,7 @@ class Zone(AutoLightsBase):
         self._minimum_luminance_var_id = value
         if value is not None:
             try:
-                self._minimum_luminance = indigo.variables[value].getValue(float)
+                self._minimum_luminance = float(indigo.variables[value].value)
             except Exception as e:
                 self.logger.error(f"minimum_luminance_var_id {value} not found: {e}")
                 self._minimum_luminance = None
@@ -1125,7 +1125,7 @@ class Zone(AutoLightsBase):
                     device_changes.append(["💡", f"turned on '{device.name}'"])
                 else:
                     emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
-                    device_changes.append([emoji, f"{device.name}: {old_b} → {new_b}"])
+                    device_changes.append([emoji, f"{self.name}: {old_b} → {new_b}"])
 
         return BrightnessPlan(
             contributions=plan_contribs,
