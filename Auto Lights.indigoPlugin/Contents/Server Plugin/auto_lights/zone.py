@@ -1187,12 +1187,6 @@ class Zone(AutoLightsBase):
         Retrieve or create the Indigo device for this zone.
         Caches device via self._indigo_dev_id.
         """
-        # dynamic import to support fake indigo in tests
-        try:
-            import indigo
-        except ImportError:
-            import sys
-            indigo = sys.modules.get("indigo")
         # Return cached device if ID known
         if self._indigo_dev_id is not None:
             return indigo.devices[self._indigo_dev_id]
