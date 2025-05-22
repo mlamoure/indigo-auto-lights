@@ -245,7 +245,7 @@ class AutoLightsConfig(AutoLightsBase):
                 plan_contribs.append(("🌐", f"Global Variable '{var_name}' is True and applies to Zone"))
             elif comp_type == "is FALSE (bool)" and lc_current in ["false", "0"]:
                 plan_contribs.append(("🌐", f"Global Variable '{var_name}' is True and applies to Zone"))
-            elif comp_type is None and lc_current == lc_var_value:
+            elif lc_current == lc_var_value:
                 plan_contribs.append(
                     ("🌐", f"Global Variable '{var_name}' is True and applies to Zone")
                 )
