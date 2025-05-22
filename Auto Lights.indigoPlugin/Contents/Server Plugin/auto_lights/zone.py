@@ -1005,6 +1005,20 @@ class Zone(AutoLightsBase):
             BrightnessPlan: Detailed plan with contributions, exclusions, new targets, and device changes.
         """
         self._debug_log("Calculating target brightness plan")
+        # GLOBAL PLUGIN DISABLED: plugin globally disabled, turn all lights off
+        if not self._config.enabled:
+            all_devs = self.on_lights_dev_ids + self.off_lights_dev_ids
+            new_targets = [{"dev_id": d, "brightness": 0} for d in all_devs]
+            device_changes = []
+            for d in all_devs:
+                dev = indigo.devices[d]
+                device_changes.append(("🔌", f"turned off '{dev.name}'"))
+            return BrightnessPlan(
+                contributions=[],
+                exclusions=[],
+                new_targets=new_targets,
+                device_changes=device_changes,
+            )
         # -- Global override: check for global lights-off conditions
         global_plan = self._config.has_global_lights_off(self)
         if global_plan.contributions:
@@ -1118,7 +1132,7 @@ class Zone(AutoLightsBase):
                     device_changes.append((emoji, f"{action} '{device.name}'"))
                 else:
                     emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
-                    device_changes.append((emoji, f"{device.name}: {old_b} → {new_b}"))
+                    device_changes.append((emoji, f"{self.name}: {old_b} → {new_b}"))
 
         return BrightnessPlan(
             contributions=plan_contribs,
