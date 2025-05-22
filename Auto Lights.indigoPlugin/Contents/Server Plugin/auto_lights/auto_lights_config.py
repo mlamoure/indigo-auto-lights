@@ -155,6 +155,14 @@ class AutoLightsConfig(AutoLightsBase):
             if hasattr(self, key):
                 setattr(self, key, value)
 
+        # Initialize stub variables for global behavior (so tests see correct values)
+        for behavior in self._global_behavior_variables:
+            var_id = behavior.get("var_id")
+            try:
+                indigo.variables[var_id].value = behavior.get("var_value")
+            except Exception:
+                continue
+
         # Process lighting periods into LightingPeriod objects
         self._lighting_periods = []
         lp_data = data.get("lighting_periods", [])
