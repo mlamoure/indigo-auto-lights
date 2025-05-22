@@ -3,17 +3,26 @@ import types
 
 # Stub indigo module for plugin imports before runtime
 indigo_stub = types.SimpleNamespace()
-indigo_stub.devices = {}
-indigo_stub.variables = {}
+class Devices(dict):
+    def __iter__(self):
+        return iter(self.values())
+
+indigo_stub.devices = Devices()
+class Variables(dict):
+    def __iter__(self):
+        return iter(self.values())
+
+indigo_stub.variables = Variables()
 indigo_stub.kProtocol = types.SimpleNamespace(Plugin="Plugin")
 indigo_stub.device = types.SimpleNamespace(
     create=lambda *a, **k: indigo_stub.devices.setdefault(
         max(indigo_stub.devices.keys(), default=0) + 1,
-        types.SimpleNamespace(
-            id=max(indigo_stub.devices.keys(), default=0) + 1,
+        indigo_stub.Device(
+            max(indigo_stub.devices.keys(), default=0) + 1,
+            name=k.get("name", ""),
             onState=True,
             brightness=0,
-            states={},
+            sensorValue=0,
         ),
     ),
     turnOn=lambda dev_id, **_: setattr(indigo_stub.devices[dev_id], "onState", True),
