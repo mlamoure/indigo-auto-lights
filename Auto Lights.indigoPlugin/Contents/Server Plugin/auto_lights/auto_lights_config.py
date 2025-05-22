@@ -256,7 +256,7 @@ class AutoLightsConfig(AutoLightsBase):
         for d in current:
             if d["brightness"] != 0:
                 dev = indigo.devices[d["dev_id"]]
-                device_changes.append(("🔌", f"turned off '{dev.name}'"))
+                device_changes.append(["🔌", f"turned off '{dev.name}'"])
         return BrightnessPlan(
             contributions=plan_contribs,
             exclusions=[],
