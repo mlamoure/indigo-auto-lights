@@ -29,6 +29,42 @@ indigo_stub.variable = types.SimpleNamespace(
         ),
     )
 )
+
+# stub Device and Variable classes to satisfy type annotations and helper imports
+import datetime
+
+class Device:
+    def __init__(self, id, name="", onState=False, brightness=0, sensorValue=None):
+        self.id = id
+        self.name = name or f"Dev-{id}"
+        self.onState = onState
+        self.onOffState = onState
+        self.brightness = brightness
+        self.sensorValue = sensorValue if sensorValue is not None else brightness
+        self.states = {
+            "onState": self.onState,
+            "onOffState": self.onOffState,
+            "brightness": self.brightness,
+        }
+        self.pluginId = ""
+        self.deviceTypeId = ""
+        self.pluginProps = {}
+        self.lastChanged = datetime.datetime.now()
+
+    def replaceOnServer(self): pass
+    def updateStatesOnServer(self, state_list): pass
+
+class Variable:
+    def __init__(self, id, name="", value=None):
+        self.id = id
+        self.name = name
+        self.value = value
+
+indigo_stub.Device = Device
+indigo_stub.DimmerDevice = Device
+indigo_stub.RelayDevice = Device
+indigo_stub.Variable = Variable
+
 sys.modules["indigo"] = indigo_stub
 
 import pytest
