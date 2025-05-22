@@ -121,7 +121,7 @@ class AutoLightsAgent(AutoLightsBase):
 
         return True
 
-    def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> List[Zone]:
+    def process_device_change(self, orig_dev: "indigo.Device", diff: dict) -> List[Zone]:
         """
         Process a device change event.
 
@@ -239,7 +239,7 @@ class AutoLightsAgent(AutoLightsBase):
             self.process_zone(zone)
 
     def process_variable_change(
-        self, orig_var: indigo.Variable, new_var: indigo.Variable
+        self, orig_var: "indigo.Variable", new_var: "indigo.Variable"
     ) -> List[Zone]:
         """
         Process a variable change event.
