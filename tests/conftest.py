@@ -2,6 +2,7 @@ import sys
 import types
 import pytest
 import os
+from collections import UserDict
 # Make plugin code importable by pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "Auto Lights.indigoPlugin", "Contents", "Server Plugin")))
 
@@ -13,8 +14,8 @@ def fake_indigo():
     """
     fake = types.SimpleNamespace()
     # containers
-    fake.devices = {}
-    fake.variables = {}
+    fake.devices = UserDict()
+    fake.variables = UserDict()
 
     # Protocol enum
     fake.kProtocol = types.SimpleNamespace(Plugin="Plugin")
