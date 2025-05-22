@@ -1,10 +1,10 @@
-import indigo
 
 def make_device(dev_id, **kwargs):
     """
     Create a dummy indigo.Device and insert into fake indigo.devices
     Supports: onState, brightness, sensorValue
     """
+    import indigo
     d = indigo.Device(
         dev_id,
         name=kwargs.get("name", ""),
