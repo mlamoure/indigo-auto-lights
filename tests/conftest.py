@@ -1,5 +1,36 @@
 import sys
 import types
+
+# Stub indigo module for plugin imports before runtime
+indigo_stub = types.SimpleNamespace()
+indigo_stub.devices = {}
+indigo_stub.variables = {}
+indigo_stub.kProtocol = types.SimpleNamespace(Plugin="Plugin")
+indigo_stub.device = types.SimpleNamespace(
+    create=lambda *a, **k: indigo_stub.devices.setdefault(
+        max(indigo_stub.devices.keys(), default=0) + 1,
+        types.SimpleNamespace(
+            id=max(indigo_stub.devices.keys(), default=0) + 1,
+            onState=True,
+            brightness=0,
+            states={},
+        ),
+    ),
+    turnOn=lambda dev_id, **_: setattr(indigo_stub.devices[dev_id], "onState", True),
+    turnOff=lambda dev_id, **_: setattr(indigo_stub.devices[dev_id], "onState", False),
+)
+indigo_stub.variable = types.SimpleNamespace(
+    create=lambda *a, **k: indigo_stub.variables.setdefault(
+        max(indigo_stub.variables.keys(), default=0) + 1,
+        types.SimpleNamespace(
+            id=max(indigo_stub.variables.keys(), default=0) + 1,
+            name=(a[0] if a else ""),
+            value=(a[1] if len(a) > 1 else None),
+        ),
+    )
+)
+sys.modules["indigo"] = indigo_stub
+
 import pytest
 import os
 from collections import UserDict
@@ -9,71 +40,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), os.pa
 @pytest.fixture(autouse=True)
 def fake_indigo():
     """
-    Inject a dummy `indigo` module so imports in our plugin code never fail
-    and all code paths can run headless.
+    Reset the stub indigo module before each test.
     """
-    fake = types.SimpleNamespace()
-    # containers
-    fake.devices = UserDict()
-    fake.variables = UserDict()
-
-    # Protocol enum
-    fake.kProtocol = types.SimpleNamespace(Plugin="Plugin")
-
-    # Minimal Device/Variable classes
-    class DummyDevice:
-        def __init__(self, id, name="", onState=False, brightness=0, sensorValue=None):
-            self.id = id
-            self.name = name or f"Dev-{id}"
-            self.onState = onState
-            self.onOffState = onState
-            self.brightness = brightness
-            self.sensorValue = brightness if sensorValue is None else sensorValue
-            self.states = {"onState": self.onState, "brightness": self.brightness}
-            self.pluginId = ""
-            self.deviceTypeId = ""
-            self.pluginProps = {}
-        def replaceOnServer(self): pass
-        def updateStatesOnServer(self, state_list): pass
-
-    class DummyVariable:
-        def __init__(self, id, name, value):
-            self.id = id
-            self.name = name
-            self.value = value
-        def getValue(self, t):
-            return t(self.value)
-
-    # assign classes
-    fake.Device = fake.DimmerDevice = fake.RelayDevice = DummyDevice
-
-    # device namespace
-    def _create(protocol, name, address, deviceTypeId, props):
-        new_id = max(fake.devices.keys(), default=0) + 1
-        d = DummyDevice(new_id, name=name, onState=True)
-        fake.devices[new_id] = d
-        return d
-
-    fake.device = types.SimpleNamespace(
-        create=_create,
-        turnOn=lambda dev_id, **kw: setattr(fake.devices[dev_id], "onState", True),
-        turnOff=lambda dev_id, **kw: setattr(fake.devices[dev_id], "onState", False),
-    )
-
-    # variable namespace
-    def _var_create(name, init_val):
-        new_id = max(fake.variables.keys(), default=0) + 1
-        v = DummyVariable(new_id, name, init_val)
-        fake.variables[new_id] = v
-        return v
-
-    fake.variable = types.SimpleNamespace(create=_var_create)
-
-    # no-op subscriptions
-    fake.devices.subscribeToChanges = lambda *a, **k: None
-    fake.variables.subscribeToChanges = lambda *a, **k: None
-
-    # inject
-    sys.modules["indigo"] = fake
-    yield fake
-    del sys.modules["indigo"]
+    indigo_stub.devices.clear()
+    indigo_stub.variables.clear()
+    yield indigo_stub
