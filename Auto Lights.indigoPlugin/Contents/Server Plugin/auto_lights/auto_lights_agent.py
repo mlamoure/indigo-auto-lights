@@ -194,6 +194,9 @@ class AutoLightsAgent(AutoLightsBase):
                         self.logger.info(
                             f"    ⏳ lock_extension_duration: {zone.lock_extension_duration} minutes"
                         )
+                        self.logger.info(
+                            f"    🗝️ unlock_when_no_presence: {zone.unlock_when_no_presence}"
+                        )
                     processed.append(zone)
                     # Schedule processing of expired lock after expiration + 2 seconds
                     delay = (
