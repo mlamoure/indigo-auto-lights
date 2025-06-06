@@ -213,32 +213,12 @@ class AutoLightsAgent(AutoLightsBase):
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
 
-                # presence-handling for auto-unlock with grace period
+                # presence-handling for auto-unlock: cancel grace timer on presence
                 if device_prop == "presence_dev_ids" and zone.unlock_when_no_presence:
                     if zone.has_presence_detected():
-                        # presence returned: cancel pending no-presence timer
                         t = self._no_presence_timers.pop(zone.name, None)
                         if t:
                             t.cancel()
-                    elif zone.locked:
-                        now = datetime.datetime.now()
-                        elapsed = (now - zone._lock_start_time).total_seconds()
-                        remaining = max(0, LOCK_HOLD_GRACE_SECONDS - elapsed)
-                        if remaining <= 0:
-                            # grace already passed
-                            self.reset_locks(
-                                zone.name,
-                                f"no presence held ≥ {LOCK_HOLD_GRACE_SECONDS}s (grace)",
-                            )
-                        else:
-                            if zone.name not in self._no_presence_timers:
-                                timer = threading.Timer(
-                                    remaining,
-                                    lambda z=zone: self._unlock_after_grace(z),
-                                )
-                                timer.daemon = True
-                                self._no_presence_timers[zone.name] = timer
-                                timer.start()
 
                 if self.process_zone(zone):
                     processed.append(zone)

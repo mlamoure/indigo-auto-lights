@@ -726,6 +726,20 @@ class Zone(AutoLightsBase):
                 self._lock_timer.daemon = True
                 self._lock_timer.start()
 
+            # schedule no-presence grace timer at lock-time
+            if self.unlock_when_no_presence and not self.has_presence_detected():
+                agent = self._config.agent
+                old = agent._no_presence_timers.pop(self.name, None)
+                if old:
+                    old.cancel()
+                t = threading.Timer(
+                    LOCK_HOLD_GRACE_SECONDS,
+                    lambda z=self: agent._unlock_after_grace(z),
+                )
+                t.daemon = True
+                agent._no_presence_timers[self.name] = t
+                t.start()
+
             self.logger.info(
                 f"Zone '{self._name}' locked until {self.lock_expiration_str}"
             )
