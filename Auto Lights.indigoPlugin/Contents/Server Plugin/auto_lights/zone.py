@@ -20,6 +20,9 @@ except ImportError:
     pass
 
 
+# Grace period before allowing auto-unlock when no presence (in seconds)
+LOCK_HOLD_GRACE_SECONDS = 30
+
 class Zone(AutoLightsBase):
     """
     Zone abstraction for Auto Lights.
@@ -706,6 +709,8 @@ class Zone(AutoLightsBase):
             value (bool): The desired locked state.
         """
         if value:
+            # record lock start time for no-presence grace period
+            self._lock_start_time = datetime.datetime.now()
             new_expiration = datetime.datetime.now() + datetime.timedelta(
                 minutes=self.lock_duration
             )

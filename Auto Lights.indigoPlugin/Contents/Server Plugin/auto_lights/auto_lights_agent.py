@@ -4,7 +4,7 @@ from typing import List
 
 from .auto_lights_base import AutoLightsBase
 from .auto_lights_config import AutoLightsConfig
-from .zone import Zone
+from .zone import Zone, LOCK_HOLD_GRACE_SECONDS
 
 try:
     import indigo
@@ -218,10 +218,13 @@ class AutoLightsAgent(AutoLightsBase):
                     and zone.unlock_when_no_presence
                     and not zone.has_presence_detected()
                 ):
-                    self.reset_locks(
-                        zone.name,
-                        "no presence detected and `unlock_when_no_presence` is set for this Zone",
-                    )
+                    # enforce grace period before auto-unlock
+                    elapsed = (datetime.datetime.now() - zone._lock_start_time).total_seconds()
+                    if elapsed >= LOCK_HOLD_GRACE_SECONDS:
+                        self.reset_locks(
+                            zone.name,
+                            f"no presence detected and held locked ≥ {LOCK_HOLD_GRACE_SECONDS} seconds (grace period)",
+                        )
 
                 if self.process_zone(zone):
                     processed.append(zone)
