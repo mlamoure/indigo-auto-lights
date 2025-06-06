@@ -17,6 +17,8 @@ class AutoLightsAgent(AutoLightsBase):
         super().__init__()
         self.config = config
         self._timers = {}
+        # Timers for presence-based unlock grace periods
+        self._no_presence_timers = {}
 
         # Initialize per-zone transition timers
         for z in self.config.zones:
@@ -211,25 +213,51 @@ class AutoLightsAgent(AutoLightsBase):
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
 
-                # if presence has changed and the zone is locked, investigate if it should be unlocked
-                if (
-                    device_prop == "presence_dev_ids"
-                    and zone.locked
-                    and zone.unlock_when_no_presence
-                    and not zone.has_presence_detected()
-                ):
-                    # enforce grace period before auto-unlock
-                    elapsed = (datetime.datetime.now() - zone._lock_start_time).total_seconds()
-                    if elapsed >= LOCK_HOLD_GRACE_SECONDS:
-                        self.reset_locks(
-                            zone.name,
-                            f"no presence detected and held locked ≥ {LOCK_HOLD_GRACE_SECONDS} seconds (grace period)",
-                        )
+                # presence-handling for auto-unlock with grace period
+                if device_prop == "presence_dev_ids" and zone.unlock_when_no_presence:
+                    if zone.has_presence_detected():
+                        # presence returned: cancel pending no-presence timer
+                        t = self._no_presence_timers.pop(zone.name, None)
+                        if t:
+                            t.cancel()
+                    elif zone.locked:
+                        now = datetime.datetime.now()
+                        elapsed = (now - zone._lock_start_time).total_seconds()
+                        remaining = max(0, LOCK_HOLD_GRACE_SECONDS - elapsed)
+                        if remaining <= 0:
+                            # grace already passed
+                            self.reset_locks(
+                                zone.name,
+                                f"no presence held ≥ {LOCK_HOLD_GRACE_SECONDS}s (grace)",
+                            )
+                        else:
+                            if zone.name not in self._no_presence_timers:
+                                timer = threading.Timer(
+                                    remaining,
+                                    lambda z=zone: self._unlock_after_grace(z),
+                                )
+                                timer.daemon = True
+                                self._no_presence_timers[zone.name] = timer
+                                timer.start()
 
                 if self.process_zone(zone):
                     processed.append(zone)
 
         return processed
+
+    def _unlock_after_grace(self, zone: Zone) -> None:
+        """Called by timer to attempt unlock after presence-grace expires."""
+        # remove our timer reference
+        self._no_presence_timers.pop(zone.name, None)
+        if (
+            zone.locked
+            and zone.unlock_when_no_presence
+            and not zone.has_presence_detected()
+        ):
+            self.reset_locks(
+                zone.name,
+                f"no presence held ≥ {LOCK_HOLD_GRACE_SECONDS}s (grace)"
+            )
 
     def process_all_zones(self) -> None:
         """
