@@ -51,6 +51,7 @@ A Zone typically includes:
 - **Locks**: Each Zone respects manual overrides. When this happens, a lock is created for the Zone. Once locked, the
   Zone will not automatically turn on or off lights until the lock expires, the presence variable goes false, or you
   reset the lock. Behavior for locks can be customized and has multiple fields. See [below](#locks) for details.
+- **Unlock When No Presence**: Enable to unlock the zone when no presence is detected. A grace period of 30 seconds is applied before unlocking to avoid rapid toggles. Recommend leaving this off for zones where you may want an override to outlast the presence of the room, like a hallway.
 - **Exclude from Lock**: If certain devices shouldn’t trigger a manual override lock, add them here. I recommend this
   for devices that do long fading times for dimmer changes, like the Hue lights plugin. The transition state will
   confuse Auto Lights and think the dimmer was changed outside of the plugin, and a lock will be created.
