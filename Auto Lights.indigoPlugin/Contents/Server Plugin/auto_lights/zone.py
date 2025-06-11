@@ -3,7 +3,7 @@ import json
 import logging
 import math
 import threading
-from typing import List, Union, Optional, TYPE_CHECKING, Tuple
+from typing import List, Union, Optional, TYPE_CHECKING, Tuple, Any
 
 from .auto_lights_base import AutoLightsBase
 from .brightness_plan import BrightnessPlan
