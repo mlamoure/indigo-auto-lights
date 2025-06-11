@@ -1046,6 +1046,7 @@ class Zone(AutoLightsBase):
         Returns:
             BrightnessPlan: Detailed plan with contributions, exclusions, new targets, and device changes.
         """
+        self._runtime_cache.clear()
         self._debug_log("Calculating target brightness plan")
         # GLOBAL PLUGIN DISABLED: plugin globally disabled, turn all lights off
         if not self._config.enabled:
@@ -1332,7 +1333,10 @@ class Zone(AutoLightsBase):
         if dev.name != expected_name:
             try:
                 dev.name = expected_name
-                dev.replaceOnServer()
+                if hasattr(dev, "replaceOnServer"):
+                    dev.replaceOnServer()
+                else:
+                    self.logger.debug("Device does not support replaceOnServer, skipping rename update")
             except Exception as e:
                 self.logger.error(
                     f"Failed to rename Indigo device for Zone '{self._name}': {e}"
@@ -1344,7 +1348,10 @@ class Zone(AutoLightsBase):
         state_list.extend(self._build_runtime_states(dev))
 
         try:
-            dev.updateStatesOnServer(state_list)
+            if hasattr(dev, "updateStatesOnServer"):
+                dev.updateStatesOnServer(state_list)
+            else:
+                self.logger.debug("Device does not support updateStatesOnServer, skipping update")
         except Exception as e:
             self.logger.error(f"Failed to sync states for zone '{self._name}': {e}")
         # Update onOffState with UI value
@@ -1356,7 +1363,10 @@ class Zone(AutoLightsBase):
                 ui = "Enabled"
             else:
                 ui = "Disabled"
-            dev.updateStateOnServer("onOffState", on_state, uiValue=ui)
+            if hasattr(dev, "updateStateOnServer"):
+                dev.updateStateOnServer("onOffState", on_state, uiValue=ui)
+            else:
+                self.logger.debug("Device does not support updateStateOnServer, skipping onOffState update")
         except Exception as e:
             self.logger.error(f"Failed to update onOffState for zone '{self._name}': {e}")
 

@@ -235,6 +235,11 @@ class AutoLightsAgent(AutoLightsBase):
         """Called by timer to attempt unlock after presence-grace expires."""
         # remove our timer reference
         self._no_presence_timers.pop(zone.name, None)
+        # Only unlock if the lock's grace period has expired.
+        if hasattr(zone, "_lock_start_time"):
+            elapsed = (datetime.datetime.now() - zone._lock_start_time).total_seconds()
+            if elapsed < LOCK_HOLD_GRACE_SECONDS:
+                return
         if (
             zone.locked
             and zone.unlock_when_no_presence
