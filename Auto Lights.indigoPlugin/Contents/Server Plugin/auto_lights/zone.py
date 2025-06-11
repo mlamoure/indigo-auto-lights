@@ -1319,6 +1319,18 @@ class Zone(AutoLightsBase):
             dev.updateStatesOnServer(state_list)
         except Exception as e:
             self.logger.error(f"Failed to sync states for zone '{self._name}': {e}")
+        # Update onOffState with UI value
+        try:
+            on_state = dev.onState
+            if self.locked:
+                ui = "Locked"
+            elif on_state:
+                ui = "Enabled"
+            else:
+                ui = "Disabled"
+            dev.updateStateOnServer("onOffState", on_state, uiValue=ui)
+        except Exception as e:
+            self.logger.error(f"Failed to update onOffState for zone '{self._name}': {e}")
 
     def _has_device(self, dev_id: int) -> str:
         """
