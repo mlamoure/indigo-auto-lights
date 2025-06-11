@@ -122,6 +122,7 @@ class Plugin(indigo.PluginBase):
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
         self._agent.refresh_all_indigo_devices()
+        self.logger.debug("Plugin startup complete")
 
     def shutdown(self: indigo.PluginBase) -> None:
         """
@@ -526,3 +527,4 @@ class Plugin(indigo.PluginBase):
         self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")
         dev.stateListOrDisplayStateIdChanged()
         self._agent.refresh_indigo_device(dev.id)
+        self.logger.debug(f"deviceStartComm complete for device {dev.id} ('{dev.name}')")
