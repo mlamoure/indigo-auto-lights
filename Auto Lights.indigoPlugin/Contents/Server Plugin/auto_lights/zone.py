@@ -751,6 +751,11 @@ class Zone(AutoLightsBase):
                 minutes=1
             )
             self._debug_log(f"Zone '{self._name}' unlocked")
+        # Immediately refresh zone device UI after lock state change
+        try:
+            self.sync_indigo_device()
+        except Exception as e:
+            self.logger.exception(f"Failed to sync onOffState after lock change for zone '{self._name}': {e}")
 
     @property
     def lock_expiration_str(self) -> str:
