@@ -184,6 +184,9 @@ class Zone(AutoLightsBase):
         # global behavior variables map
         self._global_behavior_variables_map: dict[str, bool] = {}
 
+        # per-process run cache (cleared by AutoLightsAgent.process_zone)
+        self._runtime_cache: dict[str, Any] = {}
+
     def __setattr__(self, name, value):
         """
         Override __setattr__ to trigger synchronization to Indigo when
@@ -426,6 +429,9 @@ class Zone(AutoLightsBase):
 
     @property
     def luminance(self) -> int:
+        if "luminance" in self._runtime_cache:
+            return self._runtime_cache["luminance"]
+
         self._luminance = 0
         if len(self.luminance_dev_ids) == 0:
             return 0
@@ -433,6 +439,7 @@ class Zone(AutoLightsBase):
             self._luminance += indigo.devices[devId].sensorValue
         self._luminance = int(self._luminance / len(self.luminance_dev_ids))
         self._debug_log(f"computed luminance: {self._luminance}")
+        self._runtime_cache["luminance"] = self._luminance
         return self._luminance
 
     def current_lights_status(self, include_lock_excluded: bool = False) -> List[dict]:
@@ -804,6 +811,9 @@ class Zone(AutoLightsBase):
         Returns:
             bool: True if presence is detected, False otherwise.
         """
+        if "presence" in self._runtime_cache:
+            return self._runtime_cache["presence"]
+
         for dev_id in self.presence_dev_ids:
             presence_device = indigo.devices[dev_id]
             state_on = presence_device.states.get("onState", False)
@@ -813,7 +823,10 @@ class Zone(AutoLightsBase):
             )
             detected = state_onoff or state_on
             if detected:
+                self._runtime_cache["presence"] = True
                 return True
+
+        self._runtime_cache["presence"] = False
         return False
 
     def is_dark(self) -> bool:
@@ -825,6 +838,9 @@ class Zone(AutoLightsBase):
             bool: True if the calculated average luminance is below the minimum threshold,
                   or if no valid sensor values are available; otherwise False.
         """
+        if "is_dark" in self._runtime_cache:
+            return self._runtime_cache["is_dark"]
+
         if not self.luminance_dev_ids:
             self._debug_log(
                 f"Zone '{self._name}': is_dark: No luminance devices, returning True"
@@ -848,7 +864,9 @@ class Zone(AutoLightsBase):
         self._debug_log(
             f"Zone '{self._name}': Calculated average luminance: {avg} (minimum required: {self.minimum_luminance})."
         )
-        return avg < self.minimum_luminance
+        result = avg < self.minimum_luminance
+        self._runtime_cache["is_dark"] = result
+        return result
 
     def _current_state_any_light_is_on(self) -> bool:
         """
@@ -1198,8 +1216,13 @@ class Zone(AutoLightsBase):
             bool: True if the device is excluded from the lighting period,
                   False if the device should be controlled by the lighting period
         """
+        cache_key = f"excl_{dev_id}_{lighting_period.id}"
+        if cache_key in self._runtime_cache:
+            return self._runtime_cache[cache_key]
+
         device_map = self.device_period_map.get(str(dev_id), {})
         result = device_map.get(str(lighting_period.id), True) is False
+        self._runtime_cache[cache_key] = result
         self._debug_log(
             f"has_dev_lighting_mapping_exclusion: dev_id={dev_id}, period={lighting_period.name}, device_map={device_map}, result={result}"
         )

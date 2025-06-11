@@ -73,6 +73,9 @@ class AutoLightsAgent(AutoLightsBase):
             zone.check_in()
             return False
 
+        # reset per-zone runtime cache for this run
+        zone._runtime_cache.clear()
+
         # Determine plan
         plan_global = self.config.has_global_lights_off(zone)
         if plan_global.contributions:
