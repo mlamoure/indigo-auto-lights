@@ -1025,12 +1025,12 @@ def zone_config(zone_id):
             dev for dev in devices_list if dev["id"] in selected_dev_ids
         ]
         lighting_periods_all = config_data.get("lighting_periods", [])
-        # Filter to only lighting_period_ids for this zone
-        selected_period_ids = set(zone.get("lighting_period_ids", []))
+        # Preserve the order the user arranged in lighting_period_ids
+        id_to_period = {p["id"]: p for p in lighting_periods_all}
         filtered_periods = [
-            period
-            for period in lighting_periods_all
-            if period.get("id") in selected_period_ids
+            id_to_period[pid]
+            for pid in zone.get("lighting_period_ids", [])
+            if pid in id_to_period
         ]
         if hasattr(zone_form, "device_period_map"):
             if request.method == "GET":

@@ -100,3 +100,62 @@ def test_zone_form_can_exclude_one_device(client, tmp_path):
     mapping = saved["zones"][0]["device_period_map"]
     assert mapping["1001"]["1"] is True
     assert mapping["1002"]["1"] is False
+
+def test_zone_form_period_order(tmp_path):
+    # Create config with two periods in reverse order
+    cfg = {
+        "plugin_config": {},
+        "lighting_periods": [
+            {"id": 1, "name": "First",  "mode": "On and Off",
+             "from_time_hour": 0, "from_time_minute": 0,
+             "to_time_hour": 23, "to_time_minute": 59},
+            {"id": 2, "name": "Second", "mode": "On and Off",
+             "from_time_hour": 0, "from_time_minute": 0,
+             "to_time_hour": 23, "to_time_minute": 59}
+        ],
+        "zones": [
+            {
+                "name": "TestZone",
+                "lighting_period_ids": [2, 1],
+                "device_settings": {
+                    "on_lights_dev_ids":   [1001],
+                    "off_lights_dev_ids":  [],
+                    "luminance_dev_ids":   [],
+                    "presence_dev_ids":    []
+                },
+                "minimum_luminance_settings": {
+                    "minimum_luminance":              None,
+                    "minimum_luminance_use_variable": False,
+                    "minimum_luminance_var_id":       None,
+                    "adjust_brightness":              True
+                },
+                "behavior_settings": {
+                    "lock_duration":             None,
+                    "extend_lock_when_active":   False,
+                    "lock_extension_duration":   None,
+                    "off_lights_behavior":       "",
+                    "unlock_when_no_presence":   False
+                },
+                "advanced_settings": {"exclude_from_lock_dev_ids": []},
+                "device_period_map":              {},
+                "global_behavior_variables_map":  {}
+            }
+        ]
+    }
+    config_file = tmp_path / "conf.json"
+    config_file.write_text(json.dumps(cfg))
+    # Initialize app
+    app = init_flask_app(str(config_file), debug=False)
+    app.testing = True
+    # Pre-populate caches
+    app.config["config_editor"]._indigo_devices_cache["data"] = [
+        {"id": 1001, "name": "Dev-1001", "class": "indigo.DimmerDevice", "deviceTypeId": "D1"}
+    ]
+    app.config["config_editor"]._indigo_variables_cache["data"] = []
+    client = app.test_client()
+    resp = client.get("/zone/0")
+    html = resp.get_data(as_text=True)
+    # Check that 'Second' appears before 'First' in table headers
+    first_idx = html.find("<th>First")
+    second_idx = html.find("<th>Second")
+    assert second_idx < first_idx
