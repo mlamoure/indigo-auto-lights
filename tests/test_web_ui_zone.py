@@ -52,6 +52,14 @@ def client(tmp_path):
     app.config["config_editor"]._indigo_variables_cache["data"] = []
     return app.test_client()
 
+def test_zone_form_initial_render(client):
+    resp = client.get("/zone/0")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    # initial mapping should show both devices included
+    assert '<select name="device_period_map-1001-1"><option value="include" selected>' in html
+    assert '<select name="device_period_map-1002-1"><option value="include" selected>' in html
+
 def test_zone_form_can_exclude_one_device(client, tmp_path):
     # 1) fetch the form
     resp = client.get("/zone/0")
