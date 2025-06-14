@@ -48,7 +48,11 @@ def client(tmp_path):
     app = init_flask_app(str(config_file), debug=False)
     app.testing = True
     # Pre-populate caches to avoid Indigo connection errors
-    app.config["config_editor"]._indigo_devices_cache["data"] = []
+    app.config["config_editor"]._indigo_devices_cache["data"] = [
+        {"id": 1001, "name": "Dev-1001", "class": "indigo.DimmerDevice", "deviceTypeId": "D1"},
+        {"id": 1002, "name": "Dev-1002", "class": "indigo.RelayDevice", "deviceTypeId": "R2"},
+        {"id": 2000, "name": "OtherDev",  "class": "indigo.DimmerDevice", "deviceTypeId": "D3"}
+    ]
     app.config["config_editor"]._indigo_variables_cache["data"] = []
     return app.test_client()
 
