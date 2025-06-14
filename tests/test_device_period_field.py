@@ -1,9 +1,13 @@
 import pytest
+from flask_wtf import FlaskForm
 from config_web_editor.web_config_app import DevicePeriodMapField
 
 # Dummy devices and periods:
 DEVICES = [{"id": 101, "name": "Lamp A"}, {"id": 102, "name": "Lamp B"}]
 PERIODS = [{"id": 1, "name": "All Day"}, {"id": 2, "name": "Night"}]
+
+class DummyForm(FlaskForm):
+    device_period_map = DevicePeriodMapField(label="Map", devices=DEVICES, lighting_periods=PERIODS)
 
 def make_formdata(mapping):
     """
@@ -20,7 +24,8 @@ def make_formdata(mapping):
 def test_process_initial_data_only_on_get():
     # Simulate GET: formdata=None, data=initial
     initial = {"101": {"1": False}}
-    f = DevicePeriodMapField(devices=DEVICES, lighting_periods=PERIODS)
+    form = DummyForm()
+    f = form._fields['device_period_map']
     f.process(formdata=None, data=initial)
     assert f.data == initial
 
@@ -31,7 +36,8 @@ def test_process_overwrites_with_posted_data():
         "102": {"1": False, "2": True},
     }
     formdata = make_formdata(posted_mapping)
-    f = DevicePeriodMapField(devices=DEVICES, lighting_periods=PERIODS)
+    form = DummyForm()
+    f = form._fields['device_period_map']
     f.process(formdata=formdata, data={"101": {"1": False}})
     # It must match exactly what we sent in
     assert f.data == {

@@ -47,6 +47,9 @@ def client(tmp_path):
     # 2) spin up Flask pointing at that config
     app = init_flask_app(str(config_file), debug=False)
     app.testing = True
+    # Pre-populate caches to avoid Indigo connection errors
+    app.config["config_editor"]._indigo_devices_cache["data"] = []
+    app.config["config_editor"]._indigo_variables_cache["data"] = []
     return app.test_client()
 
 def test_zone_form_can_exclude_one_device(client, tmp_path):
