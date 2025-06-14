@@ -32,6 +32,8 @@ from flask_wtf import FlaskForm
 # disable FlaskForm i18n lookups so you can instantiate forms
 # outside of a real Flask app context (for unit tests)
 FlaskForm.Meta.get_translations = lambda self, form: None
+# disable CSRF so forms don't try to reach into current_app.config
+FlaskForm.Meta.csrf = False
 from markupsafe import Markup
 from wtforms import (
     StringField,
