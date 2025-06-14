@@ -1027,8 +1027,8 @@ def zone_config(zone_id):
             if period.get("id") in selected_period_ids
         ]
         if hasattr(zone_form, "device_period_map"):
-            # Make sure the field has the correct data from the saved configuration
-            zone_form.device_period_map.data = zone.get("device_period_map", {})
+            if request.method == "GET":
+                zone_form.device_period_map.data = zone.get("device_period_map", {})
             zone_form.device_period_map.devices = filtered_devices
             zone_form.device_period_map.lighting_periods = filtered_periods
             zone_form.device_period_map.widget = DevicePeriodMapWidget(
