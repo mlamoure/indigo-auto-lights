@@ -42,8 +42,14 @@ device_states:
   102:
     brightness: 50
   301:
-    onState: true
+    onState: false
 expected:
-  new_targets: []
+  new_targets:
+    - dev_id: 101
+      brightness: 0
+    - dev_id: 102
+      brightness: 0
   exclusions: []
-  device_changes: []
+  device_changes:
+    - ["🔌", "turned off 'Dev-101'"]
+    - ["🔌", "turned off 'Dev-102'"]

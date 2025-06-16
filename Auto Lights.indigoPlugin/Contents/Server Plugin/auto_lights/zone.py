@@ -1103,8 +1103,34 @@ class Zone(AutoLightsBase):
 
         new_targets: List[dict] = []
 
+        # -- Handle 'Off Only' mode: only turn off when no presence
+        if period.mode == LightingPeriodMode.OFF_ONLY:
+            if presence:
+                return BrightnessPlan(
+                    contributions=[("👫", f"presence detected = {presence}")],
+                    exclusions=[],
+                    new_targets=[],
+                    device_changes=[],
+                )
+            contributions = [("👥", "no presence → turning all off")]
+            new_targets = [
+                {"dev_id": s["dev_id"], "brightness": 0}
+                for s in self.current_lights_status(include_lock_excluded=True)
+            ]
+            current = {
+                s["dev_id"]: s["brightness"]
+                for s in self.current_lights_status(include_lock_excluded=True)
+            }
+            device_changes = []
+            for t in new_targets:
+                did, new_b = t["dev_id"], t["brightness"]
+                old_b = current.get(did)
+                if old_b is not None and old_b != new_b:
+                    dev = indigo.devices[did]
+                    device_changes.append(["🔌", f"turned off '{dev.name}'"])
+            return BrightnessPlan(contributions, [], new_targets, device_changes)
         # -- Handle 'On and Off' mode when presence is detected and it's dark
-        if period.mode is LightingPeriodMode.ON_AND_OFF and presence and darkness:
+        elif period.mode is LightingPeriodMode.ON_AND_OFF and presence and darkness:
             plan_contribs.append(("💡", "presence & dark → turning on lights"))
             for dev_id in self.on_lights_dev_ids:
                 excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)

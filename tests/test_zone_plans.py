@@ -43,6 +43,7 @@ SCENARIOS = [
     "scenario3_presence_bright.yaml",
     "scenario4_no_presence.yaml",
     "scenario5_off_only_mode.yaml",
+    "scenario5_off_only_no_presence.yaml",
     "scenario7_force_off_behavior.yaml",
     "scenario8_device_exclusion.yaml",
     "scenario9_limit_brightness.yaml",
