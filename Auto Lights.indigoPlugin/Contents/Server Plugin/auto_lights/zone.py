@@ -1386,7 +1386,10 @@ class Zone(AutoLightsBase):
             if self.locked:
                 ui = "Locked"
             elif on_state:
-                ui = "Enabled"
+                if self.has_presence_detected():
+                    ui = "Enabled - Presence Active"
+                else:
+                    ui = "Enabled - No Presence"
             else:
                 ui = "Disabled"
             if hasattr(dev, "updateStateOnServer"):
