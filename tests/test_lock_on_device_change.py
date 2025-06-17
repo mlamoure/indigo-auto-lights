@@ -28,7 +28,8 @@ def agent_and_zone(tmp_path):
 
 def test_process_device_change_creates_new_lock(agent_and_zone):
     agent, zone, dev_id = agent_and_zone
-    # Initially unlocked
+    # Initially unlocked (establish baseline)
+    agent.process_zone(zone)
     assert not zone.locked
     # Simulate external brightness change
     orig_dev = indigo.devices[dev_id]
