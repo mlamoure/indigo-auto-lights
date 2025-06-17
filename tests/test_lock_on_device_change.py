@@ -34,6 +34,9 @@ def test_process_device_change_creates_new_lock(agent_and_zone):
     # Simulate external brightness change
     orig_dev = indigo.devices[dev_id]
     diff = {"brightness": 50}
+    # Reflect change on the stub device
+    orig_dev.brightness = diff["brightness"]
+    orig_dev.states["brightness"] = diff["brightness"]
     processed = agent.process_device_change(orig_dev, diff)
     # Lock should be created
     assert zone.locked

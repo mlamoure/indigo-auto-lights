@@ -25,7 +25,8 @@ def agent_and_zone(tmp_path):
     zone.unlock_when_no_presence = True
     zone.locked = True
     # Insert a dummy grace timer
-    agent._no_presence_timers[zone.name] = object()
+    import threading
+    agent._no_presence_timers[zone.name] = threading.Timer(0, lambda: None)
     # Create the presence device stub
     dev_id = zone.presence_dev_ids[0]
     make_device(dev_id, onState=False)
