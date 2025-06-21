@@ -172,8 +172,9 @@ class Plugin(indigo.PluginBase):
         # call base implementation
         indigo.PluginBase.variableUpdated(self, new_var, new_var)
 
-        # process the change
-        self._agent.process_variable_change(orig_var, new_var)
+        # process the change if the agent exists
+        if self._agent is not None:
+            self._agent.process_variable_change(orig_var, new_var)
 
     def start_configuration_web_server(self: indigo.PluginBase):
         if self._web_server_thread is not None:
@@ -355,6 +356,9 @@ class Plugin(indigo.PluginBase):
         Handle enabling/disabling zones based on action.props.get("type").
         Types: 'enable_all', 'disable_all', 'enable', 'disable'
         """
+        if self._agent is None:
+            return
+            
         action_type = action.pluginTypeId
         if action_type == "enable_all_zones":
             self._agent.enable_all_zones()
@@ -405,6 +409,9 @@ class Plugin(indigo.PluginBase):
 
     def actionControlDevice(self, action, dev):
         """Handle global config and zone device toggles and dispatch processing."""
+
+        if self._agent is None:
+            return
 
         action_type = action.deviceAction
 
@@ -469,8 +476,11 @@ class Plugin(indigo.PluginBase):
 
     def _build_zone_runtime_state_definitions(self, dev):
         """
-        Turn a zone’s runtime‐state entries into state‐definitions.
+        Turn a zone's runtime‐state entries into state‐definitions.
         """
+        if self._agent is None:
+            return []
+            
         zone = next(
             (z for z in self._agent.config.zones if z.indigo_dev.id == dev.id), None
         )
@@ -504,27 +514,30 @@ class Plugin(indigo.PluginBase):
 
         # ---- GLOBAL CONFIG DEVICE ----
         if dev.deviceTypeId == "auto_lights_config":
-            states.extend(
-                self._build_schema_state_definitions(
-                    dev, self._agent.config.config_field_schemas
+            if self._agent is not None:
+                states.extend(
+                    self._build_schema_state_definitions(
+                        dev, self._agent.config.config_field_schemas
+                    )
                 )
-            )
 
         # ---- ZONE DEVICE ----
         elif dev.deviceTypeId == "auto_lights_zone":
-            # schema-driven fields
-            states.extend(
-                self._build_schema_state_definitions(
-                    dev, self._agent.config.zone_field_schemas
+            if self._agent is not None:
+                # schema-driven fields
+                states.extend(
+                    self._build_schema_state_definitions(
+                        dev, self._agent.config.zone_field_schemas
+                    )
                 )
-            )
-            # plus runtime fields
-            states.extend(self._build_zone_runtime_state_definitions(dev))
+                # plus runtime fields
+                states.extend(self._build_zone_runtime_state_definitions(dev))
 
         return states
 
     def deviceStartComm(self, dev):
         self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")
         dev.stateListOrDisplayStateIdChanged()
-        self._agent.refresh_indigo_device(dev.id)
+        if self._agent is not None:
+            self._agent.refresh_indigo_device(dev.id)
         self.logger.debug(f"deviceStartComm complete for device {dev.id} ('{dev.name}')")
