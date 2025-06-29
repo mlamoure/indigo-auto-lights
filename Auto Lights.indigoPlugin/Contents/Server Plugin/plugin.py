@@ -331,6 +331,17 @@ class Plugin(indigo.PluginBase):
         config = AutoLightsConfig(conf_path)
         config.log_non_events = self._log_non_events
         self._agent = AutoLightsAgent(config)
+        
+        # Log info if plugin is globally disabled on startup
+        if not config.enabled:
+            config_dev_name = config.indigo_dev.name if config.indigo_dev else "Unknown"
+            config_dev_state = config.indigo_dev.onState if config.indigo_dev else False
+            self.logger.info(
+                f"Auto Lights plugin is currently DISABLED "
+                f"(config device '{config_dev_name}' onState={config_dev_state}). "
+                f"Enable the device to activate automatic lighting control."
+            )
+        
         self._agent.process_all_zones()
 
     def reset_zone_lock(

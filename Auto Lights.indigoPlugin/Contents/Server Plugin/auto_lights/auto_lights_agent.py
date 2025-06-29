@@ -42,7 +42,12 @@ class AutoLightsAgent(AutoLightsBase):
 
         # GUARD: plugin globally disabled
         if not self.config.enabled:
-            self._debug_log("Skipping process_zone: plugin globally DISABLED")
+            config_dev_name = self.config.indigo_dev.name if self.config.indigo_dev else "Unknown"
+            config_dev_state = self.config.indigo_dev.onState if self.config.indigo_dev else False
+            self._debug_log(
+                f"Skipping process_zone: plugin globally DISABLED "
+                f"(config device '{config_dev_name}' onState={config_dev_state})"
+            )
             return False
 
         # GUARD: zone disabled
