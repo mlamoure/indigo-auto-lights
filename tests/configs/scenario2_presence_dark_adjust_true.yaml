@@ -48,4 +48,4 @@ expected:
       brightness: 60
   exclusions: []
   device_changes:
-    - ["🔆", "Zone1: 0 → 60"]
+    - ["🔆", "Dev-101: 0 → 60"]

@@ -1194,9 +1194,8 @@ class Zone(AutoLightsBase):
                     device_changes.append(["💡", f"turned on '{device.name}'"])
                 else:
                     emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
-                    # use device name when any exclusions exist, otherwise zone name
-                    label = device.name if plan_exclusions else self.name
-                    device_changes.append([emoji, f"{label}: {old_b} → {new_b}"])
+                    # always use device name for clarity
+                    device_changes.append([emoji, f"{device.name}: {old_b} → {new_b}"])
 
         return BrightnessPlan(
             contributions=plan_contribs,
