@@ -7,12 +7,13 @@ import socket
 import threading
 from datetime import datetime
 
-from werkzeug.serving import make_server
+# NOTE: Werkzeug server import disabled - migrated to IWS. Kept for rollback capability.
+# from werkzeug.serving import make_server
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
-# Removed: API tools no longer needed with direct indigo object access
-from config_web_editor.web_config_app import init_flask_app, app as flask_app
+# NOTE: Flask imports disabled - migrated to IWS. Kept for rollback capability.
+# from config_web_editor.web_config_app import init_flask_app, app as flask_app
 
 try:
     import indigo
@@ -79,9 +80,10 @@ class Plugin(indigo.PluginBase):
         indigo.devices.subscribeToChanges()
         indigo.variables.subscribeToChanges()
 
+        # NOTE: Flask server disabled - migrated to IWS. Kept for rollback capability.
         # Start the configuration web server if not disabled.
-        if not self._disable_web_server:
-            self.start_configuration_web_server()
+        # if not self._disable_web_server:
+        #     self.start_configuration_web_server()
 
         # Initialize IWS web handler (works alongside Flask during migration)
         self._init_iws_web_handler()
@@ -144,57 +146,62 @@ class Plugin(indigo.PluginBase):
             self._agent.process_variable_change(orig_var, new_var)
 
     def start_configuration_web_server(self: indigo.PluginBase):
-        if self._web_server_thread is not None:
-            self.stop_configuration_web_server()
+        # NOTE: Flask server disabled - migrated to IWS. Method kept for rollback capability.
+        self.logger.info("Flask web server disabled - using Indigo Web Server (IWS) instead")
+        return
 
-        # Start Flask web server (legacy - will be removed once IWS is fully validated)
-        if True:  # Always start for now during migration
-            urls = []
-            # Determine the appropriate URLs based on the bind IP.
-            if self._web_config_bind_ip == "0.0.0.0":
-                hostname = socket.gethostname()
-                local_ip = socket.gethostbyname(hostname)
-                urls.append(f"http://{hostname}:{self._web_config_bind_port}")
-                urls.append(f"http://{local_ip}:{self._web_config_bind_port}")
-            elif self._web_config_bind_ip == "127.0.0.1":
-                urls.append(f"http://127.0.0.1:{self._web_config_bind_port}")
-                urls.append(f"http://localhost:{self._web_config_bind_port}")
-                self.logger.info(
-                    "NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
-                )
-            else:
-                urls.append(
-                    f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
-                )
-            self.logger.info(
-                f"Starting the configuration web server... Visit {' or '.join(urls)}"
-            )
-            # Start the configuration web server using a WSGI server in a daemon thread.
-            # Initialize the Flask app (registers config_editor & caches).
-            init_flask_app(
-                self._config_file_str,
-                self._web_config_bind_ip,
-                self._web_config_bind_port,
-            )
-            # Notify plugin to reload config immediately after save from web UI
-            flask_app.config["reload_config_cb"] = self._init_config_and_agent
-            # Create a real WSGI server
-            self._web_server = make_server(
-                self._web_config_bind_ip,
-                int(self._web_config_bind_port),
-                flask_app,
-                threaded=True,
-            )
-            self._web_server_thread = threading.Thread(
-                target=self._web_server.serve_forever,
-                name="AutoLightsWebUI",
-                daemon=True,
-            )
-            self._web_server_thread.start()
-        else:
-            self.logger.info(
-                "Skipping start of configuration web server due to default config values."
-            )
+        # Legacy Flask server code - commented out for IWS migration
+        # if self._web_server_thread is not None:
+        #     self.stop_configuration_web_server()
+
+        # # Start Flask web server (legacy - will be removed once IWS is fully validated)
+        # if True:  # Always start for now during migration
+        #     urls = []
+        #     # Determine the appropriate URLs based on the bind IP.
+        #     if self._web_config_bind_ip == "0.0.0.0":
+        #         hostname = socket.gethostname()
+        #         local_ip = socket.gethostbyname(hostname)
+        #         urls.append(f"http://{hostname}:{self._web_config_bind_port}")
+        #         urls.append(f"http://{local_ip}:{self._web_config_bind_port}")
+        #     elif self._web_config_bind_ip == "127.0.0.1":
+        #         urls.append(f"http://127.0.0.1:{self._web_config_bind_port}")
+        #         urls.append(f"http://localhost:{self._web_config_bind_port}")
+        #         self.logger.info(
+        #             "NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
+        #         )
+        #     else:
+        #         urls.append(
+        #             f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
+        #         )
+        #     self.logger.info(
+        #         f"Starting the configuration web server... Visit {' or '.join(urls)}"
+        #     )
+        #     # Start the configuration web server using a WSGI server in a daemon thread.
+        #     # Initialize the Flask app (registers config_editor & caches).
+        #     init_flask_app(
+        #         self._config_file_str,
+        #         self._web_config_bind_ip,
+        #         self._web_config_bind_port,
+        #     )
+        #     # Notify plugin to reload config immediately after save from web UI
+        #     flask_app.config["reload_config_cb"] = self._init_config_and_agent
+        #     # Create a real WSGI server
+        #     self._web_server = make_server(
+        #         self._web_config_bind_ip,
+        #         int(self._web_config_bind_port),
+        #         flask_app,
+        #         threaded=True,
+        #     )
+        #     self._web_server_thread = threading.Thread(
+        #         target=self._web_server.serve_forever,
+        #         name="AutoLightsWebUI",
+        #         daemon=True,
+        #     )
+        #     self._web_server_thread.start()
+        # else:
+        #     self.logger.info(
+        #         "Skipping start of configuration web server due to default config values."
+        #     )
 
     def stop_configuration_web_server(self: indigo.PluginBase):
         """
@@ -225,13 +232,13 @@ class Plugin(indigo.PluginBase):
         Updates environment variables, configuration, and logging levels.
         """
         if not user_cancelled:
-            # Update environment variables based on user preferences.
-            os.environ["INDIGO_API_URL"] = values_dict.get(
-                "indigo_api_url", "https://myreflector.indigodomo.net"
-            )
-            os.environ["INDIGO_API_KEY"] = values_dict.get(
-                "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
-            )
+            # NOTE: API environment variables no longer needed - using direct indigo object access
+            # os.environ["INDIGO_API_URL"] = values_dict.get(
+            #     "indigo_api_url", "https://myreflector.indigodomo.net"
+            # )
+            # os.environ["INDIGO_API_KEY"] = values_dict.get(
+            #     "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
+            # )
             self._web_config_bind_ip = values_dict.get(
                 "web_config_bind_ip", "127.0.0.1"
             )
@@ -247,11 +254,12 @@ class Plugin(indigo.PluginBase):
             self.indigo_log_handler.setLevel(self.log_level)
             self.plugin_file_handler.setLevel(self.log_level)
 
+            # NOTE: Flask server restart logic disabled - migrated to IWS
             # Restart or stop the configuration web server based on new settings.
-            if self._disable_web_server:
-                self.stop_configuration_web_server()
-            else:
-                self.start_configuration_web_server()
+            # if self._disable_web_server:
+            #     self.stop_configuration_web_server()
+            # else:
+            #     self.start_configuration_web_server()
 
     def get_zone_list(
         self: indigo.PluginBase, filter="", values_dict=None, type_id="", target_id=0

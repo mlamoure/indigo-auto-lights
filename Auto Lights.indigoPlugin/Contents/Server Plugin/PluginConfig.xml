@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <PluginConfig>
+    <!-- NOTE: API configuration fields removed - migrated to IWS with direct indigo object access -->
+    <!-- Kept commented out for rollback capability
     <Field id="api_intro_label" type="label" fontSize="small" alignWithControl="false" alignText="left">
         <Label>Enter the Indigo API URL – your Reflector URL
             Alternatively, if using local secrets (check Indigo Documentation), use your local server address, including http/https and port.
@@ -16,7 +18,10 @@
         <Label>API Key:</Label>
     </Field>
     <Field id="simpleSeparator1" type="separator" alignWithControl="false"/>
+    -->
 
+    <!-- NOTE: Flask web server configuration fields removed - migrated to IWS -->
+    <!-- Kept commented out for rollback capability
     <Field type="checkbox"
            id="disable_web_server"
            defaultValue="false">
@@ -38,6 +43,7 @@
         <Label>Web server port:</Label>
     </Field>
     <Field id="simpleSeparator2" type="separator" alignWithControl="false"/>
+    -->
 
     <Field id="log_level" type="menu" defaultValue="20">
         <Label>Event Logging Level:</Label>

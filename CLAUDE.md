@@ -34,11 +34,23 @@ This is an Indigo Home Automation plugin for automatic lighting control written 
 - `BrightnessPlan` (brightness_plan.py) - Luminance-based brightness calculation
 - `LightingPeriod` (lighting_period.py) - Time-based lighting control periods
 
-**Web Configuration Interface**:
-- `config_web_editor/` - Flask-based web UI for zone configuration
-- Runs as embedded web server within the plugin
-- Uses Indigo API for device/variable access
-- Configuration stored as JSON with schema validation
+**Web Configuration Interface** (IWS-based):
+- `config_web_editor/` - Web UI for zone configuration using Indigo Web Server (IWS)
+- **Architecture**: Migrated from standalone Flask server to Indigo's integrated web server (IWS)
+- **Routing**: Action-based routing via Actions.xml entries mapped to plugin handler methods
+- **URL Structure**: `http://localhost:8176/message/<plugin_id>/web_ui/?page=<page_name>`
+- **Data Access**: Direct `indigo.devices`, `indigo.variables` object access (no HTTP API needed)
+- **Templating**: Jinja2 standalone with custom `url_for()` helper function
+- **Forms**: WTForms without Flask (using `Form` base class, no CSRF)
+- **Form Processing**: Werkzeug's MultiDict for POST data handling
+- **Configuration**: Stored as JSON with schema validation
+
+**IWS Key Components**:
+- `iws_web_handler.py` - IWS request handler (replaces Flask routing)
+- `iws_form_helpers.py` - WTForms utilities for IWS (dynamic form generation from JSON schema)
+- `indigo_api_tools.py` - Direct indigo object access utilities (replaces HTTP API calls)
+- `Actions.xml` - Defines IWS action endpoints (`web_ui`, `static`)
+- Legacy Flask code preserved (commented out) for rollback capability
 
 ### Key Concepts
 
@@ -60,7 +72,79 @@ Tests use pytest with a custom `conftest.py` that stubs the Indigo module since 
 
 The plugin integrates with Indigo through:
 - Device state monitoring (deviceUpdated callback)
-- Variable change monitoring (variableUpdated callback) 
+- Variable change monitoring (variableUpdated callback)
 - Custom plugin devices for zones and global configuration
 - Actions for manual zone lock resets
 - Menu items for debugging locked zones
+- IWS action handlers for web UI requests (handle_web_ui, serve_static_file)
+
+## IWS Migration Details
+
+### Migration Overview
+
+The plugin was migrated from a standalone Flask web server to Indigo's integrated Web Server (IWS). This migration provides several benefits:
+
+- **No Separate Server**: Web UI runs through Indigo's built-in web server (port 8176)
+- **Direct Object Access**: Uses `indigo.devices` and `indigo.variables` instead of HTTP API calls
+- **No API Keys**: Eliminated need for API URL and API key configuration
+- **Simplified Deployment**: No network configuration required (bind IP, port)
+- **Integrated Experience**: Web UI accessible through standard Indigo web server
+
+### Key Architecture Changes
+
+**Request Handling**:
+- **Before**: Flask routes (`@app.route('/zones')`)
+- **After**: IWS action handlers in Actions.xml mapped to plugin methods
+
+**URL Structure**:
+- **Before**: `http://localhost:9000/zones`
+- **After**: `http://localhost:8176/message/com.vtmikel.autolights/web_ui/?page=zones`
+
+**Data Access**:
+- **Before**: HTTP API calls with requests library
+- **After**: Direct iteration over `indigo.devices`, `indigo.variables`
+
+**Form Processing**:
+- **Before**: Flask-WTF with CSRF protection
+- **After**: WTForms base `Form` class with Werkzeug MultiDict
+
+**Templating**:
+- **Before**: Flask's integrated Jinja2
+- **After**: Standalone Jinja2 Environment with custom `url_for()` function
+
+### Accessing the Web UI
+
+The web configuration interface is available at:
+```
+http://localhost:8176/message/com.vtmikel.autolights/web_ui/
+```
+
+Or from any machine on your network (replace localhost with Indigo server address):
+```
+http://<indigo-server-ip>:8176/message/com.vtmikel.autolights/web_ui/
+```
+
+### Rollback Instructions
+
+All Flask-related code has been preserved (commented out) for rollback capability. To revert to Flask:
+
+1. Uncomment Flask imports in `plugin.py:15-16`
+2. Uncomment `start_configuration_web_server()` call in `plugin.py:84-85`
+3. Uncomment Flask server code in `start_configuration_web_server()` method
+4. Uncomment API environment variables in `closedPrefsConfigUi()` method
+5. Uncomment web server restart logic in `closedPrefsConfigUi()` method
+6. Restore PluginConfig.xml fields (API URL, API key, web server settings)
+7. Update requirements.txt to include Flask dependencies
+
+### Dependencies
+
+**Current (IWS mode)**:
+- WTForms~=3.2.1 - Form generation and validation
+- Jinja2~=3.1.6 - Template rendering
+- Werkzeug~=3.1.3 - MultiDict for WTForms
+- MarkupSafe~=3.0.2 - Jinja2 dependency
+- python-dotenv~=1.1.1 - Environment configuration
+- pytest~=8.4.1 - Testing
+
+**Removed (Flask mode)**:
+- Flask, Flask-WTF, requests, click, blinker, itsdangerous, certifi, urllib3, idna, charset-normalizer

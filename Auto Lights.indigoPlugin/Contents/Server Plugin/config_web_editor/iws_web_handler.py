@@ -180,25 +180,42 @@ class IWSWebHandler:
             logger.exception(f"Error handling IWS request: {e}")
             return self._error_response(500, f"Internal Server Error: {str(e)}")
 
+    def _extract_flash_messages(self, params: Dict[str, list]) -> Dict[str, Optional[str]]:
+        """
+        Extract flash messages from query parameters.
+
+        Args:
+            params: Query string parameters
+
+        Returns:
+            Dict with 'message' and 'error' keys
+        """
+        message = params.get('message', [''])[0] if 'message' in params else None
+        error = params.get('error', [''])[0] if 'error' in params else None
+        return {"message": message, "error": error}
+
     def _handle_get(self, page: str, params: Dict[str, list]) -> Dict[str, Any]:
         """Handle GET requests."""
-        # Route to appropriate page handler
+        # Extract flash messages
+        flash = self._extract_flash_messages(params)
+
+        # Route to appropriate page handler (pass flash messages)
         if not page or page == 'index':
-            return self._render_index()
+            return self._render_index(flash)
         elif page == 'zones':
-            return self._render_zones()
+            return self._render_zones(flash)
         elif page.startswith('zone/'):
             zone_id = page.split('/')[-1]
-            return self._render_zone_edit(zone_id)
+            return self._render_zone_edit(zone_id, flash)
         elif page == 'plugin_config':
-            return self._render_plugin_config()
+            return self._render_plugin_config(flash)
         elif page == 'lighting_periods':
-            return self._render_lighting_periods()
+            return self._render_lighting_periods(flash)
         elif page.startswith('lighting_period/'):
             period_id = page.split('/')[-1]
-            return self._render_lighting_period_edit(period_id)
+            return self._render_lighting_period_edit(period_id, flash)
         elif page == 'config_backup':
-            return self._render_config_backup()
+            return self._render_config_backup(flash)
         else:
             return self._error_response(404, f"Page not found: {page}")
 
@@ -431,17 +448,17 @@ class IWSWebHandler:
                 "content": json.dumps({"error": str(e)})
             }
 
-    def _render_index(self) -> Dict[str, Any]:
+    def _render_index(self, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the index/home page."""
         template = self.jinja_env.get_template('index.html')
-        html = template.render()
+        html = template.render(flash=flash or {})
         return {
             "status": 200,
             "headers": {"Content-Type": "text/html; charset=utf-8"},
             "content": html
         }
 
-    def _render_zones(self) -> Dict[str, Any]:
+    def _render_zones(self, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the zones list page."""
         try:
             # Load config and schema
@@ -457,7 +474,7 @@ class IWSWebHandler:
 
             # Render template
             template = self.jinja_env.get_template('zones.html')
-            html = template.render(zones_forms=zones_forms)
+            html = template.render(zones_forms=zones_forms, flash=flash or {})
 
             return {
                 "status": 200,
@@ -468,7 +485,7 @@ class IWSWebHandler:
             logger.exception(f"Error rendering zones page: {e}")
             return self._error_response(500, f"Error rendering zones: {str(e)}")
 
-    def _render_zone_edit(self, zone_id: str) -> Dict[str, Any]:
+    def _render_zone_edit(self, zone_id: str, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the zone edit page."""
         try:
             # Load config and data
@@ -531,7 +548,7 @@ class IWSWebHandler:
 
             # Render template
             template = self.jinja_env.get_template('zone_edit.html')
-            html = template.render(zone_form=zone_form, index=zone_id)
+            html = template.render(zone_form=zone_form, index=zone_id, flash=flash or {})
 
             return {
                 "status": 200,
@@ -543,7 +560,7 @@ class IWSWebHandler:
             logger.exception(f"Error rendering zone edit page: {e}")
             return self._error_response(500, f"Error rendering zone edit: {str(e)}")
 
-    def _render_plugin_config(self) -> Dict[str, Any]:
+    def _render_plugin_config(self, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the plugin configuration page."""
         try:
             config_data = self.config_editor.load_config()
@@ -565,7 +582,7 @@ class IWSWebHandler:
                 logger.warning(f"Could not update variable choices: {e}")
 
             template = self.jinja_env.get_template('plugin_edit.html')
-            html = template.render(plugin_form=plugin_form)
+            html = template.render(plugin_form=plugin_form, flash=flash or {})
 
             return {
                 "status": 200,
@@ -576,7 +593,7 @@ class IWSWebHandler:
             logger.exception(f"Error rendering plugin config page: {e}")
             return self._error_response(500, f"Error rendering plugin config: {str(e)}")
 
-    def _render_lighting_periods(self) -> Dict[str, Any]:
+    def _render_lighting_periods(self, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the lighting periods list page."""
         try:
             config_data = self.config_editor.load_config()
@@ -590,7 +607,7 @@ class IWSWebHandler:
             period_forms = [PeriodFormClass(data=period) for period in periods_data]
 
             template = self.jinja_env.get_template('lighting_periods.html')
-            html = template.render(lighting_periods_forms=period_forms)
+            html = template.render(lighting_periods_forms=period_forms, flash=flash or {})
 
             return {
                 "status": 200,
@@ -601,7 +618,7 @@ class IWSWebHandler:
             logger.exception(f"Error rendering lighting periods page: {e}")
             return self._error_response(500, f"Error rendering lighting periods: {str(e)}")
 
-    def _render_lighting_period_edit(self, period_id: str) -> Dict[str, Any]:
+    def _render_lighting_period_edit(self, period_id: str, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the lighting period edit page."""
         try:
             config_data = self.config_editor.load_config()
@@ -629,7 +646,7 @@ class IWSWebHandler:
             period_form = PeriodFormClass(data=period)
 
             template = self.jinja_env.get_template('lighting_period_edit.html')
-            html = template.render(lighting_period_form=period_form, period_id=period_id)
+            html = template.render(lighting_period_form=period_form, period_id=period_id, flash=flash or {})
 
             return {
                 "status": 200,
@@ -640,7 +657,7 @@ class IWSWebHandler:
             logger.exception(f"Error rendering lighting period edit page: {e}")
             return self._error_response(500, f"Error rendering lighting period edit: {str(e)}")
 
-    def _render_config_backup(self) -> Dict[str, Any]:
+    def _render_config_backup(self, flash: Optional[Dict[str, Optional[str]]] = None) -> Dict[str, Any]:
         """Render the config backup page."""
         try:
             # Get backup lists from config editor
@@ -653,7 +670,8 @@ class IWSWebHandler:
             template = self.jinja_env.get_template('config_backup.html')
             html = template.render(
                 manual_backups=manual_backups,
-                auto_backups=auto_backup_files
+                auto_backups=auto_backup_files,
+                flash=flash or {}
             )
 
             return {
