@@ -84,6 +84,13 @@ class Plugin(indigo.PluginBase):
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
         self._agent.refresh_all_indigo_devices()
+
+        # Log IWS Web Configuration URL for user convenience
+        indigo_host = "localhost"
+        indigo_port = 8176  # Default Indigo web server port
+        iws_url = f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
+        self.logger.info(f"🌐 Web Configuration Interface: {iws_url}")
+
         self.logger.debug("Plugin startup complete")
 
     def shutdown(self: indigo.PluginBase) -> None:
