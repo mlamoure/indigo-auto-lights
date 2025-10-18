@@ -43,6 +43,7 @@ class WebConfigEditor:
         self.backup_dir = Path(backup_dir)
         self.auto_backup_dir = Path(auto_backup_dir)
         self.app = flask_app
+        self.reload_config_callback = None  # Direct callback for IWS mode
 
         self.config_schema: Dict[str, Any] = self.load_schema()
         self._cache_lock = threading.RLock()
@@ -101,8 +102,13 @@ class WebConfigEditor:
         # Notify plugin to reload config immediately if callback is registered
         try:
             cb = None
-            if self.app:
+            # Try direct callback first (for IWS mode)
+            if self.reload_config_callback and callable(self.reload_config_callback):
+                cb = self.reload_config_callback
+            # Fall back to Flask app callback (for legacy mode)
+            elif self.app:
                 cb = self.app.config.get("reload_config_cb")
+
             if callable(cb):
                 cb()
         except Exception as e:

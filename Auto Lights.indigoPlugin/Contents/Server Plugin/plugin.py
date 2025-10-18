@@ -318,6 +318,9 @@ class Plugin(indigo.PluginBase):
                 flask_app=None  # No Flask app for IWS mode
             )
 
+            # Set up reload callback for when config is saved
+            config_editor.reload_config_callback = self._init_config_and_agent
+
             # Initialize IWS web handler
             self._iws_web_handler = IWSWebHandler(
                 config_editor=config_editor,
