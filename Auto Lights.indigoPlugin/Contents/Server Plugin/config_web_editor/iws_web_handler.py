@@ -16,6 +16,7 @@ from urllib.parse import parse_qs
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from .config_editor import WebConfigEditor
+from .iws_form_helpers import generate_form_class_from_schema
 
 logger = logging.getLogger(__name__)
 
@@ -170,33 +171,227 @@ class IWSWebHandler:
 
     def _render_zones(self) -> Dict[str, Any]:
         """Render the zones list page."""
-        # TODO: Implement zones rendering
-        return self._error_response(501, "Zones page not yet implemented")
+        try:
+            # Load config and schema
+            config_data = self.config_editor.load_config()
+            zones_data = config_data.get("zones", [])
+
+            # Generate form class from schema
+            zone_schema = self.config_editor.config_schema["properties"]["zones"]["items"]
+            ZonesFormClass = generate_form_class_from_schema(zone_schema)
+
+            # Create form for each zone
+            zones_forms = [ZonesFormClass(data=zone) for zone in zones_data]
+
+            # Render template
+            template = self.jinja_env.get_template('zones.html')
+            html = template.render(zones_forms=zones_forms)
+
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": html
+            }
+        except Exception as e:
+            logger.exception(f"Error rendering zones page: {e}")
+            return self._error_response(500, f"Error rendering zones: {str(e)}")
 
     def _render_zone_edit(self, zone_id: str) -> Dict[str, Any]:
         """Render the zone edit page."""
-        # TODO: Implement zone edit rendering
-        return self._error_response(501, "Zone edit page not yet implemented")
+        try:
+            # Load config and data
+            config_data = self.config_editor.load_config()
+            zones_data = config_data.get("zones", [])
+            zone_schema = self.config_editor.config_schema["properties"]["zones"]["items"]
+
+            # Determine if creating new or editing existing
+            if zone_id == "new":
+                # Create new zone with defaults
+                defaults = {}
+                for field, subschema in zone_schema.get("properties", {}).items():
+                    if "default" in subschema:
+                        defaults[field] = subschema["default"]
+                zone = defaults
+                is_new = True
+            else:
+                # Load existing zone
+                try:
+                    index = int(zone_id)
+                    if index < 0 or index >= len(zones_data):
+                        return self._error_response(404, f"Zone index {index} not found")
+                    zone = zones_data[index]
+                    is_new = False
+                except ValueError:
+                    return self._error_response(400, f"Invalid zone ID: {zone_id}")
+
+            # Generate form class and create instance
+            ZonesFormClass = generate_form_class_from_schema(zone_schema)
+            zone_form = ZonesFormClass(data=zone)
+
+            # Update choices for device dropdowns with cached data
+            try:
+                devices = self.config_editor.get_cached_indigo_devices()
+                device_choices = [(d["id"], d["name"]) for d in devices]
+
+                # Update on_lights_dev_ids choices
+                if hasattr(zone_form.device_settings, 'on_lights_dev_ids'):
+                    zone_form.device_settings.on_lights_dev_ids.choices = device_choices
+
+                # Update off_lights_dev_ids choices
+                if hasattr(zone_form.device_settings, 'off_lights_dev_ids'):
+                    zone_form.device_settings.off_lights_dev_ids.choices = device_choices
+
+            except Exception as e:
+                logger.warning(f"Could not update device choices: {e}")
+
+            # Update variable dropdowns
+            try:
+                variables = self.config_editor.get_cached_indigo_variables()
+                var_choices = [(-1, "None Selected")] + [(v["id"], v["name"]) for v in variables]
+
+                # Update all _var_id fields
+                for field_name, field in zone_form._fields.items():
+                    if field_name.endswith("_var_id"):
+                        field.choices = var_choices
+
+            except Exception as e:
+                logger.warning(f"Could not update variable choices: {e}")
+
+            # Render template
+            template = self.jinja_env.get_template('zone_edit.html')
+            html = template.render(zone_form=zone_form, index=zone_id)
+
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": html
+            }
+
+        except Exception as e:
+            logger.exception(f"Error rendering zone edit page: {e}")
+            return self._error_response(500, f"Error rendering zone edit: {str(e)}")
 
     def _render_plugin_config(self) -> Dict[str, Any]:
         """Render the plugin configuration page."""
-        # TODO: Implement plugin config rendering
-        return self._error_response(501, "Plugin config page not yet implemented")
+        try:
+            config_data = self.config_editor.load_config()
+            plugin_config = config_data.get("plugin_config", {})
+
+            # Generate form from schema
+            plugin_schema = self.config_editor.config_schema["properties"]["plugin_config"]
+            PluginFormClass = generate_form_class_from_schema(plugin_schema)
+            plugin_form = PluginFormClass(data=plugin_config)
+
+            # Update variable choices
+            try:
+                variables = self.config_editor.get_cached_indigo_variables()
+                var_choices = [(-1, "None Selected")] + [(v["id"], v["name"]) for v in variables]
+                for field_name, field in plugin_form._fields.items():
+                    if field_name.endswith("_var_id"):
+                        field.choices = var_choices
+            except Exception as e:
+                logger.warning(f"Could not update variable choices: {e}")
+
+            template = self.jinja_env.get_template('plugin_edit.html')
+            html = template.render(plugin_form=plugin_form)
+
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": html
+            }
+        except Exception as e:
+            logger.exception(f"Error rendering plugin config page: {e}")
+            return self._error_response(500, f"Error rendering plugin config: {str(e)}")
 
     def _render_lighting_periods(self) -> Dict[str, Any]:
         """Render the lighting periods list page."""
-        # TODO: Implement lighting periods rendering
-        return self._error_response(501, "Lighting periods page not yet implemented")
+        try:
+            config_data = self.config_editor.load_config()
+            periods_data = config_data.get("lighting_periods", [])
+
+            # Generate form class from schema
+            period_schema = self.config_editor.config_schema["properties"]["lighting_periods"]["items"]
+            PeriodFormClass = generate_form_class_from_schema(period_schema)
+
+            # Create form for each period
+            period_forms = [PeriodFormClass(data=period) for period in periods_data]
+
+            template = self.jinja_env.get_template('lighting_periods.html')
+            html = template.render(lighting_periods_forms=period_forms)
+
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": html
+            }
+        except Exception as e:
+            logger.exception(f"Error rendering lighting periods page: {e}")
+            return self._error_response(500, f"Error rendering lighting periods: {str(e)}")
 
     def _render_lighting_period_edit(self, period_id: str) -> Dict[str, Any]:
         """Render the lighting period edit page."""
-        # TODO: Implement lighting period edit rendering
-        return self._error_response(501, "Lighting period edit page not yet implemented")
+        try:
+            config_data = self.config_editor.load_config()
+            periods_data = config_data.get("lighting_periods", [])
+            period_schema = self.config_editor.config_schema["properties"]["lighting_periods"]["items"]
+
+            # Determine if creating new or editing existing
+            if period_id == "new":
+                # Create new period with defaults
+                defaults = {}
+                for field, subschema in period_schema.get("properties", {}).items():
+                    if "default" in subschema:
+                        defaults[field] = subschema["default"]
+                period = defaults
+                is_new = True
+            else:
+                # Find existing period by ID
+                period = next((p for p in periods_data if p.get("id") == period_id), None)
+                if not period:
+                    return self._error_response(404, f"Lighting period {period_id} not found")
+                is_new = False
+
+            # Generate form
+            PeriodFormClass = generate_form_class_from_schema(period_schema)
+            period_form = PeriodFormClass(data=period)
+
+            template = self.jinja_env.get_template('lighting_period_edit.html')
+            html = template.render(lighting_period_form=period_form, period_id=period_id)
+
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": html
+            }
+        except Exception as e:
+            logger.exception(f"Error rendering lighting period edit page: {e}")
+            return self._error_response(500, f"Error rendering lighting period edit: {str(e)}")
 
     def _render_config_backup(self) -> Dict[str, Any]:
         """Render the config backup page."""
-        # TODO: Implement config backup rendering
-        return self._error_response(501, "Config backup page not yet implemented")
+        try:
+            # Get backup lists from config editor
+            manual_backups = self.config_editor.list_manual_backups()
+            auto_backups = self.config_editor.list_auto_backups()
+
+            # Extract just filenames for auto backups
+            auto_backup_files = [os.path.basename(path) for path in auto_backups]
+
+            template = self.jinja_env.get_template('config_backup.html')
+            html = template.render(
+                manual_backups=manual_backups,
+                auto_backups=auto_backup_files
+            )
+
+            return {
+                "status": 200,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": html
+            }
+        except Exception as e:
+            logger.exception(f"Error rendering config backup page: {e}")
+            return self._error_response(500, f"Error rendering config backup: {str(e)}")
 
     def _error_response(self, status: int, message: str) -> Dict[str, Any]:
         """Generate an error response."""
