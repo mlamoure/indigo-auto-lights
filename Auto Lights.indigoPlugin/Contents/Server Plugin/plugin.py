@@ -11,7 +11,7 @@ from werkzeug.serving import make_server
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
-from config_web_editor.tools.indigo_api_tools import get_indigo_api_url, indigo_api_call
+# Removed: API tools no longer needed with direct indigo object access
 from config_web_editor.web_config_app import init_flask_app, app as flask_app
 
 try:
@@ -43,31 +43,16 @@ class Plugin(indigo.PluginBase):
             plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs
         )
 
-        self.connection_indigo_api = None
         self._agent = None
         self._web_server_thread = None
         self._web_server = None
         self._iws_web_handler = None  # IWS web handler for config interface
-
-        # Set environment variables for Indigo API configuration.
-        os.environ["INDIGO_API_URL"] = plugin_prefs.get(
-            "indigo_api_url", "https://myreflector.indigodomo.net"
-        )
-        os.environ["INDIGO_API_KEY"] = plugin_prefs.get(
-            "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
-        )
 
         # Retrieve web server binding settings from plugin preferences.
         self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
         self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
         self._disable_web_server = plugin_prefs.get("disable_web_server", False)
         self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
-        self._disable_ssl_validation = bool(
-            plugin_prefs.get("disable_ssl_validation", False)
-        )
-        os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(
-            self._disable_ssl_validation
-        )
 
         # Configure logging levels based on plugin preferences.
         self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
@@ -80,28 +65,7 @@ class Plugin(indigo.PluginBase):
             "Logs", "Preferences"
         ).replace("/plugin.log", "/config/auto_lights_conf.json")
 
-    def test_connections(self) -> None:
-        """
-        Test connectivity to the Indigo API by fetching a random device.
-        """
-
-        # no need to test if the web server is disabled
-        if self._disable_web_server:
-            return
-
-        try:
-            random_device = random.choice(list(indigo.devices))
-            device_id = random_device.id
-            device_detail = indigo_api_call(
-                f"{get_indigo_api_url()}/indigo.devices/{device_id}", "GET", None
-            )
-            if "error" not in device_detail:
-                self.connection_indigo_api = True
-            else:
-                self.connection_indigo_api = False
-        except Exception as e:
-            self.logger.error("Indigo API connectivity test failed: %s", e)
-            self.connection_indigo_api = False
+    # Removed test_connections() - no longer needed with direct indigo object access
 
     def startup(self: indigo.PluginBase) -> None:
         """
@@ -110,8 +74,6 @@ class Plugin(indigo.PluginBase):
         :return:
         """
         self.logger.debug("startup called")
-
-        self.test_connections()
 
         # Subscribe to changes for devices and variables.
         indigo.devices.subscribeToChanges()
@@ -184,17 +146,9 @@ class Plugin(indigo.PluginBase):
     def start_configuration_web_server(self: indigo.PluginBase):
         if self._web_server_thread is not None:
             self.stop_configuration_web_server()
-        if not getattr(self, "connection_indigo_api", False):
-            self.logger.warning(
-                "Cannot start web server because Indigo API connection failed."
-            )
-            return
 
-        # Check if Indigo API configuration is not default
-        if (
-            os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
-            and os.environ.get("INDIGO_API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
-        ):
+        # Start Flask web server (legacy - will be removed once IWS is fully validated)
+        if True:  # Always start for now during migration
             urls = []
             # Determine the appropriate URLs based on the bind IP.
             if self._web_config_bind_ip == "0.0.0.0":
@@ -286,20 +240,12 @@ class Plugin(indigo.PluginBase):
             self._disable_web_server = values_dict.get("disable_web_server")
             self._log_non_events = bool(values_dict.get("log_non_events", False))
             self._agent.config.log_non_events = self._log_non_events
-            self._disable_ssl_validation = bool(
-                values_dict.get("disable_ssl_validation", False)
-            )
-            os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(
-                self._disable_ssl_validation
-            )
 
             # Update logging configuration.
             self.log_level = int(values_dict.get("log_level", logging.INFO))
             self.logger.debug(f"{self.log_level=}")
             self.indigo_log_handler.setLevel(self.log_level)
             self.plugin_file_handler.setLevel(self.log_level)
-
-            self.test_connections()
 
             # Restart or stop the configuration web server based on new settings.
             if self._disable_web_server:
