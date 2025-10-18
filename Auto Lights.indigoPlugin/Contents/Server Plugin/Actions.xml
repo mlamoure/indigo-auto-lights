@@ -46,4 +46,13 @@
             </Field>
         </ConfigUI>
     </Action>
+    <!-- IWS Actions for Web Configuration Interface -->
+    <Action id="web_ui" uiPath="hidden">
+        <Name>Web UI Handler</Name>
+        <CallbackMethod>handle_web_ui</CallbackMethod>
+    </Action>
+    <Action id="static" uiPath="hidden">
+        <Name>Static File Server</Name>
+        <CallbackMethod>serve_static_file</CallbackMethod>
+    </Action>
 </Actions>

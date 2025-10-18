@@ -47,6 +47,7 @@ class Plugin(indigo.PluginBase):
         self._agent = None
         self._web_server_thread = None
         self._web_server = None
+        self._iws_web_handler = None  # IWS web handler for config interface
 
         # Set environment variables for Indigo API configuration.
         os.environ["INDIGO_API_URL"] = plugin_prefs.get(
@@ -119,6 +120,10 @@ class Plugin(indigo.PluginBase):
         # Start the configuration web server if not disabled.
         if not self._disable_web_server:
             self.start_configuration_web_server()
+
+        # Initialize IWS web handler (works alongside Flask during migration)
+        self._init_iws_web_handler()
+
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
         self._agent.refresh_all_indigo_devices()
@@ -341,8 +346,51 @@ class Plugin(indigo.PluginBase):
                 f"(config device '{config_dev_name}' onState={config_dev_state}). "
                 f"Enable the device to activate automatic lighting control."
             )
-        
+
         self._agent.process_all_zones()
+
+    def _init_iws_web_handler(self: indigo.PluginBase):
+        """
+        Initialize the IWS web handler for the configuration interface.
+        This replaces the separate Flask web server with IWS integration.
+        """
+        try:
+            from config_web_editor.config_editor import WebConfigEditor
+            from config_web_editor.iws_web_handler import IWSWebHandler
+
+            # Set up WebConfigEditor (same as Flask version)
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            schema_file = os.path.join(current_dir, "config_web_editor/config/config_schema.json")
+            backup_dir = os.path.join(os.path.dirname(self._config_file_str), "backups")
+            auto_backup_dir = os.path.join(os.path.dirname(self._config_file_str), "auto_backups")
+
+            config_editor = WebConfigEditor(
+                self._config_file_str,
+                schema_file,
+                backup_dir,
+                auto_backup_dir,
+                flask_app=None  # No Flask app for IWS mode
+            )
+
+            # Initialize IWS web handler
+            self._iws_web_handler = IWSWebHandler(
+                config_editor=config_editor,
+                plugin_id=self.pluginId
+            )
+
+            # Start cache refresher thread
+            config_editor.start_cache_refresher()
+
+            # Log IWS URL
+            indigo_host = "localhost"  # Default to localhost
+            indigo_port = 8176  # Default Indigo web server port
+            iws_url = f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
+            self.logger.info(f"IWS Web Configuration Interface available at: {iws_url}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize IWS web handler: {e}")
+            self.logger.exception(e)
+            self._iws_web_handler = None
 
     def reset_zone_lock(
         self: indigo.PluginBase, action, dev, caller_waiting_for_result
@@ -545,6 +593,69 @@ class Plugin(indigo.PluginBase):
                 states.extend(self._build_zone_runtime_state_definitions(dev))
 
         return states
+
+    ########################################
+    # IWS Action Handlers
+    ########################################
+
+    def handle_web_ui(self, action, dev=None, callerWaitingForResult=True):
+        """
+        Handle web UI requests through Indigo IWS.
+
+        Args:
+            action: Indigo action containing request details in action.props
+            dev: Optional device reference (unused)
+            callerWaitingForResult: Whether caller is waiting for result
+
+        Returns:
+            Dict with status, headers, and content for IWS response
+        """
+        if not self._iws_web_handler:
+            self.logger.error("IWS web handler not initialized")
+            return {
+                "status": 503,
+                "headers": {"Content-Type": "text/html; charset=utf-8"},
+                "content": "<html><body><h1>503 Service Unavailable</h1><p>IWS web handler not initialized</p></body></html>"
+            }
+
+        # Extract request details from action.props
+        method = (action.props.get("incoming_request_method") or "GET").upper()
+        headers = dict(action.props.get("headers", {}))
+        body = action.props.get("request_body") or ""
+        query_string = action.props.get("query_string") or ""
+
+        self.logger.debug(f"IWS Web UI: {method} {query_string}")
+
+        # Delegate to IWS web handler
+        return self._iws_web_handler.handle_request(method, headers, body, query_string)
+
+    def serve_static_file(self, action, dev=None, callerWaitingForResult=True):
+        """
+        Serve static files (CSS, images, etc.) through Indigo IWS.
+
+        Args:
+            action: Indigo action containing request details
+            dev: Optional device reference (unused)
+            callerWaitingForResult: Whether caller is waiting for result
+
+        Returns:
+            Dict with status, headers, and content for IWS response
+        """
+        if not self._iws_web_handler:
+            self.logger.error("IWS web handler not initialized")
+            return {
+                "status": 503,
+                "headers": {"Content-Type": "text/plain"},
+                "content": "Service Unavailable"
+            }
+
+        # Extract query string
+        query_string = action.props.get("query_string") or ""
+
+        self.logger.debug(f"IWS Static: {query_string}")
+
+        # Delegate to IWS web handler
+        return self._iws_web_handler.serve_static_file(query_string)
 
     def deviceStartComm(self, dev):
         self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")
