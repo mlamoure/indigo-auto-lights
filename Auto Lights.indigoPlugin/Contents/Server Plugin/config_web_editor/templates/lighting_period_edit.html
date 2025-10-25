@@ -14,9 +14,7 @@
 <div id="container">
     <div id="content">
         <form method="POST" id="lighting-period-config-form" class="edit-form">
-            {{ lighting_period_form.hidden_tag() }}
-
-            {% for field in lighting_period_form if field.name != 'submit' %}
+            {% for field in lighting_period_form if field.name not in ['submit', 'id'] %}
             <div class="form-field">
                 {% if field.name in ['from_time_hour', 'to_time_hour'] %}
                 <label class="tooltip-label" data-tooltip="{{ field.description }}">{{ field.label.text
@@ -51,7 +49,7 @@
             {% endfor %}
             <div>
                 <input type="submit" value="Save" class="btn">
-                <button type="button" class="btn" onclick="window.location.href='/lighting_periods'">Cancel</button>
+                <button type="button" class="btn" onclick="window.location.href='{{ url_for('lighting_periods') }}'">Cancel</button>
             </div>
         </form>
         <div id="save-feedback-overlay"

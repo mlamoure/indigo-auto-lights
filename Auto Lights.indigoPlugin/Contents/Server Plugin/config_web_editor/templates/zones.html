@@ -28,7 +28,7 @@
                   <tr>
                     <td>{{ loop.index }}</td>
                     <td>{{ zone_form.name.data }}</td>
-                    <td><a class="btn" href="/zone/{{ loop.index0 }}">Edit</a> <button type="button" class="btn" onclick="confirmDelete({{ loop.index0 }})">Delete</button></td>
+                    <td><a class="btn" href="{{ url_for('zone_config', zone_id=loop.index0) }}">Edit</a> <button type="button" class="btn" onclick="confirmDelete({{ loop.index0 }})">Delete</button></td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -39,22 +39,33 @@
       </div>
     </div>
     <script>
+      // IWS-compatible URLs generated from template
+      const zoneNewUrl = "{{ url_for('zone_config', zone_id='new') }}";
+      const zoneDeleteUrlBase = "{{ url_for('zones') }}".replace("?page=zones", "?page=zone/delete/");
+
       function addZone() {
-        window.location.href = "/zone/new";
+        window.location.href = zoneNewUrl;
       }
 
       function confirmDelete(zoneId) {
         document.getElementById('delete-overlay').style.display = 'block';
         document.getElementById('delete-zone-id').value = zoneId;
       }
-      
+
       function cancelDelete() {
         document.getElementById('delete-overlay').style.display = 'none';
       }
-      
+
       function deleteZone() {
         var zoneId = document.getElementById('delete-zone-id').value;
-        window.location.href = "/zone/delete/" + zoneId;
+        var deleteUrl = zoneDeleteUrlBase + zoneId;
+
+        // Create a hidden form and submit POST request
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        document.body.appendChild(form);
+        form.submit();
       }
     </script>
     <div id="delete-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">

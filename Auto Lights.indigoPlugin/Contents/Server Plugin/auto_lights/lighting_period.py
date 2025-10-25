@@ -99,11 +99,31 @@ class LightingPeriod(AutoLightsBase):
 
     @classmethod
     def from_config_dict(cls, cfg: dict):
-        from_time = datetime.time(
-            cfg.get("from_time_hour"), cfg.get("from_time_minute")
-        )
-        to_time = datetime.time(cfg.get("to_time_hour"), cfg.get("to_time_minute"))
-        instance = cls(cfg.get("name"), cfg.get("mode"), from_time, to_time)
+        # Get values with defaults to handle None/missing values
+        name = cfg.get("name")
+        mode = cfg.get("mode")
+        from_hour = cfg.get("from_time_hour")
+        from_minute = cfg.get("from_time_minute")
+        to_hour = cfg.get("to_time_hour")
+        to_minute = cfg.get("to_time_minute")
+
+        # Apply defaults if values are None
+        if name is None:
+            name = "Unnamed Lighting Period"
+        if mode is None:
+            mode = "On and Off"
+        if from_hour is None:
+            from_hour = 0
+        if from_minute is None:
+            from_minute = 0
+        if to_hour is None:
+            to_hour = 23
+        if to_minute is None:
+            to_minute = 45
+
+        from_time = datetime.time(from_hour, from_minute)
+        to_time = datetime.time(to_hour, to_minute)
+        instance = cls(name, mode, from_time, to_time)
         if "lock_duration" in cfg:
             instance._lock_duration = cfg["lock_duration"]
         if "limit_brightness" in cfg:

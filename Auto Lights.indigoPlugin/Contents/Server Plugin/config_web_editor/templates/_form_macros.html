@@ -234,9 +234,9 @@ document.addEventListener('DOMContentLoaded', function(){
           var fieldName = this.getAttribute('data-field-name');
           var varName = prompt("Enter the new variable name:");
           if (!varName) return;
-          
+
           // Post the new variable creation request to the local web app endpoint
-          fetch("/create_new_variable", {
+          fetch("{{ url_for('create_new_variable') }}", {
              method: 'POST',
              headers: {
                "Content-Type": "application/json"

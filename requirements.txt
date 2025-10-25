@@ -2,9 +2,9 @@
 WTForms~=3.2.1          # Form generation and validation
 Jinja2~=3.1.6           # Template rendering
 Werkzeug~=3.1.3         # MultiDict for WTForms
-MarkupSafe~=3.0.2       # Jinja2 dependency
+MarkupSafe~=3.0.3       # Jinja2 dependency (updated)
 python-dotenv~=1.1.1    # Environment configuration
-pytest~=8.4.1           # Testing
+pytest~=8.4.2           # Testing (updated)
 
 # Removed Flask dependencies (migrated to IWS):
 # Flask~=3.1.2          - Replaced by Indigo Web Server

@@ -7,9 +7,11 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, TYPE_CHECKING
 
-from flask import Flask
+if TYPE_CHECKING:
+    from flask import Flask
+
 from auto_lights.lighting_period_mode import LightingPeriodMode
 
 from .tools.indigo_api_tools import (
@@ -27,7 +29,7 @@ class WebConfigEditor:
         schema_file: Union[str, Path],
         backup_dir: Union[str, Path],
         auto_backup_dir: Union[str, Path],
-        flask_app: Optional[Flask] = None,
+        flask_app: Optional["Flask"] = None,
     ) -> None:
         """
         Initialize the configuration editor.
@@ -36,7 +38,7 @@ class WebConfigEditor:
         :param schema_file: Path to the JSON schema file.
         :param backup_dir: Directory for manual backups.
         :param auto_backup_dir: Directory for automatic backups.
-        :param flask_app: Optional Flask app for logging in background tasks.
+        :param flask_app: Optional Flask app for logging (legacy Flask mode only, None for IWS mode).
         """
         self.config_file = Path(config_file)
         self.schema_file = Path(schema_file)

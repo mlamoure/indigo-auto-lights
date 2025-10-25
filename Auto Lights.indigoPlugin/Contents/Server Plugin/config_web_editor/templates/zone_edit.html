@@ -15,7 +15,6 @@
     <div id="content">
         {% from "_form_macros.html" import render_field, save_overlay %}
         <form method="POST" id="zone-config-form" class="edit-form">
-            {{ zone_form.hidden_tag() }}
             {% for field in zone_form if field.name not in ['submit', 'csrf_token', 'device_period_map',
             'minimum_luminance_settings'] %}
             {{ render_field(field) }}
@@ -28,7 +27,7 @@
             {{ render_field(zone_form.device_period_map) }}
             <div>
                 <input type="submit" value="Save" class="btn">
-                <button type="button" class="btn" onclick="window.location.href='/zones'">Cancel</button>
+                <button type="button" class="btn" onclick="window.location.href='{{ url_for('zones') }}'">Cancel</button>
             </div>
         </form>
         {{ save_overlay() }}
@@ -143,7 +142,7 @@
             });
             document.getElementById('create-var-submit').addEventListener('click', function () {
                 var varName = document.getElementById('new-var-name').value;
-                fetch('/create_new_variable', {
+                fetch('{{ url_for('create_new_variable') }}', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({name: varName})
@@ -261,7 +260,7 @@
             for (var i = 0; i < selected.options.length; i++) {
                 deviceIds.push(selected.options[i].value);
             }
-            fetch("/get_luminance_value", {
+            fetch('{{ url_for('get_luminance_value') }}', {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({device_ids: deviceIds})
@@ -315,7 +314,7 @@
                     deviceIds.push(parseInt(selected.options[i].value));
                 }
             }
-            fetch("/get_luminance_value", {
+            fetch('{{ url_for('get_luminance_value') }}', {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({device_ids: deviceIds})

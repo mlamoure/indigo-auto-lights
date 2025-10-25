@@ -63,6 +63,10 @@ def _device_to_dict(device, keys_to_keep=KEYS_TO_KEEP):
     result = {}
 
     for key in keys_to_keep:
+        if key == "class":
+            # Special handling for device class - skip in loop, handle below
+            continue
+
         if hasattr(device, key):
             value = getattr(device, key)
             # Convert indigo.Dict to regular dict
@@ -75,6 +79,12 @@ def _device_to_dict(device, keys_to_keep=KEYS_TO_KEEP):
                     result[key] = list(value)
             else:
                 result[key] = value
+
+    # Special handling for device class
+    if "class" in keys_to_keep:
+        # Get the full class name (e.g., "indigo.DimmerDevice")
+        device_class = f"{device.__class__.__module__}.{device.__class__.__name__}"
+        result["class"] = device_class
 
     # Add object type
     result["objectType"] = "device"

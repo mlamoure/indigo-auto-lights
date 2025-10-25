@@ -265,6 +265,7 @@
           },
           "name": {
             "type": "string",
+            "default": "New Lighting Period",
             "title": "Name",
             "tooltip": "Provide a name for the lighting period."
           },
@@ -274,6 +275,7 @@
               "On and Off",
               "Off Only"
             ],
+            "default": "On and Off",
             "title": "Mode",
             "tooltip": "When the lighting period is set to On and Off, the Auto Lights plugin will actively manage the the on/off state for the zone.  When set to Off Only, the plugin will only turn lights off for the zone."
           },
@@ -281,6 +283,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 23,
+            "default": 0,
             "title": "From Time Hour",
             "tooltip": "Specify the starting hour (0-23) for the lighting period."
           },
@@ -292,6 +295,7 @@
               30,
               45
             ],
+            "default": 0,
             "title": "From Time Minute",
             "tooltip": "Specify the starting minute for the lighting period."
           },
@@ -299,6 +303,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 23,
+            "default": 23,
             "title": "To Time Hour",
             "tooltip": "Specify the ending hour (0-23) for the lighting period."
           },
@@ -310,6 +315,7 @@
               30,
               45
             ],
+            "default": 45,
             "title": "To Time Minute",
             "tooltip": "Specify the ending minute for the lighting period."
           },

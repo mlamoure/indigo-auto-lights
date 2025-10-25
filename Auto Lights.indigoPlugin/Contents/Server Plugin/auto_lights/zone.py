@@ -1,3 +1,27 @@
+"""
+Zone Module - Auto Lights Plugin
+
+This module implements the Zone class, which represents a logical grouping of lights
+with shared automation rules. Zones are the core abstraction for automatic lighting
+control, managing:
+
+- Device control (on/off/brightness) based on presence and luminance
+- Zone locking to prevent automation when users manually control lights
+- Lighting periods for time-based control (on/off times, brightness limits)
+- Brightness planning using luminance sensors
+- State synchronization with Indigo devices
+
+Each zone can have:
+- Multiple light devices (dimmers, relays, or other controllable devices)
+- Presence sensors to detect occupancy
+- Luminance sensors for ambient light-aware brightness adjustment
+- Lock exclusion devices that prevent zone locking when manually controlled
+- Global behavior variable mappings for external automation control
+
+Zones use thread-safe locking mechanisms to coordinate state changes and prevent
+race conditions during device updates.
+"""
+
 import datetime
 import json
 import logging
@@ -187,6 +211,9 @@ class Zone(AutoLightsBase):
         # per-process run cache (cleared by AutoLightsAgent.process_zone)
         self._runtime_cache: dict[str, Any] = {}
 
+        # Reentrancy guard to prevent infinite recursion during sync
+        self._syncing = False
+
     def __setattr__(self, name, value):
         """
         Override __setattr__ to trigger synchronization to Indigo when
@@ -200,7 +227,8 @@ class Zone(AutoLightsBase):
             return
 
         # now, if this is one of the fields we want to mirror back into Indigo, do it
-        if hasattr(self, "_config"):
+        # Skip if we're already syncing (prevents infinite recursion)
+        if hasattr(self, "_config") and not getattr(self, "_syncing", False):
             key = name[1:] if name.startswith("_") else name
             if key in self.zone_indigo_device_config_states:
                 self.sync_indigo_device()
@@ -1346,6 +1374,10 @@ class Zone(AutoLightsBase):
         Combines configured sync attributes and runtime state mappings
         into a single update to the Indigo server.
         """
+        # Prevent infinite recursion - if already syncing, skip
+        if self._syncing:
+            return
+
         dev = self.indigo_dev
         if dev is None:
             self.logger.error(
@@ -1353,50 +1385,56 @@ class Zone(AutoLightsBase):
             )
             return
 
-        # Update device name to match zone name
-        expected_name = f"Auto Lights Zone - {self.name}"
-        if dev.name != expected_name:
+        # Set reentrancy guard
+        self._syncing = True
+        try:
+            # Update device name to match zone name
+            expected_name = f"Auto Lights Zone - {self.name}"
+            if dev.name != expected_name:
+                try:
+                    dev.name = expected_name
+                    if hasattr(dev, "replaceOnServer"):
+                        dev.replaceOnServer()
+                    else:
+                        self.logger.debug("Device does not support replaceOnServer, skipping rename update")
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to rename Indigo device for Zone '{self._name}': {e}"
+                    )
+            # Build list from schema-driven attributes
+            state_list = self._build_schema_states(dev)
+
+            # Append dynamic runtime states
+            state_list.extend(self._build_runtime_states(dev))
+
             try:
-                dev.name = expected_name
-                if hasattr(dev, "replaceOnServer"):
-                    dev.replaceOnServer()
+                if hasattr(dev, "updateStatesOnServer"):
+                    dev.updateStatesOnServer(state_list)
                 else:
-                    self.logger.debug("Device does not support replaceOnServer, skipping rename update")
+                    self.logger.debug("Device does not support updateStatesOnServer, skipping update")
             except Exception as e:
-                self.logger.error(
-                    f"Failed to rename Indigo device for Zone '{self._name}': {e}"
-                )
-        # Build list from schema-driven attributes
-        state_list = self._build_schema_states(dev)
-
-        # Append dynamic runtime states
-        state_list.extend(self._build_runtime_states(dev))
-
-        try:
-            if hasattr(dev, "updateStatesOnServer"):
-                dev.updateStatesOnServer(state_list)
-            else:
-                self.logger.debug("Device does not support updateStatesOnServer, skipping update")
-        except Exception as e:
-            self.logger.error(f"Failed to sync states for zone '{self._name}': {e}")
-        # Update onOffState with UI value
-        try:
-            on_state = dev.onState
-            if self.locked:
-                ui = "Locked"
-            elif on_state:
-                if self.has_presence_detected():
-                    ui = "Enabled - Presence Active"
+                self.logger.error(f"Failed to sync states for zone '{self._name}': {e}")
+            # Update onOffState with UI value
+            try:
+                on_state = dev.onState
+                if self.locked:
+                    ui = "Locked"
+                elif on_state:
+                    if self.has_presence_detected():
+                        ui = "Enabled - Presence Active"
+                    else:
+                        ui = "Enabled - No Presence"
                 else:
-                    ui = "Enabled - No Presence"
-            else:
-                ui = "Disabled"
-            if hasattr(dev, "updateStateOnServer"):
-                dev.updateStateOnServer("onOffState", on_state, uiValue=ui)
-            else:
-                self.logger.debug("Device does not support updateStateOnServer, skipping onOffState update")
-        except Exception as e:
-            self.logger.error(f"Failed to update onOffState for zone '{self._name}': {e}")
+                    ui = "Disabled"
+                if hasattr(dev, "updateStateOnServer"):
+                    dev.updateStateOnServer("onOffState", on_state, uiValue=ui)
+                else:
+                    self.logger.debug("Device does not support updateStateOnServer, skipping onOffState update")
+            except Exception as e:
+                self.logger.error(f"Failed to update onOffState for zone '{self._name}': {e}")
+        finally:
+            # Always clear the flag when done
+            self._syncing = False
 
     def _has_device(self, dev_id: int) -> str:
         """

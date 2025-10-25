@@ -1,3 +1,17 @@
+"""
+Utility Functions - Auto Lights Plugin
+
+This module provides utility functions for device control and state verification:
+
+- Device control with retry logic for unreliable devices
+- State confirmation to ensure devices reach target states
+- Brightness and on/off control for various device types (dimmers, relays, SenseME fans)
+- Logging for device control operations
+
+The functions in this module handle low-level device interaction and provide
+a consistent interface for controlling different types of Indigo devices.
+"""
+
 import logging
 import time
 
@@ -11,7 +25,8 @@ logger = logging.getLogger("Plugin")
 
 def _check_confirm(device, target_level, target_bool) -> bool:
     """Return True if the device's state matches the target values."""
-    logger.debug(
+    logger.log(
+        5,
         f"_check_confirm called for '{device.name}' with target_level={target_level}, target_bool={target_bool}"
     )
     if isinstance(device, indigo.DimmerDevice):
@@ -25,7 +40,7 @@ def _check_confirm(device, target_level, target_bool) -> bool:
             result = int(device.states.get("brightness", 0)) == target_level
         else:
             result = True
-    logger.debug(f"_check_confirm result for '{device.name}': {result}")
+    logger.log(5, f"_check_confirm result for '{device.name}': {result}")
     return result
 
 

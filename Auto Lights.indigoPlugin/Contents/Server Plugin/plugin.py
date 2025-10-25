@@ -83,7 +83,6 @@ class Plugin(indigo.PluginBase):
 
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
-        self._agent.refresh_all_indigo_devices()
 
         # Log IWS Web Configuration URL for user convenience
         indigo_host = "localhost"
@@ -481,56 +480,35 @@ class Plugin(indigo.PluginBase):
         # If initialization failed, return error
         if not self._iws_web_handler:
             self.logger.error("IWS web handler failed to initialize")
-            return {
-                "status": 503,
-                "headers": {"Content-Type": "text/html; charset=utf-8"},
-                "content": "<html><body><h1>503 Service Unavailable</h1><p>IWS web handler failed to initialize</p></body></html>"
-            }
+            reply = indigo.Dict()
+            reply["status"] = 503
+            reply["headers"] = indigo.Dict({"Content-Type": "text/html; charset=utf-8"})
+            reply["content"] = "<html><body><h1>503 Service Unavailable</h1><p>IWS web handler failed to initialize</p></body></html>"
+            return reply
 
         # Extract request details from action.props
         method = (action.props.get("incoming_request_method") or "GET").upper()
         headers = dict(action.props.get("headers", {}))
-        body = action.props.get("request_body") or ""
-        query_string = action.props.get("query_string") or ""
 
-        self.logger.debug(f"IWS Web UI: {method} {query_string}")
+        # IWS provides pre-parsed POST data in body_params (like url_query_args for GET)
+        body_params = dict(action.props.get("body_params", {}))
 
-        # Delegate to IWS web handler
-        return self._iws_web_handler.handle_request(method, headers, body, query_string)
+        # For JSON POST requests, we need the raw request_body
+        request_body = action.props.get("request_body", "")
 
-    def serve_static_file(self, action, dev=None, callerWaitingForResult=True):
-        """
-        Serve static files (CSS, images, etc.) through Indigo IWS.
+        # IWS provides pre-parsed query parameters in url_query_args
+        url_query_args = dict(action.props.get("url_query_args", {}))
 
-        Args:
-            action: Indigo action containing request details
-            dev: Optional device reference (unused)
-            callerWaitingForResult: Whether caller is waiting for result
-
-        Returns:
-            Dict with status, headers, and content for IWS response
-        """
-        # Lazy initialization - create handler on first request
-        if not self._iws_web_handler:
-            self.logger.debug("Lazy initializing IWS web handler on first request")
-            self._init_iws_web_handler()
-
-        # If initialization failed, return error
-        if not self._iws_web_handler:
-            self.logger.error("IWS web handler failed to initialize")
-            return {
-                "status": 503,
-                "headers": {"Content-Type": "text/plain"},
-                "content": "Service Unavailable"
-            }
-
-        # Extract query string
-        query_string = action.props.get("query_string") or ""
-
-        self.logger.debug(f"IWS Static: {query_string}")
+        self.logger.debug(f"IWS Web UI: {method} request")
+        self.logger.debug(f"URL query args from action.props: {url_query_args}")
+        if method == "POST":
+            self.logger.debug(f"POST body params from action.props: {body_params}")
 
         # Delegate to IWS web handler
-        return self._iws_web_handler.serve_static_file(query_string)
+        return self._iws_web_handler.handle_request(method, headers, body_params, url_query_args, request_body)
+
+    # Static files are now automatically served from Resources/static/ by IWS
+    # No custom handler needed - see Actions.xml and SDK example
 
     def deviceStartComm(self, dev):
         self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")
