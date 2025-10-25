@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>Configuration Backup - Indigo Auto Lights</title>
-    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
 {% set page_title = "Configuration Backup" %}
@@ -18,7 +18,8 @@
             <tr>
                 <td>Download Current Config</td>
                 <td>
-                    <form method="GET" action="/download_config" style="margin:0;">
+                    <form method="GET" action="{{ url_for('config_backup') }}" style="margin:0;">
+                        <input type="hidden" name="action" value="download_config">
                         <button type="submit" class="btn">Download Current Config</button>
                     </form>
                 </td>
@@ -26,7 +27,7 @@
             <tr>
                 <td>Reset to Defaults</td>
                 <td>
-                    <form method="POST" action="/config_backup" style="margin:0;" onsubmit="return confirm('This will reset your Auto Lights config to default and take a backup in Automatic Backups. Are you sure?');">
+                    <form method="POST" action="{{ url_for('config_backup') }}" style="margin:0;" onsubmit="return confirm('This will reset your Auto Lights config to default and take a backup in Automatic Backups. Are you sure?');">
                         <input type="hidden" name="action" value="reset_defaults">
                         <button type="submit" class="btn">Reset to Defaults</button>
                     </form>
@@ -35,7 +36,8 @@
             <tr>
                 <td>Upload Config</td>
                 <td>
-                    <form method="POST" action="/upload_config" enctype="multipart/form-data" style="margin:0;">
+                    <form method="POST" action="{{ url_for('config_backup') }}" enctype="multipart/form-data" style="margin:0;">
+                        <input type="hidden" name="action" value="upload_config">
                         <label class="btn">
                             Choose File
                             <input type="file" name="config_file_upload" accept=".json" style="display:none;"
@@ -62,9 +64,9 @@
             {% for backup in manual_backups %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ backup }}</td>
+                <td>{{ backup.filename }}</td>
                 <td>
-                    {% set backup_timestamp = backup|replace('manual_backup_', '')|replace('.json', '') %}
+                    {% set backup_timestamp = backup.filename|replace('manual_backup_', '')|replace('.json', '') %}
                     {% if backup_timestamp|length == 14 %}
                     {% set formatted_date = backup_timestamp[0:4] ~ '-' ~ backup_timestamp[4:6] ~ '-' ~
                     backup_timestamp[6:8] ~ ' ' ~ backup_timestamp[8:10] ~ ':' ~ backup_timestamp[10:12] ~ ':' ~
@@ -75,9 +77,9 @@
                     {% endif %}
                 </td>
                 <td>
-                    <form method="post" style="display:inline;">
+                    <form method="post" action="{{ url_for('config_backup') }}" style="display:inline;">
                         <input type="hidden" name="backup_type" value="manual">
-                        <input type="hidden" name="backup_file" value="{{ backup }}">
+                        <input type="hidden" name="backup_file" value="{{ backup.filename }}">
                         <button type="submit" name="action" value="restore" class="btn">Restore</button>
                         <button type="submit" name="action" value="download" class="btn">Download</button>
                         <button type="submit" name="action" value="delete" class="btn">Delete</button>
@@ -88,8 +90,8 @@
             </tbody>
         </table>
 
-        <form method="POST" action="/config_backup" style="display:inline-block;">
-            <input type="hidden" name="action" value="create_manual">
+        <form method="POST" action="{{ url_for('config_backup') }}" style="display:inline-block;">
+            <input type="hidden" name="action" value="create_manual_backup">
             <button type="submit" class="btn">Create Manual Backup</button>
         </form>
 
@@ -125,7 +127,7 @@
                 </td>
                 <td>{{ backup.description }}</td>
                 <td>
-                    <form method="post" style="display:inline;">
+                    <form method="post" action="{{ url_for('config_backup') }}" style="display:inline;">
                         <input type="hidden" name="backup_type" value="auto">
                         <input type="hidden" name="backup_file" value="{{ backup.filename }}">
                         <button type="submit" name="action" value="restore" class="btn">Restore</button>

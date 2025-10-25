@@ -7,12 +7,13 @@ import socket
 import threading
 from datetime import datetime
 
-from werkzeug.serving import make_server
+# NOTE: Werkzeug server import disabled - migrated to IWS. Kept for rollback capability.
+# from werkzeug.serving import make_server
 
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
-from config_web_editor.tools.indigo_api_tools import get_indigo_api_url, indigo_api_call
-from config_web_editor.web_config_app import init_flask_app, app as flask_app
+# NOTE: Flask imports disabled - migrated to IWS. Kept for rollback capability.
+# from config_web_editor.web_config_app import init_flask_app, app as flask_app
 
 try:
     import indigo
@@ -43,30 +44,9 @@ class Plugin(indigo.PluginBase):
             plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs
         )
 
-        self.connection_indigo_api = None
         self._agent = None
-        self._web_server_thread = None
-        self._web_server = None
-
-        # Set environment variables for Indigo API configuration.
-        os.environ["INDIGO_API_URL"] = plugin_prefs.get(
-            "indigo_api_url", "https://myreflector.indigodomo.net"
-        )
-        os.environ["INDIGO_API_KEY"] = plugin_prefs.get(
-            "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
-        )
-
-        # Retrieve web server binding settings from plugin preferences.
-        self._web_config_bind_ip = plugin_prefs.get("web_config_bind_ip", "127.0.0.1")
-        self._web_config_bind_port = plugin_prefs.get("web_config_bind_port", "9000")
-        self._disable_web_server = plugin_prefs.get("disable_web_server", False)
+        self._iws_web_handler = None  # IWS web handler for config interface (lazy init)
         self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
-        self._disable_ssl_validation = bool(
-            plugin_prefs.get("disable_ssl_validation", False)
-        )
-        os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(
-            self._disable_ssl_validation
-        )
 
         # Configure logging levels based on plugin preferences.
         self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
@@ -79,28 +59,7 @@ class Plugin(indigo.PluginBase):
             "Logs", "Preferences"
         ).replace("/plugin.log", "/config/auto_lights_conf.json")
 
-    def test_connections(self) -> None:
-        """
-        Test connectivity to the Indigo API by fetching a random device.
-        """
-
-        # no need to test if the web server is disabled
-        if self._disable_web_server:
-            return
-
-        try:
-            random_device = random.choice(list(indigo.devices))
-            device_id = random_device.id
-            device_detail = indigo_api_call(
-                f"{get_indigo_api_url()}/indigo.devices/{device_id}", "GET", None
-            )
-            if "error" not in device_detail:
-                self.connection_indigo_api = True
-            else:
-                self.connection_indigo_api = False
-        except Exception as e:
-            self.logger.error("Indigo API connectivity test failed: %s", e)
-            self.connection_indigo_api = False
+    # Removed test_connections() - no longer needed with direct indigo object access
 
     def startup(self: indigo.PluginBase) -> None:
         """
@@ -110,18 +69,27 @@ class Plugin(indigo.PluginBase):
         """
         self.logger.debug("startup called")
 
-        self.test_connections()
-
         # Subscribe to changes for devices and variables.
         indigo.devices.subscribeToChanges()
         indigo.variables.subscribeToChanges()
 
+        # NOTE: Flask server disabled - migrated to IWS. Kept for rollback capability.
         # Start the configuration web server if not disabled.
-        if not self._disable_web_server:
-            self.start_configuration_web_server()
+        # if not self._disable_web_server:
+        #     self.start_configuration_web_server()
+
+        # NOTE: IWS web handler uses lazy initialization (created on first request)
+        # This avoids __file__ not defined error at startup
+
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
-        self._agent.refresh_all_indigo_devices()
+
+        # Log IWS Web Configuration URL for user convenience
+        indigo_host = "localhost"
+        indigo_port = 8176  # Default Indigo web server port
+        iws_url = f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
+        self.logger.info(f"🌐 Web Configuration Interface: {iws_url}")
+
         self.logger.debug("Plugin startup complete")
 
     def shutdown(self: indigo.PluginBase) -> None:
@@ -133,7 +101,7 @@ class Plugin(indigo.PluginBase):
         self.logger.debug("shutdown called")
         if hasattr(self, "_agent") and self._agent is not None:
             self._agent.shutdown()
-        self.stop_configuration_web_server()
+        # NOTE: Flask web server cleanup removed - migrated to IWS
 
     def deviceUpdated(
         self: indigo.PluginBase, orig_dev: indigo.Device, new_dev: indigo.Device
@@ -176,131 +144,24 @@ class Plugin(indigo.PluginBase):
         if self._agent is not None:
             self._agent.process_variable_change(orig_var, new_var)
 
-    def start_configuration_web_server(self: indigo.PluginBase):
-        if self._web_server_thread is not None:
-            self.stop_configuration_web_server()
-        if not getattr(self, "connection_indigo_api", False):
-            self.logger.warning(
-                "Cannot start web server because Indigo API connection failed."
-            )
-            return
-
-        # Check if Indigo API configuration is not default
-        if (
-            os.environ.get("INDIGO_API_URL") != "https://myreflector.indigodomo.net"
-            and os.environ.get("INDIGO_API_KEY") != "xxxxx-xxxxx-xxxxx-xxxxx"
-        ):
-            urls = []
-            # Determine the appropriate URLs based on the bind IP.
-            if self._web_config_bind_ip == "0.0.0.0":
-                hostname = socket.gethostname()
-                local_ip = socket.gethostbyname(hostname)
-                urls.append(f"http://{hostname}:{self._web_config_bind_port}")
-                urls.append(f"http://{local_ip}:{self._web_config_bind_port}")
-            elif self._web_config_bind_ip == "127.0.0.1":
-                urls.append(f"http://127.0.0.1:{self._web_config_bind_port}")
-                urls.append(f"http://localhost:{self._web_config_bind_port}")
-                self.logger.info(
-                    "NOTE: This address will only work on the Indigo server directly.  See the plugin config to change this."
-                )
-            else:
-                urls.append(
-                    f"http://{self._web_config_bind_ip}:{self._web_config_bind_port}"
-                )
-            self.logger.info(
-                f"Starting the configuration web server... Visit {' or '.join(urls)}"
-            )
-            # Start the configuration web server using a WSGI server in a daemon thread.
-            # Initialize the Flask app (registers config_editor & caches).
-            init_flask_app(
-                self._config_file_str,
-                self._web_config_bind_ip,
-                self._web_config_bind_port,
-            )
-            # Notify plugin to reload config immediately after save from web UI
-            flask_app.config["reload_config_cb"] = self._init_config_and_agent
-            # Create a real WSGI server
-            self._web_server = make_server(
-                self._web_config_bind_ip,
-                int(self._web_config_bind_port),
-                flask_app,
-                threaded=True,
-            )
-            self._web_server_thread = threading.Thread(
-                target=self._web_server.serve_forever,
-                name="AutoLightsWebUI",
-                daemon=True,
-            )
-            self._web_server_thread.start()
-        else:
-            self.logger.info(
-                "Skipping start of configuration web server due to default config values."
-            )
-
-    def stop_configuration_web_server(self: indigo.PluginBase):
-        """
-        Stops the configuration web server by calling server.shutdown()
-        instead of an HTTP round-trip.
-        """
-        if self._web_server is None:
-            self.logger.info("Configuration web server is not running.")
-            return
-
-        try:
-            self.logger.info("Shutting down configuration web server...")
-            self._web_server.shutdown()
-            self._web_server_thread.join(timeout=3.0)
-            if self._web_server_thread.is_alive():
-                self.logger.warning("Web server thread did not exit cleanly.")
-
-        except Exception as e:
-            self.logger.error(f"Error stopping configuration web server: {e}")
-
-        finally:
-            self._web_server = None
-            self._web_server_thread = None
+    # NOTE: Flask web server methods removed - migrated to IWS
+    # See git history (feature/migrate-to-iws branch) for rollback capability
 
     def closedPrefsConfigUi(self: indigo.PluginBase, values_dict, user_cancelled):
         """
         Called when the preferences configuration UI is closed.
-        Updates environment variables, configuration, and logging levels.
+        Updates logging configuration.
         """
         if not user_cancelled:
-            # Update environment variables based on user preferences.
-            os.environ["INDIGO_API_URL"] = values_dict.get(
-                "indigo_api_url", "https://myreflector.indigodomo.net"
-            )
-            os.environ["INDIGO_API_KEY"] = values_dict.get(
-                "api_key", "xxxxx-xxxxx-xxxxx-xxxxx"
-            )
-            self._web_config_bind_ip = values_dict.get(
-                "web_config_bind_ip", "127.0.0.1"
-            )
-            self._web_config_bind_port = values_dict.get("web_config_bind_port", "9000")
-
-            self._disable_web_server = values_dict.get("disable_web_server")
+            # Update log_non_events setting
             self._log_non_events = bool(values_dict.get("log_non_events", False))
             self._agent.config.log_non_events = self._log_non_events
-            self._disable_ssl_validation = bool(
-                values_dict.get("disable_ssl_validation", False)
-            )
-            os.environ["INDIGO_API_DISABLE_SSL_VALIDATION"] = str(
-                self._disable_ssl_validation
-            )
 
-            # Update logging configuration.
+            # Update logging configuration
             self.log_level = int(values_dict.get("log_level", logging.INFO))
             self.logger.debug(f"{self.log_level=}")
             self.indigo_log_handler.setLevel(self.log_level)
             self.plugin_file_handler.setLevel(self.log_level)
-
-            self.test_connections()
-
-            # Restart or stop the configuration web server based on new settings.
-            if self._disable_web_server:
-                self.stop_configuration_web_server()
-            else:
-                self.start_configuration_web_server()
 
     def get_zone_list(
         self: indigo.PluginBase, filter="", values_dict=None, type_id="", target_id=0
@@ -341,8 +202,57 @@ class Plugin(indigo.PluginBase):
                 f"(config device '{config_dev_name}' onState={config_dev_state}). "
                 f"Enable the device to activate automatic lighting control."
             )
-        
+
         self._agent.process_all_zones()
+
+    def _init_iws_web_handler(self: indigo.PluginBase):
+        """
+        Initialize the IWS web handler for the configuration interface.
+        This replaces the separate Flask web server with IWS integration.
+
+        Uses lazy initialization - called on first web request to avoid __file__ issues.
+        """
+        try:
+            from config_web_editor.config_editor import WebConfigEditor
+            from config_web_editor.iws_web_handler import IWSWebHandler
+
+            # Set up WebConfigEditor
+            # In Indigo plugins, os.getcwd() returns the Server Plugin directory
+            current_dir = os.getcwd()
+            schema_file = os.path.join(current_dir, "config_web_editor/config/config_schema.json")
+            backup_dir = os.path.join(os.path.dirname(self._config_file_str), "backups")
+            auto_backup_dir = os.path.join(os.path.dirname(self._config_file_str), "auto_backups")
+
+            config_editor = WebConfigEditor(
+                self._config_file_str,
+                schema_file,
+                backup_dir,
+                auto_backup_dir,
+                flask_app=None  # No Flask app for IWS mode
+            )
+
+            # Set up reload callback for when config is saved
+            config_editor.reload_config_callback = self._init_config_and_agent
+
+            # Initialize IWS web handler
+            self._iws_web_handler = IWSWebHandler(
+                config_editor=config_editor,
+                plugin_id=self.pluginId
+            )
+
+            # Start cache refresher thread
+            config_editor.start_cache_refresher()
+
+            # Log IWS URL
+            indigo_host = "localhost"  # Default to localhost
+            indigo_port = 8176  # Default Indigo web server port
+            iws_url = f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
+            self.logger.info(f"IWS Web Configuration Interface available at: {iws_url}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize IWS web handler: {e}")
+            self.logger.exception(e)
+            self._iws_web_handler = None
 
     def reset_zone_lock(
         self: indigo.PluginBase, action, dev, caller_waiting_for_result
@@ -545,6 +455,60 @@ class Plugin(indigo.PluginBase):
                 states.extend(self._build_zone_runtime_state_definitions(dev))
 
         return states
+
+    ########################################
+    # IWS Action Handlers
+    ########################################
+
+    def handle_web_ui(self, action, dev=None, callerWaitingForResult=True):
+        """
+        Handle web UI requests through Indigo IWS.
+
+        Args:
+            action: Indigo action containing request details in action.props
+            dev: Optional device reference (unused)
+            callerWaitingForResult: Whether caller is waiting for result
+
+        Returns:
+            Dict with status, headers, and content for IWS response
+        """
+        # Lazy initialization - create handler on first request
+        if not self._iws_web_handler:
+            self.logger.debug("Lazy initializing IWS web handler on first request")
+            self._init_iws_web_handler()
+
+        # If initialization failed, return error
+        if not self._iws_web_handler:
+            self.logger.error("IWS web handler failed to initialize")
+            reply = indigo.Dict()
+            reply["status"] = 503
+            reply["headers"] = indigo.Dict({"Content-Type": "text/html; charset=utf-8"})
+            reply["content"] = "<html><body><h1>503 Service Unavailable</h1><p>IWS web handler failed to initialize</p></body></html>"
+            return reply
+
+        # Extract request details from action.props
+        method = (action.props.get("incoming_request_method") or "GET").upper()
+        headers = dict(action.props.get("headers", {}))
+
+        # IWS provides pre-parsed POST data in body_params (like url_query_args for GET)
+        body_params = dict(action.props.get("body_params", {}))
+
+        # For JSON POST requests, we need the raw request_body
+        request_body = action.props.get("request_body", "")
+
+        # IWS provides pre-parsed query parameters in url_query_args
+        url_query_args = dict(action.props.get("url_query_args", {}))
+
+        self.logger.debug(f"IWS Web UI: {method} request")
+        self.logger.debug(f"URL query args from action.props: {url_query_args}")
+        if method == "POST":
+            self.logger.debug(f"POST body params from action.props: {body_params}")
+
+        # Delegate to IWS web handler
+        return self._iws_web_handler.handle_request(method, headers, body_params, url_query_args, request_body)
+
+    # Static files are now automatically served from Resources/static/ by IWS
+    # No custom handler needed - see Actions.xml and SDK example
 
     def deviceStartComm(self, dev):
         self.logger.debug(f"deviceStartComm called for device {dev.id} ('{dev.name}')")

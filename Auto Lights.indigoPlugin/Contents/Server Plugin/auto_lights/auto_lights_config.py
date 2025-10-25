@@ -151,6 +151,11 @@ class AutoLightsConfig(AutoLightsBase):
         self._debug_log("from_config_dict called")
         # Process plugin_config
         plugin_config = data.get("plugin_config", {})
+
+        # Defensive: Ensure array fields are never None (prevents crashes)
+        if plugin_config.get("global_behavior_variables") is None:
+            plugin_config["global_behavior_variables"] = []
+
         for key, value in plugin_config.items():
             if hasattr(self, key):
                 setattr(self, key, value)

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Lighting Periods - Indigo Auto Lights</title>
-    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   </head>
   <body>
 {% set page_title = "Lighting Periods" %}
@@ -36,19 +36,19 @@
                 <td>
                   {% for idx, zone in enumerate(zones) %}
                     {% if period.id.data in zone.lighting_period_ids %}
-                      <a href="/zone/{{ idx }}">{{ zone.name }}</a>{% if not loop.last %}, {% endif %}
+                      <a href="{{ url_for('zone_config', zone_id=idx) }}">{{ zone.name }}</a>{% if not loop.last %}, {% endif %}
                     {% endif %}
                   {% endfor %}
                 </td>
                 <td>
-                  <a class="btn" href="/lighting_period/{{ loop.index0 }}">Edit</a><br>
-                  <button type="button" class="btn" onclick="confirmDelete({{ loop.index0 }})" style="margin-top: 8px;">Delete</button>
+                  <a class="btn" href="{{ url_for('lighting_period_config', period_id=period.id.data) }}">Edit</a><br>
+                  <button type="button" class="btn" onclick="confirmDelete('{{ period.id.data }}')" style="margin-top: 8px;">Delete</button>
                 </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
-        <a class="btn" href="/lighting_period/new">New Lighting Period</a>
+        <a class="btn" href="{{ url_for('lighting_period_config', period_id='new') }}">New Lighting Period</a>
         <div id="delete-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
           <div style="background:#fff; padding:20px; margin:100px auto; width:300px; border-radius:8px; text-align:center;">
             <p>Are you sure you want to delete this lighting period?</p>
@@ -58,18 +58,28 @@
           </div>
         </div>
         <script>
+          // IWS-compatible URL generated from template
+          const periodDeleteUrlBase = "{{ url_for('lighting_periods') }}".replace("?page=lighting_periods", "?page=lighting_period/delete/");
+
           function confirmDelete(periodId) {
             document.getElementById('delete-overlay').style.display = 'block';
             document.getElementById('delete-period-id').value = periodId;
           }
-          
+
           function cancelDelete() {
             document.getElementById('delete-overlay').style.display = 'none';
           }
-          
+
           function deletePeriod() {
             var periodId = document.getElementById('delete-period-id').value;
-            window.location.href = "/lighting_period/delete/" + periodId;
+            var deleteUrl = periodDeleteUrlBase + periodId;
+
+            // Create a hidden form and submit POST request
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = deleteUrl;
+            document.body.appendChild(form);
+            form.submit();
           }
         </script>
       </div>

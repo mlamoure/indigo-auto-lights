@@ -86,6 +86,13 @@ indigo_stub.DimmerDevice = Device
 indigo_stub.RelayDevice = Device
 indigo_stub.Variable = Variable
 
+# Add Dict class for IWS response format (just a regular dict in tests)
+class IndigoDict(dict):
+    """Stub for indigo.Dict() - behaves exactly like dict in tests."""
+    pass
+
+indigo_stub.Dict = IndigoDict
+
 sys.modules["indigo"] = indigo_stub
 
 import pytest
