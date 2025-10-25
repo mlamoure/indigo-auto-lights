@@ -61,6 +61,71 @@ class Plugin(indigo.PluginBase):
 
     # Removed test_connections() - no longer needed with direct indigo object access
 
+    def _get_web_config_urls(self: indigo.PluginBase) -> list[dict[str, str]]:
+        """
+        Detect and return all available URLs for accessing the web configuration interface.
+
+        Returns a list of dicts with 'label' and 'url' keys for each access method:
+        - localhost URL (always available)
+        - hostname-based URL (if detectable)
+        - IP address-based URLs (all non-localhost IPs)
+        - Indigo Reflector URL (if configured)
+
+        :return: List of URL dicts [{"label": "...", "url": "..."}, ...]
+        """
+        urls = []
+        indigo_port = 8176  # Default Indigo web server port
+        path = f"/message/{self.pluginId}/web_ui/"
+
+        # Always add localhost URL
+        urls.append({
+            "label": "Local",
+            "url": f"http://localhost:{indigo_port}{path}"
+        })
+
+        try:
+            # Get hostname and add hostname-based URL
+            hostname = socket.gethostname()
+            if hostname and hostname != "localhost":
+                urls.append({
+                    "label": "Network (hostname)",
+                    "url": f"http://{hostname}:{indigo_port}{path}"
+                })
+
+            # Get all non-localhost IP addresses
+            try:
+                addr_info = socket.getaddrinfo(hostname, None, socket.AF_INET)
+                seen_ips = set()
+                for info in addr_info:
+                    ip = info[4][0]
+                    # Skip localhost IPs and duplicates
+                    if not ip.startswith('127.') and ip not in seen_ips:
+                        seen_ips.add(ip)
+                        urls.append({
+                            "label": "Network (IP)",
+                            "url": f"http://{ip}:{indigo_port}{path}"
+                        })
+            except Exception as e:
+                self.logger.debug(f"Could not detect network IPs: {e}")
+
+        except Exception as e:
+            self.logger.debug(f"Could not detect hostname: {e}")
+
+        # Try to get Indigo Reflector URL if configured
+        try:
+            reflector_url = indigo.server.getReflectorURL()
+            if reflector_url:
+                # Remove trailing slash if present
+                reflector_base = reflector_url.rstrip('/')
+                urls.append({
+                    "label": "Remote (Reflector)",
+                    "url": f"{reflector_base}{path}"
+                })
+        except Exception as e:
+            self.logger.debug(f"Could not detect Indigo Reflector URL: {e}")
+
+        return urls
+
     def startup(self: indigo.PluginBase) -> None:
         """
         Any logic needed at startup, but after __init__ is called.
@@ -84,11 +149,11 @@ class Plugin(indigo.PluginBase):
         # Initialize configuration and AutoLightsAgent.
         self._init_config_and_agent()
 
-        # Log IWS Web Configuration URL for user convenience
-        indigo_host = "localhost"
-        indigo_port = 8176  # Default Indigo web server port
-        iws_url = f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
-        self.logger.info(f"🌐 Web Configuration Interface: {iws_url}")
+        # Log IWS Web Configuration URLs for user convenience
+        self.logger.info("🌐 Web Configuration Interface:")
+        urls = self._get_web_config_urls()
+        for url_info in urls:
+            self.logger.info(f"   {url_info['label']}: {url_info['url']}")
 
         self.logger.debug("Plugin startup complete")
 

@@ -1,0 +1,38 @@
+{
+  "plugin_config": {
+    "default_lock_duration": 0,
+    "default_lock_extension_duration": 0,
+    "global_behavior_variables": []
+  },
+  "zones": [
+    {
+      "name": "Updated Zone",
+      "lighting_period_ids": [],
+      "device_settings": {
+        "on_lights_dev_ids": [],
+        "off_lights_dev_ids": [],
+        "luminance_dev_ids": [],
+        "presence_dev_ids": []
+      },
+      "minimum_luminance_settings": {
+        "minimum_luminance": null,
+        "minimum_luminance_use_variable": false,
+        "minimum_luminance_var_id": null,
+        "adjust_brightness": false
+      },
+      "behavior_settings": {
+        "lock_duration": null,
+        "extend_lock_when_active": false,
+        "lock_extension_duration": null,
+        "unlock_when_no_presence": false,
+        "off_lights_behavior": null
+      },
+      "advanced_settings": {
+        "exclude_from_lock_dev_ids": []
+      },
+      "device_period_map": {},
+      "global_behavior_variables_map": {}
+    }
+  ],
+  "lighting_periods": []
+}
