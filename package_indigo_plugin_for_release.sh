@@ -1,0 +1,1 @@
+/Users/mike/Mike_Sync_Documents/Programming/mike-local-development-scripts/package_indigo_plugin_for_release.sh

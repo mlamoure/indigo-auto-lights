@@ -35,16 +35,27 @@ Example output:
 
 ---
 
+## 🚀 What's New in 2025.2.0 (Pre-Release)
+
+Version 2025.2.0 introduces a major architectural change: the web configuration interface has been migrated from a standalone Flask server to **Indigo's built-in Web Server (IWS)**. This simplifies setup significantly:
+
+- ✅ No more separate web server configuration
+- ✅ No more API keys or Reflector setup required
+- ✅ Direct access via Indigo's standard web server (port 8176)
+- ✅ Authentication using your existing Indigo credentials
+
+**For existing users**: If you're upgrading from an earlier version, the old web server configuration options (API URL, API Key, Bind IP/Port) are no longer needed or available. Simply access the web interface through **Plugins > Auto Lights > Open Web Configuration**.
+
+This is marked as a pre-release for testing. Please report any issues you encounter.
+
+---
+
 ## Requirements
 
-1. **Indigo Version**  
+1. **Indigo Version**
    Auto Lights is tested with the latest Indigo. Older versions may or may not be fully compatible.
 
-2. **API Key / Reflector**  
-   To use the Auto Lights web config editor, you’ll need to be able to access Indigo via API key. There's two options to
-   do this. See [The Web Config Editor](#the-web-config-editor) for instructions and details.
-
-3. **Lights to Control & Presence Devices**  
+2. **Lights to Control & Presence Devices**
    Almost any Indigo-compatible lighting device, plus some way of reporting presence to determine if a zone is occupied,
    such as a motion sensor or virtual presence device. Luminance sensors are optional, and give you the brightness-based
    dimming logic.
@@ -56,26 +67,30 @@ Example output:
 Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
 too advanced for the Indigo native ConfigUI. See [here](#screenshots) for screenshots.
 
-The Web Config is run as a separate web server on your Indigo Server. Because of this, it must interact with your Indigo
-via API. There are two options to enable this:
+**As of version 2025.2.0** (pre-release), the web configuration interface is integrated with Indigo's built-in Web Server (IWS). This means:
 
-1. Enable remote access via Indigo reflector with API (recommended): Be sure your server has been started up with Remote
-   access and refelctor turned on. Get a API key for Auto Lights by
-   going [here](https://www.indigodomo.com/account/authorizations).
+- **No separate web server configuration needed** - no more configuring bind IPs, ports, or API keys
+- **Integrated authentication** - uses the same Indigo credentials as your Indigo web interface
+- **Simple access** - available through Indigo's standard web server on port 8176
 
-2. Enable local secrets (advanced): Add a API key for Auto Lights via
-   the [Local Secrets method in the Indigo Documentation](https://wiki.indigodomo.com/doku.php?id=indigo_2024.2_documentation:indigo_web_server#local_secrets)
+### Accessing the Web Configuration
 
-There is no authorization on the Web Config interface itself. If this concerns you, there are two options available:
+There are two ways to access the web configuration interface:
 
-* Set your web server to only bind to localhost, this will make it so that the web config is only available on your
-  Indigo host directly, and not to addresses on your LAN.
-* Disable the web config server once you've configured your Auto Lights. The plugin does not need it for execution, it's
-  only needed to build your config.
+1. **Via Indigo Menu** (easiest):
+   - Go to **Plugins > Auto Lights > Open Web Configuration**
+   - This will open the web interface in your default browser
+
+2. **Direct URL**:
+   - On the Indigo server: `http://localhost:8176/message/com.vtmikel.autolights/web_ui/`
+   - From another computer on your network: `http://<indigo-server-ip>:8176/message/com.vtmikel.autolights/web_ui/`
+   - You'll be prompted for your Indigo username and password
+
+**Note**: Versions prior to 2025.2.0 used a separate Flask web server that required API key configuration. If you're upgrading from an earlier version, those configuration options are no longer needed or available.
 
 ## Documentation
 
-See documentation [here](Auto%20Lights.indigoPlugin/Contents/Server%20Plugin/config_web_editor/static/Documentation.MD)
+See documentation [here](Auto%20Lights.indigoPlugin/Contents/Resources/static/Documentation.MD)
 
 ---
 
@@ -83,31 +98,21 @@ See documentation [here](Auto%20Lights.indigoPlugin/Contents/Server%20Plugin/con
 
 Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
 
-1. **Reflector / Indigo API URL**  
-   The base URL used by Auto Lights for Indigo API calls.
+1. **Event Logging Level**
+   - 5 (Extra Debugging Messages)
+   - 10 (Debugging Messages)
+   - 20 (Informational Messages) - Default
+   - 30 (Warning Messages)
+   - 40 (Error Messages)
+   - 50 (Critical Errors Only)
 
-2. **API Key**  
-   Needed to authenticate API calls.
+   Choose a level based on how much detail you need in your Indigo logs.
 
-3. **Disable Web Server**  
-   Toggle this to fully turn off the built-in config web server. See [The Web Config Editor](#the-web-config-editor) for
-   more details.
+2. **Log non-action-taken events to the Indigo Event Log**
+   When enabled, the plugin will log extra information about why actions were not taken (e.g., "Zone locked", "Luminance too high").
+   Not recommended unless you are debugging your configuration.
 
-4. **Web Config Bind IP**  
-   `127.0.0.1` (only accessible locally) or `0.0.0.0` (accessible by devices on your local network).
-
-5. **Web Config Bind Port**  
-   Default is `9000`. Change it if something else is using that port.
-
-6. **Logging Level**
-    - 5 (Extra Debugging)
-    - 10 (Debug)
-    - 20 (Info)
-    - 30 (Warning)
-    - 40 (Error)
-    - 50 (Critical)
-
-Choose a level based on how much detail you need in your Indigo logs.
+**Note**: As of version 2025.2.0, web server configuration options (API URL, API Key, Bind IP/Port) have been removed since the web interface now uses Indigo's built-in Web Server.
 
 ---
 
@@ -115,15 +120,18 @@ Choose a level based on how much detail you need in your Indigo logs.
 
 Auto Lights Actions:
 
-1. **Reset All Zone Locks**  
+1. **Reset All Zone Locks**
    Clears lock timers on all Zones, letting Auto Lights resume control immediately.
 
-2. **Reset Specific Zone Lock**  
+2. **Reset Specific Zone Lock**
    Enables you to unlock just one Zone if you had a manual override but now want automation to resume.
 
 Additionally, available under **Plugins > Auto Lights**:
 
-1. **Print All Locked Zones**  
+1. **Open Web Configuration**
+   Opens the web interface for configuring zones in your default browser. See [The Web Config Editor](#the-web-config-editor) for more details.
+
+2. **Print All Locked Zones**
    Logs each locked Zone, showing when the lock will expire.
 
 ## Screenshots
