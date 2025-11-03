@@ -826,8 +826,8 @@ class IWSWebHandler:
             # Update choices for lighting period dropdown
             try:
                 lighting_periods = config_data.get("lighting_periods", [])
-                period_choices = [(idx, period.get("name", f"Period {idx}"))
-                                 for idx, period in enumerate(lighting_periods)]
+                period_choices = [(period.get("id"), period.get("name", f"Period {period.get('id')}"))
+                                 for period in lighting_periods]
 
                 if hasattr(zone_form, 'lighting_period_ids'):
                     zone_form.lighting_period_ids.choices = period_choices
@@ -975,8 +975,8 @@ class IWSWebHandler:
                 # Get lighting periods and filter to only those linked to this zone
                 lighting_periods = config_data.get("lighting_periods", [])
                 period_ids = zone.get("lighting_period_ids", [])
-                # Lighting periods are indexed by position in the array
-                filtered_periods = [p for idx, p in enumerate(lighting_periods) if idx in period_ids]
+                # Filter by period ID (not array index)
+                filtered_periods = [p for p in lighting_periods if p.get("id") in period_ids]
 
                 # Configure the field with filtered devices and periods
                 if hasattr(zone_form, 'device_period_map'):
