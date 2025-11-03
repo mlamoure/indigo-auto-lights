@@ -18,7 +18,7 @@
             <tr>
                 <td>Download Current Config</td>
                 <td>
-                    <form method="GET" action="{{ url_for('config_backup') }}" style="margin:0;">
+                    <form method="POST" action="{{ url_for('config_backup') }}" style="margin:0;">
                         <input type="hidden" name="action" value="download_config">
                         <button type="submit" class="btn">Download Current Config</button>
                     </form>

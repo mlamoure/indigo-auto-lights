@@ -259,14 +259,6 @@ class IWSWebHandler:
         # Flash messages are no longer passed via URL (POST/re-render pattern, not POST/redirect/GET)
         flash = {}
 
-        # Check for action parameter (for downloads, etc.)
-        action = params.get('action', '')
-
-        # Handle special actions on config_backup page
-        if page == 'config_backup' and action == 'download_config':
-            logger.debug("Routing to: _get_download_config")
-            return self._get_download_config()
-
         # Route to appropriate page handler (pass flash messages)
         if not page or page == 'index':
             logger.debug("Routing to: _render_index (page is empty or 'index')")
@@ -617,6 +609,9 @@ class IWSWebHandler:
                 backup_type = form_data.get("backup_type")
                 backup_file = form_data.get("backup_file")
                 return self._download_backup_file(backup_type, backup_file)
+            elif action == "download_config":
+                # Download current config returns file directly, no re-render
+                return self._get_download_config()
             elif action == "reset_defaults":
                 # Reset defaults has its own re-render logic
                 return self._post_reset_defaults()
