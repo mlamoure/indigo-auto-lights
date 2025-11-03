@@ -35,21 +35,6 @@ Example output:
 
 ---
 
-## 🚀 What's New in 2025.2.0 (Pre-Release)
-
-Version 2025.2.0 introduces a major architectural change: the web configuration interface has been migrated from a standalone Flask server to **Indigo's built-in Web Server (IWS)**. This simplifies setup significantly:
-
-- ✅ No more separate web server configuration
-- ✅ No more API keys or Reflector setup required
-- ✅ Direct access via Indigo's standard web server (port 8176)
-- ✅ Authentication using your existing Indigo credentials
-
-**For existing users**: If you're upgrading from an earlier version, the old web server configuration options (API URL, API Key, Bind IP/Port) are no longer needed or available. Simply access the web interface through **Plugins > Auto Lights > Open Web Configuration**.
-
-This is marked as a pre-release for testing. Please report any issues you encounter.
-
----
-
 ## Requirements
 
 1. **Indigo Version**
@@ -67,9 +52,9 @@ This is marked as a pre-release for testing. Please report any issues you encoun
 Auto Lights uses a web interface to build and configure your Zones. This path was chosen because the interface needed is
 too advanced for the Indigo native ConfigUI. See [here](#screenshots) for screenshots.
 
-**As of version 2025.2.0** (pre-release), the web configuration interface is integrated with Indigo's built-in Web Server (IWS). This means:
+The web configuration interface is integrated with Indigo's built-in Web Server (IWS):
 
-- **No separate web server configuration needed** - no more configuring bind IPs, ports, or API keys
+- **No separate web server configuration needed** - no need to configure bind IPs, ports, or API keys
 - **Integrated authentication** - uses the same Indigo credentials as your Indigo web interface
 - **Simple access** - available through Indigo's standard web server on port 8176
 
@@ -85,8 +70,6 @@ There are two ways to access the web configuration interface:
    - On the Indigo server: `http://localhost:8176/message/com.vtmikel.autolights/web_ui/`
    - From another computer on your network: `http://<indigo-server-ip>:8176/message/com.vtmikel.autolights/web_ui/`
    - You'll be prompted for your Indigo username and password
-
-**Note**: Versions prior to 2025.2.0 used a separate Flask web server that required API key configuration. If you're upgrading from an earlier version, those configuration options are no longer needed or available.
 
 ## Documentation
 
@@ -111,8 +94,6 @@ Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
 2. **Log non-action-taken events to the Indigo Event Log**
    When enabled, the plugin will log extra information about why actions were not taken (e.g., "Zone locked", "Luminance too high").
    Not recommended unless you are debugging your configuration.
-
-**Note**: As of version 2025.2.0, web server configuration options (API URL, API Key, Bind IP/Port) have been removed since the web interface now uses Indigo's built-in Web Server.
 
 ---
 
