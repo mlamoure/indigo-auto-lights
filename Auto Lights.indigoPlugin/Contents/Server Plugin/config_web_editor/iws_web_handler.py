@@ -855,9 +855,11 @@ class IWSWebHandler:
 
                     filtered = []
                     for d in devices:
-                        device_class = d.get("class", "")
-                        # Check if device class matches any allowed class
-                        if device_class in allowed_classes:
+                        device_class = str(d.get("class", "")).strip()
+                        device_type_id = str(d.get("deviceTypeId", "")).strip()
+                        # Check if device class OR deviceTypeId matches any allowed class
+                        # (native devices match by class, plugin devices match by deviceTypeId)
+                        if device_class in allowed_classes or device_type_id in allowed_classes:
                             filtered.append(d)
                     return filtered
 
