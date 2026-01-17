@@ -1,10 +1,11 @@
 # Core dependencies for IWS mode
 WTForms~=3.2.1          # Form generation and validation
 Jinja2~=3.1.6           # Template rendering
-Werkzeug~=3.1.3         # MultiDict for WTForms
+Werkzeug~=3.1.5         # MultiDict for WTForms (security fix)
 MarkupSafe~=3.0.3       # Jinja2 dependency (updated)
-python-dotenv~=1.1.1    # Environment configuration
-pytest~=8.4.2           # Testing (updated)
+python-dotenv~=1.2.1    # Environment configuration
+pytest~=8.4.2           # Testing
+PyYAML~=6.0.3           # Test config loading (updated)
 
 # Removed Flask dependencies (migrated to IWS):
 # Flask~=3.1.2          - Replaced by Indigo Web Server

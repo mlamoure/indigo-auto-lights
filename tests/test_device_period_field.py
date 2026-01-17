@@ -1,12 +1,12 @@
 import pytest
-from flask_wtf import FlaskForm
-from config_web_editor.web_config_app import DevicePeriodMapField
+from wtforms import Form
+from config_web_editor.iws_form_helpers import DevicePeriodMapField
 
 # Dummy devices and periods:
 DEVICES = [{"id": 101, "name": "Lamp A"}, {"id": 102, "name": "Lamp B"}]
 PERIODS = [{"id": 1, "name": "All Day"}, {"id": 2, "name": "Night"}]
 
-class DummyForm(FlaskForm):
+class DummyForm(Form):
     device_period_map = DevicePeriodMapField(label="Map", devices=DEVICES, lighting_periods=PERIODS)
 
 def make_formdata(mapping):
