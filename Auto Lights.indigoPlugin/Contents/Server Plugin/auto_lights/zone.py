@@ -1544,7 +1544,8 @@ class Zone(AutoLightsBase):
         extends the lock expiration by lock_extension_duration minutes.
         Otherwise, unlocks the zone.
         """
-        if self.extend_lock_when_active and self.has_presence_detected():
+        self._runtime_cache.pop("presence", None)
+        if self.enabled and self.extend_lock_when_active and self.has_presence_detected():
             new_expiration = datetime.datetime.now() + datetime.timedelta(
                 minutes=self.lock_extension_duration
             )
