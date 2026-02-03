@@ -375,11 +375,13 @@ class Zone(AutoLightsBase):
     @property
     def exclude_from_lock_dev_ids(self) -> List[int]:
         """List of device IDs to exclude from lock operations."""
-        return self._exclude_from_lock_dev_ids
+        # Defensive: return empty list if None (prevents 'in' operator crash)
+        return self._exclude_from_lock_dev_ids or []
 
     @exclude_from_lock_dev_ids.setter
     def exclude_from_lock_dev_ids(self, value: List[int]) -> None:
-        self._exclude_from_lock_dev_ids = value
+        # Normalize None to empty list
+        self._exclude_from_lock_dev_ids = value if value is not None else []
 
     @property
     def on_lights_dev_ids(self) -> List[int]:

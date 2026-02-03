@@ -231,6 +231,10 @@
             if (fieldName.endsWith("luminance_dev_ids")) {
                 updateLuminanceValue();
             }
+            // Update exclude_from_lock when on/off lights change
+            if (fieldName.endsWith("on_lights_dev_ids") || fieldName.endsWith("off_lights_dev_ids")) {
+                updateExcludeFromLockChoices();
+            }
         }
 
         function moveLeft(fieldName) {
@@ -245,6 +249,71 @@
             }
             if (fieldName.endsWith("luminance_dev_ids")) {
                 updateLuminanceValue();
+            }
+            // Update exclude_from_lock when on/off lights change
+            if (fieldName.endsWith("on_lights_dev_ids") || fieldName.endsWith("off_lights_dev_ids")) {
+                updateExcludeFromLockChoices();
+            }
+        }
+    </script>
+    <script>
+        /**
+         * Updates the "Exclude from Lock" dropdown to only show devices
+         * that are currently selected in On/Off Lights or Off Lights.
+         */
+        function updateExcludeFromLockChoices() {
+            // Get selected devices from on_lights and off_lights
+            var onLightsSelected = document.getElementById('device_settings-on_lights_dev_ids_selected');
+            var offLightsSelected = document.getElementById('device_settings-off_lights_dev_ids_selected');
+            var excludeAvailable = document.getElementById('advanced_settings-exclude_from_lock_dev_ids_available');
+            var excludeSelected = document.getElementById('advanced_settings-exclude_from_lock_dev_ids_selected');
+
+            if (!onLightsSelected || !offLightsSelected || !excludeAvailable || !excludeSelected) {
+                return;  // Fields not found, exit gracefully
+            }
+
+            // Build set of allowed device IDs (from on_lights + off_lights selected)
+            var allowedDevices = {};  // id -> name mapping
+
+            for (var i = 0; i < onLightsSelected.options.length; i++) {
+                var opt = onLightsSelected.options[i];
+                allowedDevices[opt.value] = opt.text;
+            }
+            for (var i = 0; i < offLightsSelected.options.length; i++) {
+                var opt = offLightsSelected.options[i];
+                allowedDevices[opt.value] = opt.text;
+            }
+
+            // Get currently selected exclude_from_lock device IDs
+            var currentlyExcluded = {};
+            for (var i = 0; i < excludeSelected.options.length; i++) {
+                currentlyExcluded[excludeSelected.options[i].value] = true;
+            }
+
+            // Remove any excluded devices that are no longer in allowed list
+            for (var i = excludeSelected.options.length - 1; i >= 0; i--) {
+                var opt = excludeSelected.options[i];
+                if (!allowedDevices[opt.value]) {
+                    excludeSelected.remove(i);
+                }
+            }
+
+            // Clear and rebuild available list
+            excludeAvailable.innerHTML = '';
+
+            // Add allowed devices that aren't already selected
+            var sortedIds = Object.keys(allowedDevices).sort(function(a, b) {
+                return allowedDevices[a].localeCompare(allowedDevices[b]);
+            });
+
+            for (var i = 0; i < sortedIds.length; i++) {
+                var deviceId = sortedIds[i];
+                if (!currentlyExcluded[deviceId]) {
+                    var option = document.createElement('option');
+                    option.value = deviceId;
+                    option.text = allowedDevices[deviceId];
+                    excludeAvailable.add(option);
+                }
             }
         }
     </script>

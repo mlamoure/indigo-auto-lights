@@ -64,24 +64,57 @@ def dict_to_multidict(d: Dict[str, Any]) -> MultiDict:
     """
     Convert a regular dict to MultiDict for WTForms compatibility.
 
-    IWS provides body_params as a dict where multi-value fields (like checkboxes)
-    have list values. This function converts it to MultiDict format that WTForms expects.
+    IWS provides body_params as a dict where multi-value fields (like checkboxes
+    or multi-selects) have list values. This function converts it to MultiDict
+    format that WTForms expects.
+
+    Handles edge cases:
+    - indigo.List objects (IWS returns these for multi-select fields)
+    - Nested lists are flattened (IWS sometimes wraps multi-values in extra list)
+    - All values are converted to strings (WTForms expects string form data)
 
     Args:
         d: Dictionary from IWS body_params
 
     Returns:
-        MultiDict with expanded list values
+        MultiDict with expanded list values as strings
     """
     items = []
     for key, value in d.items():
-        if isinstance(value, list):
-            # Multi-value field (e.g., checkbox group)
-            for v in value:
-                items.append((key, v))
+        # Check if value is list-like (handles both list and indigo.List)
+        # Use duck typing: check for __iter__ but exclude strings
+        is_list_like = (
+            hasattr(value, '__iter__')
+            and not isinstance(value, (str, bytes))
+        )
+
+        if is_list_like:
+            # Convert to Python list to ensure we can iterate properly
+            try:
+                value_list = list(value)
+            except (TypeError, ValueError):
+                # If conversion fails, treat as single value
+                items.append((key, str(value) if value is not None else ''))
+                continue
+
+            # Flatten and convert list values
+            for v in value_list:
+                # Check for nested list-like objects
+                v_is_list_like = (
+                    hasattr(v, '__iter__')
+                    and not isinstance(v, (str, bytes))
+                )
+                if v_is_list_like:
+                    # Nested list - flatten it
+                    try:
+                        for inner_v in list(v):
+                            items.append((key, str(inner_v)))
+                    except (TypeError, ValueError):
+                        items.append((key, str(v)))
+                else:
+                    items.append((key, str(v)))
         else:
-            # Single value field
-            items.append((key, value))
+            items.append((key, str(value) if value is not None else ''))
     return MultiDict(items)
 
 
@@ -356,6 +389,12 @@ class IWSWebHandler:
                     "off_lights_dev_ids",
                     "luminance_dev_ids",
                     "presence_dev_ids"
+                ])
+
+            # Ensure nested array fields in advanced_settings are never None
+            if "advanced_settings" in zone_data and zone_data["advanced_settings"]:
+                self._normalize_array_fields(zone_data["advanced_settings"], [
+                    "exclude_from_lock_dev_ids"
                 ])
 
             # Save based on new or existing
@@ -759,6 +798,15 @@ class IWSWebHandler:
                                 logger.warning(f"Zone {idx} device_settings.{field} is {type(value).__name__}, coercing to empty list")
                                 zone['device_settings'][field] = []
 
+                # Validate array fields in advanced_settings
+                if 'advanced_settings' in zone:
+                    for field in ['exclude_from_lock_dev_ids']:
+                        if field in zone['advanced_settings']:
+                            value = zone['advanced_settings'][field]
+                            if not isinstance(value, list):
+                                logger.warning(f"Zone {idx} advanced_settings.{field} is {type(value).__name__}, coercing to empty list")
+                                zone['advanced_settings'][field] = []
+
                 for field in array_fields:
                     if field in zone:
                         value = zone[field]
@@ -925,12 +973,20 @@ class IWSWebHandler:
 
             # Update choices for advanced settings device dropdowns
             try:
-                # Get devices again to ensure device_choices is available
                 devices = self.config_editor.get_cached_indigo_devices()
-                device_choices = [(d["id"], d["name"]) for d in devices]
+
+                # Get the zone's on_lights and off_lights device IDs
+                device_settings = zone.get("device_settings", {})
+                on_lights_ids = set(device_settings.get("on_lights_dev_ids", []) or [])
+                off_lights_ids = set(device_settings.get("off_lights_dev_ids", []) or [])
+
+                # Combine both lists - these are the only valid choices for exclude_from_lock
+                allowed_device_ids = on_lights_ids | off_lights_ids
+
+                # Filter to only devices in on_lights or off_lights
+                device_choices = [(d["id"], d["name"]) for d in devices if d["id"] in allowed_device_ids]
 
                 if hasattr(zone_form, 'advanced_settings'):
-                    # Access the nested form using .form attribute
                     advanced_form = zone_form.advanced_settings.form
                     if hasattr(advanced_form, 'exclude_from_lock_dev_ids'):
                         advanced_form.exclude_from_lock_dev_ids.choices = device_choices
