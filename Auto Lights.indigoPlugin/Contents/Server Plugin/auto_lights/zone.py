@@ -1040,6 +1040,10 @@ class Zone(AutoLightsBase):
                     )
                     if self._pending_writes == 0:
                         self.check_in()
+                        # Re-evaluate zone to catch any state changes
+                        # (e.g. motion ON) that occurred during writes
+                        if self._config.agent:
+                            self._config.agent.process_zone(self)
 
             t = threading.Thread(target=_writer, daemon=True)
             t.start()
