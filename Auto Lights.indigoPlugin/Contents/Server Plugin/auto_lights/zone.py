@@ -1033,6 +1033,7 @@ class Zone(AutoLightsBase):
                 )
                 utils.send_to_indigo(dev_id, desired_brightness)
                 # when done, decrement; if zero, check in
+                should_process = False
                 with self._write_lock:
                     self._pending_writes -= 1
                     self._debug_log(
@@ -1040,10 +1041,13 @@ class Zone(AutoLightsBase):
                     )
                     if self._pending_writes == 0:
                         self.check_in()
-                        # Re-evaluate zone to catch any state changes
-                        # (e.g. motion ON) that occurred during writes
-                        if self._config.agent:
-                            self._config.agent.process_zone(self)
+                        should_process = self._config.agent is not None
+                # Re-evaluate zone OUTSIDE the lock to catch any state
+                # changes (e.g. motion ON) that occurred during writes.
+                # Must be outside _write_lock because process_zone() may
+                # call save_brightness_changes() which also acquires it.
+                if should_process:
+                    self._config.agent.process_zone(self)
 
             t = threading.Thread(target=_writer, daemon=True)
             t.start()
