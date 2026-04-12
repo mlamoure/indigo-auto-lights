@@ -246,10 +246,15 @@ class AutoLightsAgent(AutoLightsBase):
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
-                # Invalidate presence cache when a presence device changes
-                # so that subsequent checks read fresh device state
+                # Invalidate the corresponding runtime cache so the next
+                # process_zone reads fresh sensor state. Without this, a
+                # luminance update could re-evaluate against a stale is_dark
+                # result computed earlier in the same plugin run.
                 if device_prop == "presence_dev_ids":
                     zone._runtime_cache.pop("presence", None)
+                else:
+                    zone._runtime_cache.pop("luminance", None)
+                    zone._runtime_cache.pop("is_dark", None)
 
                 # presence-handling for auto-unlock: cancel grace timer on presence
                 if device_prop == "presence_dev_ids" and zone.unlock_when_no_presence:
