@@ -177,3 +177,66 @@ def test_locked_zone_does_not_create_new_lock_for_suppressed_flap(
     # process_zone — it only checks for lock creation, which is gated on
     # `not zone.locked`)
     assert process_zone_calls == 0
+
+
+@patch("auto_lights.utils.send_to_indigo")
+def test_recovered_device_clears_suppression_while_locked_and_writes_after_expiry(
+    mock_send, multi_device_agent
+):
+    """A suppressed device that recovers during a lock should clear its
+    failure count immediately, and once the lock expires it should be treated
+    like a normal device again rather than staying skipped forever.
+    """
+    import datetime
+    agent, zone = multi_device_agent
+    dev_recovered = 102
+
+    zone.target_brightness = [
+        {"dev_id": 101, "brightness": 100},
+        {"dev_id": 102, "brightness": 100},
+    ]
+    zone._device_fail_count[dev_recovered] = MAX_CONSECUTIVE_FAILURES
+    zone.lock_expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
+    assert zone.locked
+
+    # Device recovers to the desired state while the zone is locked.
+    indigo.devices[dev_recovered].brightness = 100
+    indigo.devices[dev_recovered].onState = True
+    indigo.devices[dev_recovered].states["brightness"] = 100
+    indigo.devices[dev_recovered].states["onState"] = True
+    indigo.devices[dev_recovered].states["onOffState"] = True
+    agent.process_device_change(indigo.devices[dev_recovered], {"brightness": 100})
+    assert zone._device_fail_count.get(dev_recovered, 0) == 0
+
+    # Drift again before lock expiry so there is real work to do after unlock.
+    indigo.devices[dev_recovered].brightness = 0
+    indigo.devices[dev_recovered].onState = False
+    indigo.devices[dev_recovered].states["brightness"] = 0
+    indigo.devices[dev_recovered].states["onState"] = False
+    indigo.devices[dev_recovered].states["onOffState"] = False
+
+    sent_to: list[int] = []
+
+    def fake_send(dev_id, brightness):
+        sent_to.append(dev_id)
+        d = indigo.devices[dev_id]
+        d.brightness = brightness if isinstance(brightness, int) else (
+            100 if brightness else 0
+        )
+        d.onState = bool(d.brightness)
+        d.states["brightness"] = d.brightness
+        d.states["onState"] = d.onState
+        d.states["onOffState"] = d.onState
+        return True
+
+    mock_send.side_effect = fake_send
+
+    zone.lock_expiration = datetime.datetime.now() - datetime.timedelta(seconds=1)
+    assert not zone.locked
+    agent.process_expired_lock(zone)
+
+    deadline = time.monotonic() + 5.0
+    while zone.checked_out and time.monotonic() < deadline:
+        time.sleep(0.05)
+
+    assert dev_recovered in sent_to

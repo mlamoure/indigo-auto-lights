@@ -9,6 +9,7 @@ import json
 import threading
 import time
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 
 import pytest
@@ -18,6 +19,7 @@ from auto_lights.auto_lights_config import AutoLightsConfig
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.zone import MAX_CONSECUTIVE_FAILURES
 from auto_lights import utils
+from plugin import Plugin
 from tests.helpers import load_yaml, make_device
 
 
@@ -251,6 +253,38 @@ def test_device_change_clears_failure_count_when_at_target(mock_send, agent_and_
     assert zone._device_fail_count.get(dev_id, 0) == 0
 
 
+def test_plugin_device_updated_clears_failure_count_when_new_state_reaches_target(
+    agent_and_zone,
+):
+    """Plugin.deviceUpdated must evaluate recovery against the post-update
+    device snapshot from Indigo, not the pre-update one.
+    """
+    agent, zone = agent_and_zone
+    dev_id = zone.on_lights_dev_ids[0]
+
+    zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
+    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+
+    orig_dev = indigo.DimmerDevice(
+        dev_id,
+        name=f"Dev-{dev_id}",
+        onState=False,
+        brightness=0,
+    )
+    new_dev = indigo.DimmerDevice(
+        dev_id,
+        name=f"Dev-{dev_id}",
+        onState=True,
+        brightness=100,
+    )
+    indigo.devices[dev_id] = new_dev
+
+    fake_plugin = SimpleNamespace(_agent=agent)
+    Plugin.deviceUpdated(fake_plugin, orig_dev, new_dev)
+
+    assert zone._device_fail_count.get(dev_id, 0) == 0
+
+
 @patch("auto_lights.utils.send_to_indigo")
 def test_device_change_unrelated_does_not_clear(mock_send, agent_and_zone):
     """A deviceUpdated callback that does not reach the zone's target must
@@ -315,6 +349,21 @@ def test_check_confirm_unknown_device_no_brightness():
     assert not hasattr(dev, "brightness")
 
     assert utils._check_confirm(dev, 100, None) is False
+
+
+def test_has_brightness_changes_normalizes_relay_bool_targets(agent_and_zone):
+    """Relay targets stored as bool should compare through
+    is_device_at_target(), not raw integer/bool inequality.
+    """
+    agent, zone = agent_and_zone
+    dev_id = zone.on_lights_dev_ids[0]
+
+    make_device(dev_id, device_cls="relay", onState=True, brightness=100)
+    zone.target_brightness = [{"dev_id": dev_id, "brightness": True}]
+
+    assert zone.current_lights_status(include_lock_excluded=True)[0]["brightness"] == 100
+    assert zone.target_brightness[0]["brightness"] is True
+    assert zone.has_brightness_changes() is False
 
 
 # --- Multi-device and edge case tests ---
@@ -394,11 +443,34 @@ def test_off_lights_suppression(mock_send, multi_device_agent):
     # Pre-seed the suppression
     zone._device_fail_count[off_dev] = MAX_CONSECUTIVE_FAILURES
 
-    # Set target to turn everything off
+    # Put every light in the wrong state, then target everything off.
+    for dev_id in zone.on_lights_dev_ids:
+        indigo.devices[dev_id].brightness = 100
+        indigo.devices[dev_id].onState = True
+        indigo.devices[dev_id].states["brightness"] = 100
+        indigo.devices[dev_id].states["onState"] = True
+        indigo.devices[dev_id].states["onOffState"] = True
+    indigo.devices[off_dev].brightness = 100
+    indigo.devices[off_dev].onState = True
+    indigo.devices[off_dev].states["brightness"] = 100
+    indigo.devices[off_dev].states["onState"] = True
+    indigo.devices[off_dev].states["onOffState"] = True
+
     zone.target_brightness = [
-        {"dev_id": d, "brightness": 0} for d in zone.on_lights_dev_ids
+        {"dev_id": d, "brightness": 0}
+        for d in zone.on_lights_dev_ids + zone.off_lights_dev_ids
     ]
-    zone._target_brightness_all_off = True
+
+    def fake_send(dev_id, brightness):
+        d = indigo.devices[dev_id]
+        d.brightness = 100 if isinstance(brightness, bool) and brightness else int(brightness)
+        d.onState = bool(d.brightness)
+        d.states["brightness"] = d.brightness
+        d.states["onState"] = d.onState
+        d.states["onOffState"] = d.onState
+        return True
+
+    mock_send.side_effect = fake_send
 
     zone.check_out()
     zone.save_brightness_changes()
@@ -409,6 +481,105 @@ def test_off_lights_suppression(mock_send, multi_device_agent):
     for call_args in mock_send.call_args_list:
         assert call_args[0][0] != off_dev, \
             f"send_to_indigo was called for suppressed off_lights device {off_dev}"
+
+
+@patch("auto_lights.utils.send_to_indigo")
+def test_default_off_lights_behavior_does_not_write_off_lights_while_active(
+    mock_send, multi_device_agent
+):
+    """Default off-lights behavior should leave off_lights alone while the
+    zone is active and dark.
+    """
+    agent, zone = multi_device_agent
+    off_dev = zone.off_lights_dev_ids[0]
+
+    indigo.devices[off_dev].brightness = 100
+    indigo.devices[off_dev].onState = True
+    indigo.devices[off_dev].states["brightness"] = 100
+    indigo.devices[off_dev].states["onState"] = True
+    indigo.devices[off_dev].states["onOffState"] = True
+
+    sent_to = []
+
+    def fake_send(dev_id, brightness):
+        sent_to.append((dev_id, brightness))
+        d = indigo.devices[dev_id]
+        d.brightness = 100 if isinstance(brightness, bool) and brightness else int(brightness)
+        d.onState = bool(d.brightness)
+        d.states["brightness"] = d.brightness
+        d.states["onState"] = d.onState
+        d.states["onOffState"] = d.onState
+        return True
+
+    mock_send.side_effect = fake_send
+
+    agent.process_zone(zone)
+
+    deadline = time.monotonic() + 5.0
+    while zone.checked_out and time.monotonic() < deadline:
+        time.sleep(0.05)
+
+    written_ids = [dev_id for dev_id, _ in sent_to]
+    assert zone.on_lights_dev_ids[0] in written_ids
+    assert zone.on_lights_dev_ids[1] in written_ids
+    assert off_dev not in written_ids
+
+
+@pytest.fixture
+def force_off_agent(tmp_path):
+    """Zone with force-off behavior during an active dark period."""
+    data = load_yaml(
+        Path(__file__).parent / "configs" / "scenario7_force_off_behavior.yaml"
+    )
+    config_json = {
+        "plugin_config": data.get("plugin_config", {}),
+        "lighting_periods": data.get("lighting_periods", []),
+        "zones": data.get("zones", []),
+    }
+    conf_path = tmp_path / "conf.json"
+    conf_path.write_text(json.dumps(config_json))
+    cfg = AutoLightsConfig(str(conf_path))
+    agent = AutoLightsAgent(cfg)
+    zone = cfg.zones[0]
+
+    make_device(101, brightness=0, onState=False)
+    make_device(102, brightness=100, onState=True)
+    make_device(201, sensorValue=0)
+    make_device(301, onState=True)
+
+    return agent, zone
+
+
+@patch("auto_lights.utils.send_to_indigo")
+def test_force_off_behavior_writes_off_lights_while_active(mock_send, force_off_agent):
+    """Force-off mode should actively send off commands to off_lights during
+    a presence+dark run.
+    """
+    agent, zone = force_off_agent
+    off_dev = zone.off_lights_dev_ids[0]
+
+    sent_to = []
+
+    def fake_send(dev_id, brightness):
+        sent_to.append((dev_id, brightness))
+        d = indigo.devices[dev_id]
+        d.brightness = 100 if isinstance(brightness, bool) and brightness else int(brightness)
+        d.onState = bool(d.brightness)
+        d.states["brightness"] = d.brightness
+        d.states["onState"] = d.onState
+        d.states["onOffState"] = d.onState
+        return True
+
+    mock_send.side_effect = fake_send
+
+    agent.process_zone(zone)
+
+    deadline = time.monotonic() + 5.0
+    while zone.checked_out and time.monotonic() < deadline:
+        time.sleep(0.05)
+
+    assert (zone.on_lights_dev_ids[0], 100) in sent_to
+    assert (off_dev, 0) in sent_to
 
 
 @patch("auto_lights.utils.send_to_indigo")
