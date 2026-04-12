@@ -195,7 +195,7 @@ class Plugin(indigo.PluginBase):
 
         # process the change if the agent exists
         if self._agent is not None:
-            processed = self._agent.process_device_change(orig_dev, diff)
+            processed = self._agent.process_device_change(new_dev, diff, orig_dev)
             for z in processed:
                 z.sync_indigo_device()
 

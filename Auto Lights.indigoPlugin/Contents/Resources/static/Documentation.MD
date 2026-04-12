@@ -89,6 +89,29 @@ Controls how your **Off Lights** list is handled during **On and Off** lighting 
 - **force off unless zone is locked**  
   Actively issues an off-command to every device in your Off Lights list on each automation run—unless the zone is currently locked by a manual change.
 
+### Troubleshooting: Unresponsive Devices
+
+If a light stops responding reliably, Auto Lights now tries to fail safely instead of hammering your network:
+
+- **Device failure suppression**  
+  If a light fails to confirm **3 commands in a row**, Auto Lights temporarily stops sending commands to that specific device. Other lights in the zone can continue working normally.
+
+- **How the device starts working again**  
+  Suppression clears automatically once the device's actual state matches what Auto Lights expects. In practice, that usually means the device starts reporting correct on/off or brightness state again after the hardware problem is fixed.
+
+- **Why a zone may appear to lock itself**  
+  A flaky device that never reaches its target can look like a manual override. When that happens, the zone may create a normal lock to avoid fighting the state change. Once the lock expires, Auto Lights re-evaluates the zone and resumes normal automation.
+
+- **What the warning logs mean**
+  - `⚠️ Device 'X' failed to confirm 3 consecutive commands — suppressing until it responds`
+  - `⚠️ Zone 'Y': re-evaluation rate limit reached — deferring further re-evaluation. Check for unresponsive devices.`
+
+- **What you should do**
+  - Repair or replace the unresponsive device
+  - Check Indigo's protocol logs, especially Z-Wave logs, for repeated transport errors
+  - Restart the Auto Lights plugin if you want to clear in-memory suppression state immediately
+  - Re-test the zone once the device is healthy to confirm that normal automation resumes
+
 ### Luminance Settings
 
 > **NOTE:** Minimum brightness is only available if a luminance device is added.

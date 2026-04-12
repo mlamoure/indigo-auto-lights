@@ -848,8 +848,16 @@ class Zone(AutoLightsBase):
         Returns:
             bool: True if all devices are set to off, False otherwise.
         """
-        for tb in self.target_brightness:
-            if (isinstance(tb, int) and tb != 0) or (isinstance(tb, bool) and tb):
+        targets = self.target_brightness or []
+        if not targets:
+            return False
+
+        for tb in targets:
+            desired = tb["brightness"] if isinstance(tb, dict) else tb
+            if isinstance(desired, bool):
+                if desired:
+                    return False
+            elif desired != 0:
                 return False
         return True
 
@@ -1030,10 +1038,11 @@ class Zone(AutoLightsBase):
                 continue
 
             actual = current[dev_id]
+            at_target = utils.is_device_at_target(indigo.devices[dev_id], desired)
             self._debug_log(
-                f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}"
+                f"has_brightness_changes: device {dev_id}: desired={desired}, actual={actual}, at_target={at_target}"
             )
-            if actual != desired:
+            if not at_target:
                 return True
 
         self._debug_log("has_brightness_changes: no brightness changes detected")
@@ -1043,38 +1052,34 @@ class Zone(AutoLightsBase):
         """
         Apply and confirm the target brightness changes for this zone's devices.
 
-        We batch up all writes, set pending_writes once, then
-        spawn one thread per write. The final thread to complete
-        will call check_in(), so we don’t prematurely check in.
+        We batch up only those writes whose devices are not already at target,
+        set pending_writes once, then spawn one thread per write. The final
+        thread to complete will call check_in(), so we don’t prematurely check
+        in.
         """
-        # 1) Gather all writes
+        # 1) Gather all writes from the computed target plan.
         writes: List[tuple[int, Union[int, bool]]] = []
-
-        # If all devices are off, write off-lights first
+        ordered_targets = list(self.target_brightness or [])
         if self.target_brightness_all_off:
-            for dev_id in self.off_lights_dev_ids:
-                if self._is_device_suppressed(dev_id):
-                    continue
-                self._debug_log(
-                    f"Setting device {dev_id} off as per target_brightness_all_off"
-                )
-                writes.append((dev_id, 0))
+            ordered_targets.sort(
+                key=lambda item: 0 if item["dev_id"] in self.off_lights_dev_ids else 1
+            )
 
-        # Then map on-lights
-        target_map = {
-            item["dev_id"]: item["brightness"] for item in self.target_brightness
-        }
-        for dev_id in self.on_lights_dev_ids:
-            if self._device_fail_count.get(dev_id, 0) >= MAX_CONSECUTIVE_FAILURES:
+        for item in ordered_targets:
+            dev_id = item["dev_id"]
+            desired = item["brightness"]
+
+            if self._is_device_suppressed(dev_id):
                 continue
-            brightness = target_map.get(dev_id)
-            if brightness is not None:
-                self._debug_log(f"Setting device {dev_id} brightness to {brightness}")
-                writes.append((dev_id, brightness))
-            else:
+
+            if utils.is_device_at_target(indigo.devices[dev_id], desired):
                 self._debug_log(
-                    f"No target brightness found for device {dev_id}. Skipping update."
+                    f"save_brightness_changes: device {dev_id} already at target {desired}"
                 )
+                continue
+
+            self._debug_log(f"Setting device {dev_id} to {desired}")
+            writes.append((dev_id, desired))
 
         # If there’s nothing to do, check in immediately
         if not writes:

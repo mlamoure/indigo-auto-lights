@@ -132,7 +132,12 @@ class AutoLightsAgent(AutoLightsBase):
 
         return True
 
-    def process_device_change(self, orig_dev: indigo.Device, diff: dict) -> List[Zone]:
+    def process_device_change(
+        self,
+        current_dev: indigo.Device,
+        diff: dict,
+        previous_dev: indigo.Device | None = None,
+    ) -> List[Zone]:
         """
         Process a device change event.
 
@@ -149,7 +154,7 @@ class AutoLightsAgent(AutoLightsBase):
         """
         processed = []
         for zone in self.config.zones:
-            device_prop = zone._has_device(orig_dev.id)
+            device_prop = zone._has_device(current_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
                 # Clear failure suppression only when the device has actually
                 # reached the target state the zone is trying to write. A bare
@@ -158,18 +163,18 @@ class AutoLightsAgent(AutoLightsBase):
                 # responses) that look like activity but mean nothing. If we
                 # cleared on those, suppression would never engage and the
                 # writer-thread re-eval loop would flood the network.
-                if zone._device_fail_count.get(orig_dev.id, 0) > 0:
+                if zone._device_fail_count.get(current_dev.id, 0) > 0:
                     target_map = {
                         t["dev_id"]: t["brightness"]
                         for t in (zone.target_brightness or [])
                     }
-                    desired = target_map.get(orig_dev.id)
+                    desired = target_map.get(current_dev.id)
                     if desired is not None and utils.is_device_at_target(
-                        orig_dev, desired
+                        current_dev, desired
                     ):
-                        zone._device_fail_count.pop(orig_dev.id, None)
+                        zone._device_fail_count.pop(current_dev.id, None)
                         self.logger.info(
-                            f"✅ Device '{orig_dev.name}' reached target state "
+                            f"✅ Device '{current_dev.name}' reached target state "
                             f"— resuming automation for zone '{zone.name}'"
                         )
 
@@ -179,12 +184,12 @@ class AutoLightsAgent(AutoLightsBase):
                         and self.config.log_non_events
                     ):
                         self.logger.info(
-                            f"🚫 Ignored device change from '{orig_dev.name}' for disabled zone '{zone.name}'."
+                            f"🚫 Ignored device change from '{current_dev.name}' for disabled zone '{zone.name}'."
                         )
                     continue
 
                 self._debug_log(
-                    f"Change from {orig_dev.name}; zone property: {device_prop}"
+                    f"Change from {current_dev.name}; zone property: {device_prop}"
                 )
 
                 # Skip lock logic when no active lighting period
@@ -195,21 +200,22 @@ class AutoLightsAgent(AutoLightsBase):
                     continue
 
                 if zone.lock_enabled and not zone.locked and zone.has_lock_occurred():
+                    prior_dev = previous_dev or current_dev
                     change_info = ""
                     if "brightness" in diff:
-                        old = getattr(orig_dev, "brightness", None)
+                        old = getattr(prior_dev, "brightness", None)
                         new = diff["brightness"]
                         change_info = f" (was: {old}; now: {new})"
                     elif "onState" in diff:
-                        old = orig_dev.states.get("onState", False)
+                        old = prior_dev.states.get("onState", False)
                         new = diff["onState"]
                         change_info = f" (was: {old}; now: {new})"
                     elif "onOffState" in diff:
-                        old = orig_dev.states.get("onOffState", False)
+                        old = prior_dev.states.get("onOffState", False)
                         new = diff["onOffState"]
                         change_info = f" (was: {old}; now: {new})"
                     self.logger.info(
-                        f"🔒 New lock created for zone '{zone.name}'; device change from '{orig_dev.name}'{change_info}."
+                        f"🔒 New lock created for zone '{zone.name}'; device change from '{current_dev.name}'{change_info}."
                     )
                     self.logger.info("  🔒 Lock Details:")
                     self.logger.info(
@@ -477,7 +483,7 @@ class AutoLightsAgent(AutoLightsBase):
                 # skip if target is None
                 if desired is None:
                     continue
-                if actual != desired:
+                if not utils.is_device_at_target(indigo.devices[dev_id], desired):
                     # something is out-of-sync
                     self.logger.warning(
                         f"[debug_zone_states] Zone '{zone.name}' device '{indigo.devices[dev_id].name}': "

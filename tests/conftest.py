@@ -1,5 +1,6 @@
 import sys
 import types
+import logging
 
 # Stub indigo module for plugin imports before runtime
 indigo_stub = types.SimpleNamespace()
@@ -26,19 +27,42 @@ class Variables(dict):
 
 indigo_stub.variables = Variables()
 indigo_stub.kProtocol = types.SimpleNamespace(Plugin="Plugin")
+def _create_device(*a, **k):
+    dev_id = max(indigo_stub.devices.keys(), default=0) + 1
+    dev = indigo_stub.Device(
+        dev_id,
+        name=k.get("name", ""),
+        onState=True,
+        brightness=0,
+        sensorValue=0,
+    )
+    indigo_stub.devices[dev_id] = dev
+    return dev
+
+def _turn_on(dev_id, **_):
+    dev = indigo_stub.devices[dev_id]
+    dev.onState = True
+    dev.onOffState = True
+    dev.states["onState"] = True
+    dev.states["onOffState"] = True
+    if hasattr(dev, "brightness"):
+        dev.brightness = 100
+        dev.states["brightness"] = 100
+
+def _turn_off(dev_id, **_):
+    dev = indigo_stub.devices[dev_id]
+    dev.onState = False
+    dev.onOffState = False
+    dev.states["onState"] = False
+    dev.states["onOffState"] = False
+    if hasattr(dev, "brightness"):
+        dev.brightness = 0
+        dev.states["brightness"] = 0
+
 indigo_stub.device = types.SimpleNamespace(
-    create=lambda *a, **k: indigo_stub.devices.setdefault(
-        max(indigo_stub.devices.keys(), default=0) + 1,
-        indigo_stub.Device(
-            max(indigo_stub.devices.keys(), default=0) + 1,
-            name=k.get("name", ""),
-            onState=True,
-            brightness=0,
-            sensorValue=0,
-        ),
-    ),
-    turnOn=lambda dev_id, **_: setattr(indigo_stub.devices[dev_id], "onState", True),
-    turnOff=lambda dev_id, **_: setattr(indigo_stub.devices[dev_id], "onState", False),
+    create=_create_device,
+    turnOn=_turn_on,
+    turnOff=_turn_off,
 )
 indigo_stub.variable = types.SimpleNamespace(
     create=lambda *a, **k: indigo_stub.variables.setdefault(
@@ -72,8 +96,47 @@ class Device:
         self.pluginProps = {}
         self.lastChanged = datetime.datetime.now()
 
+    def __iter__(self):
+        return iter(self.states.items())
+
     def replaceOnServer(self): pass
     def updateStatesOnServer(self, state_list): pass
+
+
+class DimmerDevice(Device):
+    pass
+
+
+class RelayDevice(Device):
+    pass
+
+
+class _DummyHandler(logging.Handler):
+    def __init__(self, baseFilename="/tmp/Logs/plugin.log"):
+        super().__init__()
+        self.baseFilename = baseFilename
+
+    def emit(self, record):
+        pass
+
+
+class PluginBase:
+    def __init__(self, plugin_id, plugin_display_name, plugin_version, plugin_prefs, **kwargs):
+        self.pluginId = plugin_id
+        self.pluginDisplayName = plugin_display_name
+        self.pluginVersion = plugin_version
+        self.pluginPrefs = plugin_prefs
+        self.logger = logging.getLogger("Plugin")
+        self.indigo_log_handler = _DummyHandler()
+        self.plugin_file_handler = _DummyHandler()
+
+    @staticmethod
+    def deviceUpdated(self, orig_dev, new_dev):
+        return None
+
+    @staticmethod
+    def variableUpdated(self, orig_var, new_var):
+        return None
 
 class Variable:
     def __init__(self, id, name="", value=None):
@@ -82,9 +145,10 @@ class Variable:
         self.value = value
 
 indigo_stub.Device = Device
-indigo_stub.DimmerDevice = Device
-indigo_stub.RelayDevice = Device
+indigo_stub.DimmerDevice = DimmerDevice
+indigo_stub.RelayDevice = RelayDevice
 indigo_stub.Variable = Variable
+indigo_stub.PluginBase = PluginBase
 
 # Add Dict class for IWS response format (just a regular dict in tests)
 class IndigoDict(dict):
