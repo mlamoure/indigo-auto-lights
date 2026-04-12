@@ -2,6 +2,7 @@ import datetime
 import threading
 from typing import List
 
+from . import utils
 from .auto_lights_base import AutoLightsBase
 from .auto_lights_config import AutoLightsConfig
 from .zone import Zone, LOCK_HOLD_GRACE_SECONDS
@@ -150,6 +151,28 @@ class AutoLightsAgent(AutoLightsBase):
         for zone in self.config.zones:
             device_prop = zone._has_device(orig_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
+                # Clear failure suppression only when the device has actually
+                # reached the target state the zone is trying to write. A bare
+                # deviceUpdated isn't enough — for a flaky Z-Wave node, Indigo
+                # emits state diffs (lastChanged, partial reports, polling
+                # responses) that look like activity but mean nothing. If we
+                # cleared on those, suppression would never engage and the
+                # writer-thread re-eval loop would flood the network.
+                if zone._device_fail_count.get(orig_dev.id, 0) > 0:
+                    target_map = {
+                        t["dev_id"]: t["brightness"]
+                        for t in (zone.target_brightness or [])
+                    }
+                    desired = target_map.get(orig_dev.id)
+                    if desired is not None and utils.is_device_at_target(
+                        orig_dev, desired
+                    ):
+                        zone._device_fail_count.pop(orig_dev.id, None)
+                        self.logger.info(
+                            f"✅ Device '{orig_dev.name}' reached target state "
+                            f"— resuming automation for zone '{zone.name}'"
+                        )
+
                 if not zone.enabled:
                     if (
                         any(k in diff for k in ["brightness", "onState", "onOffState"])
@@ -223,6 +246,10 @@ class AutoLightsAgent(AutoLightsBase):
                         self._timers[zone.name] = timer
                         timer.start()
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
+                # Invalidate presence cache when a presence device changes
+                # so that subsequent checks read fresh device state
+                if device_prop == "presence_dev_ids":
+                    zone._runtime_cache.pop("presence", None)
 
                 # presence-handling for auto-unlock: cancel grace timer on presence
                 if device_prop == "presence_dev_ids" and zone.unlock_when_no_presence:
@@ -245,6 +272,9 @@ class AutoLightsAgent(AutoLightsBase):
             elapsed = (datetime.datetime.now() - zone._lock_start_time).total_seconds()
             if elapsed < LOCK_HOLD_GRACE_SECONDS:
                 return
+        # Clear stale presence cache before checking (same pattern as
+        # Zone._process_expired_lock which also pops "presence" before reading)
+        zone._runtime_cache.pop("presence", None)
         if (
             zone.locked
             and zone.unlock_when_no_presence

@@ -52,3 +52,30 @@ def test_no_unlock_before_grace(config):
     zone._lock_start_time -= datetime.timedelta(seconds=LOCK_HOLD_GRACE_SECONDS - 1)
     agent._unlock_after_grace(zone)
     assert zone.locked
+
+
+def test_no_unlock_when_stale_cache_hides_presence(config):
+    """Verify _unlock_after_grace reads fresh device state, not stale cache.
+
+    Scenario: cache says presence=False, but device is actually on.
+    The zone should NOT be unlocked because fresh read detects presence."""
+    import indigo
+    from tests.helpers import make_device
+
+    cfg = config("scenario1_presence_dark_adjust_false.yaml")
+    agent = AutoLightsAgent(cfg)
+    zone = cfg.zones[0]
+    zone.unlock_when_no_presence = True
+    zone.locked = True
+    zone._lock_start_time -= datetime.timedelta(seconds=LOCK_HOLD_GRACE_SECONDS + 1)
+
+    # Set presence device to ON
+    dev_id = zone.presence_dev_ids[0]
+    make_device(dev_id, onState=True)
+
+    # Seed stale cache entry that says no presence
+    zone._runtime_cache["presence"] = False
+
+    agent._unlock_after_grace(zone)
+    # Zone should stay locked because fresh device read shows presence
+    assert zone.locked

@@ -85,6 +85,8 @@ This is an Indigo Home Automation plugin for automatic lighting control written 
 
 **Configuration Schema**: JSON-based configuration with schema validation for both global settings and individual zones.
 
+**Device Failure Suppression**: Prevents infinite command loops when devices fail to confirm state changes (e.g., unreachable HA Agent devices, or devices whose brightness state never updates in Indigo). Per-device consecutive failure tracking in `zone._device_fail_count` suppresses a device after `MAX_CONSECUTIVE_FAILURES` (3) unconfirmed commands. `send_to_indigo()` returns `bool` to signal confirmation success/failure. Suppressed devices are skipped in `has_brightness_changes()` and `save_brightness_changes()`, breaking the re-evaluation loop. Auto-recovery occurs when a suppressed device sends a state update via `process_device_change()`, clearing its failure count.
+
 ### Testing
 
 Tests use pytest with a custom `conftest.py` that stubs the Indigo module since tests run outside the Indigo environment. The test suite covers zone logic, locking mechanisms, and configuration validation.
