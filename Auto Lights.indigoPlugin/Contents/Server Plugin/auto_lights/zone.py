@@ -27,7 +27,9 @@ import json
 import logging
 import math
 import threading
-from typing import List, Union, Optional, TYPE_CHECKING, Tuple, Any
+import time
+from collections import deque
+from typing import Deque, List, Union, Optional, TYPE_CHECKING, Tuple, Any
 
 from .auto_lights_base import AutoLightsBase
 from .brightness_plan import BrightnessPlan
@@ -46,6 +48,17 @@ except ImportError:
 
 # Grace period before allowing auto-unlock when no presence (in seconds)
 LOCK_HOLD_GRACE_SECONDS = 30
+
+# Max consecutive failed confirmations before suppressing a device
+MAX_CONSECUTIVE_FAILURES = 3
+
+# Belt-and-suspenders re-evaluation rate limit. The writer-thread re-eval
+# path (save_brightness_changes -> check_in -> process_zone) can in theory
+# loop on a device that never reaches target. Failure suppression is the
+# primary defense; this rate limit caps the worst-case if suppression has
+# a bug. A normal trigger only re-evals once, so 5 in 30s is generous.
+MAX_REEVAL_BURST = 5
+REEVAL_WINDOW_SECONDS = 30.0
 
 class Zone(AutoLightsBase):
     """
@@ -204,6 +217,16 @@ class Zone(AutoLightsBase):
         # counter for in-flight write commands
         self._pending_writes = 0
         self._write_lock = threading.Lock()
+
+        # track consecutive send failures per device to prevent infinite loops
+        self._device_fail_count: dict[int, int] = {}
+
+        # Sliding window of writer-thread re-eval timestamps (monotonic).
+        # Guarded by _reeval_lock; only touched from save_brightness_changes
+        # writer threads via _can_reeval().
+        self._reeval_timestamps: Deque[float] = deque()
+        self._reeval_lock = threading.Lock()
+        self._reeval_limit_warned = False
         self._indigo_dev_id: Optional[int] = None
         # global behavior variables map
         self._global_behavior_variables_map: dict[str, bool] = {}
@@ -488,12 +511,12 @@ class Zone(AutoLightsBase):
             elif "brightness" in device.states:
                 return int(device.states["brightness"])
             elif "brightnessLevel" in device.states:
-                return int(device.states["brightness"])
+                return int(device.states["brightnessLevel"])
 
             try:
                 return bool(device.onState)
             except Exception as e:
-                logging.error(
+                self.logger.error(
                     f"Zone '{self._name}': failed to read current state for device "
                     f"{getattr(device, 'id', 'unknown')} ('{getattr(device, 'name', 'unknown')}'): {e}"
                 )
@@ -936,6 +959,38 @@ class Zone(AutoLightsBase):
         self.locked = False
         self.logger.info(f"🔓 Zone '{self._name}' lock reset: {reason}")
 
+    def _is_device_suppressed(self, dev_id: int) -> bool:
+        """Return True if device has been suppressed due to repeated command failures."""
+        return self._device_fail_count.get(dev_id, 0) >= MAX_CONSECUTIVE_FAILURES
+
+    def _can_reeval(self) -> bool:
+        """Decide whether the writer-thread re-eval path may fire again.
+
+        Maintains a sliding window of recent writer-initiated re-evaluations
+        and returns False if the burst threshold is hit. External triggers
+        (deviceUpdated → process_device_change → process_zone) bypass this
+        check and never touch the deque, so legitimate user activity is
+        unaffected. Once the window drains, re-eval is allowed again.
+        """
+        now = time.monotonic()
+        cutoff = now - REEVAL_WINDOW_SECONDS
+        with self._reeval_lock:
+            while self._reeval_timestamps and self._reeval_timestamps[0] < cutoff:
+                self._reeval_timestamps.popleft()
+            if len(self._reeval_timestamps) >= MAX_REEVAL_BURST:
+                if not self._reeval_limit_warned:
+                    self._reeval_limit_warned = True
+                    self.logger.warning(
+                        f"⚠️ Zone '{self._name}': re-evaluation rate limit reached "
+                        f"({MAX_REEVAL_BURST} writer re-evals in "
+                        f"{int(REEVAL_WINDOW_SECONDS)}s) — deferring further "
+                        f"re-evaluation. Check for unresponsive devices."
+                    )
+                return False
+            self._reeval_timestamps.append(now)
+            self._reeval_limit_warned = False
+            return True
+
     def has_brightness_changes(self, exclude_lock_devices=False) -> bool:
         """
         Check if the current brightness or state of any device differs from its target brightness.
@@ -961,6 +1016,9 @@ class Zone(AutoLightsBase):
         for tgt in self.target_brightness:
             dev_id = tgt["dev_id"]
             if exclude_lock_devices and dev_id in self.exclude_from_lock_dev_ids:
+                continue
+
+            if self._is_device_suppressed(dev_id):
                 continue
 
             desired = tgt["brightness"]
@@ -995,6 +1053,8 @@ class Zone(AutoLightsBase):
         # If all devices are off, write off-lights first
         if self.target_brightness_all_off:
             for dev_id in self.off_lights_dev_ids:
+                if self._is_device_suppressed(dev_id):
+                    continue
                 self._debug_log(
                     f"Setting device {dev_id} off as per target_brightness_all_off"
                 )
@@ -1005,6 +1065,8 @@ class Zone(AutoLightsBase):
             item["dev_id"]: item["brightness"] for item in self.target_brightness
         }
         for dev_id in self.on_lights_dev_ids:
+            if self._device_fail_count.get(dev_id, 0) >= MAX_CONSECUTIVE_FAILURES:
+                continue
             brightness = target_map.get(dev_id)
             if brightness is not None:
                 self._debug_log(f"Setting device {dev_id} brightness to {brightness}")
@@ -1031,9 +1093,38 @@ class Zone(AutoLightsBase):
                 self._debug_log(
                     f"starting write for device {dev_id}, value {desired_brightness}"
                 )
-                utils.send_to_indigo(dev_id, desired_brightness)
-                # when done, decrement; if zero, check in
                 should_process = False
+                try:
+                    confirmed = utils.send_to_indigo(dev_id, desired_brightness)
+                except Exception:
+                    self.logger.exception(
+                        f"Exception sending command to device {dev_id}"
+                    )
+                    confirmed = False
+
+                # Track consecutive failures per device.
+                # Pop on success so device change events have a clean
+                # recovery path (process_device_change checks > 0).
+                if confirmed:
+                    self._device_fail_count.pop(dev_id, None)
+                else:
+                    count = self._device_fail_count.get(dev_id, 0) + 1
+                    self._device_fail_count[dev_id] = count
+                    # Warn exactly at the threshold — once per suppression
+                    # event, not on every subsequent attempt.
+                    if count == MAX_CONSECUTIVE_FAILURES:
+                        try:
+                            dev_name = indigo.devices[dev_id].name
+                        except Exception:
+                            dev_name = str(dev_id)
+                        self.logger.warning(
+                            f"⚠️ Device '{dev_name}' failed to confirm "
+                            f"{count} consecutive commands — suppressing "
+                            f"until it responds"
+                        )
+
+                # Always decrement pending_writes, even if send threw.
+                # Without this, the zone stays permanently checked out.
                 with self._write_lock:
                     self._pending_writes -= 1
                     self._debug_log(
@@ -1046,7 +1137,10 @@ class Zone(AutoLightsBase):
                 # changes (e.g. motion ON) that occurred during writes.
                 # Must be outside _write_lock because process_zone() may
                 # call save_brightness_changes() which also acquires it.
-                if should_process:
+                # Rate-limit the writer-thread re-eval path so a broken
+                # device cannot drive an infinite loop even if failure
+                # suppression has a bug.
+                if should_process and self._can_reeval():
                     self._config.agent.process_zone(self)
 
             t = threading.Thread(target=_writer, daemon=True)

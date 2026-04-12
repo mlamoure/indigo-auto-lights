@@ -36,8 +36,23 @@ def test_presence_return_cancels_unlock_timer(agent_and_zone):
     agent, zone, dev_id = agent_and_zone
     # Simulate presence return
     make_device(dev_id, onState=True)
-    zone._runtime_cache.pop("presence", None)
     orig_dev = indigo.devices[dev_id]
     diff = {"onState": True}
     agent.process_device_change(orig_dev, diff)
+    assert zone.name not in agent._no_presence_timers
+
+
+def test_stale_cache_cleared_on_presence_device_change(agent_and_zone):
+    """Verify that a stale presence=False cache entry is invalidated when
+    a presence device changes, so the grace timer cancellation reads
+    fresh device state."""
+    agent, zone, dev_id = agent_and_zone
+    # Seed a stale cache entry (presence=False even though device will be on)
+    zone._runtime_cache["presence"] = False
+    # Simulate presence return
+    make_device(dev_id, onState=True)
+    orig_dev = indigo.devices[dev_id]
+    diff = {"onState": True}
+    agent.process_device_change(orig_dev, diff)
+    # Grace timer should have been cancelled because fresh read sees presence
     assert zone.name not in agent._no_presence_timers
