@@ -10,8 +10,10 @@ from datetime import datetime
 # NOTE: Werkzeug server import disabled - migrated to IWS. Kept for rollback capability.
 # from werkzeug.serving import make_server
 
+from auto_lights import utils
 from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.auto_lights_config import AutoLightsConfig
+
 # NOTE: Flask imports disabled - migrated to IWS. Kept for rollback capability.
 # from config_web_editor.web_config_app import init_flask_app, app as flask_app
 
@@ -78,19 +80,18 @@ class Plugin(indigo.PluginBase):
         path = f"/message/{self.pluginId}/web_ui/"
 
         # Always add localhost URL
-        urls.append({
-            "label": "Local",
-            "url": f"http://localhost:{indigo_port}{path}"
-        })
+        urls.append({"label": "Local", "url": f"http://localhost:{indigo_port}{path}"})
 
         try:
             # Get hostname and add hostname-based URL
             hostname = socket.gethostname()
             if hostname and hostname != "localhost":
-                urls.append({
-                    "label": "Network (hostname)",
-                    "url": f"http://{hostname}:{indigo_port}{path}"
-                })
+                urls.append(
+                    {
+                        "label": "Network (hostname)",
+                        "url": f"http://{hostname}:{indigo_port}{path}",
+                    }
+                )
 
             # Get all non-localhost IP addresses
             try:
@@ -99,12 +100,14 @@ class Plugin(indigo.PluginBase):
                 for info in addr_info:
                     ip = info[4][0]
                     # Skip localhost IPs and duplicates
-                    if not ip.startswith('127.') and ip not in seen_ips:
+                    if not ip.startswith("127.") and ip not in seen_ips:
                         seen_ips.add(ip)
-                        urls.append({
-                            "label": "Network (IP)",
-                            "url": f"http://{ip}:{indigo_port}{path}"
-                        })
+                        urls.append(
+                            {
+                                "label": "Network (IP)",
+                                "url": f"http://{ip}:{indigo_port}{path}",
+                            }
+                        )
             except Exception as e:
                 self.logger.debug(f"Could not detect network IPs: {e}")
 
@@ -116,11 +119,10 @@ class Plugin(indigo.PluginBase):
             reflector_url = indigo.server.getReflectorURL()
             if reflector_url:
                 # Remove trailing slash if present
-                reflector_base = reflector_url.rstrip('/')
-                urls.append({
-                    "label": "Remote (Reflector)",
-                    "url": f"{reflector_base}{path}"
-                })
+                reflector_base = reflector_url.rstrip("/")
+                urls.append(
+                    {"label": "Remote (Reflector)", "url": f"{reflector_base}{path}"}
+                )
         except Exception as e:
             self.logger.debug(f"Could not detect Indigo Reflector URL: {e}")
 
@@ -177,6 +179,22 @@ class Plugin(indigo.PluginBase):
         if new_dev.pluginId == "com.vtmikel.autolights":
             return
 
+        # Construct a PerfClock for this event. event_age_ms is the gap between
+        # Indigo recording the state change (dev.lastChanged) and our callback
+        # firing. This is the Indigo-side latency we cannot influence; useful
+        # to separate from in-plugin processing time.
+        event_age_ms = None
+        try:
+            event_age_ms = int(
+                (datetime.now() - new_dev.lastChanged).total_seconds() * 1000
+            )
+        except Exception:
+            pass
+        clock = utils.PerfClock(event_age_ms=event_age_ms, trigger=new_dev.name)
+        self.logger.debug(
+            f"⏱️ deviceUpdated: '{new_dev.name}' event_age={event_age_ms}ms"
+        )
+
         # Convert the payload objects from indigo.Dict() objects to Python dict() objects.
         orig_dict = {}
         for k, v in orig_dev:
@@ -195,9 +213,15 @@ class Plugin(indigo.PluginBase):
 
         # process the change if the agent exists
         if self._agent is not None:
-            processed = self._agent.process_device_change(new_dev, diff, orig_dev)
+            processed = self._agent.process_device_change(
+                new_dev, diff, orig_dev, clock=clock
+            )
             for z in processed:
                 z.sync_indigo_device()
+            if processed:
+                self.logger.debug(
+                    f"⏱️ done: '{new_dev.name}' zones={len(processed)} t+{clock.t()}ms"
+                )
 
     def variableUpdated(
         self, orig_var: indigo.Variable, new_var: indigo.Variable
@@ -205,9 +229,14 @@ class Plugin(indigo.PluginBase):
         # call base implementation
         indigo.PluginBase.variableUpdated(self, new_var, new_var)
 
+        # Variables have no lastChanged equivalent we can rely on; event_age
+        # is None for these events.
+        clock = utils.PerfClock(event_age_ms=None, trigger=new_var.name)
+        self.logger.debug(f"⏱️ variableUpdated: '{new_var.name}'")
+
         # process the change if the agent exists
         if self._agent is not None:
-            self._agent.process_variable_change(orig_var, new_var)
+            self._agent.process_variable_change(orig_var, new_var, clock=clock)
 
     # NOTE: Flask web server methods removed - migrated to IWS
     # See git history (feature/migrate-to-iws branch) for rollback capability
@@ -289,16 +318,20 @@ class Plugin(indigo.PluginBase):
             # Set up WebConfigEditor
             # In Indigo plugins, os.getcwd() returns the Server Plugin directory
             current_dir = os.getcwd()
-            schema_file = os.path.join(current_dir, "config_web_editor/config/config_schema.json")
+            schema_file = os.path.join(
+                current_dir, "config_web_editor/config/config_schema.json"
+            )
             backup_dir = os.path.join(os.path.dirname(self._config_file_str), "backups")
-            auto_backup_dir = os.path.join(os.path.dirname(self._config_file_str), "auto_backups")
+            auto_backup_dir = os.path.join(
+                os.path.dirname(self._config_file_str), "auto_backups"
+            )
 
             config_editor = WebConfigEditor(
                 self._config_file_str,
                 schema_file,
                 backup_dir,
                 auto_backup_dir,
-                flask_app=None  # No Flask app for IWS mode
+                flask_app=None,  # No Flask app for IWS mode
             )
 
             # Set up reload callback for when config is saved
@@ -306,8 +339,7 @@ class Plugin(indigo.PluginBase):
 
             # Initialize IWS web handler
             self._iws_web_handler = IWSWebHandler(
-                config_editor=config_editor,
-                plugin_id=self.pluginId
+                config_editor=config_editor, plugin_id=self.pluginId
             )
 
             # Start cache refresher thread
@@ -316,7 +348,9 @@ class Plugin(indigo.PluginBase):
             # Log IWS URL
             indigo_host = "localhost"  # Default to localhost
             indigo_port = 8176  # Default Indigo web server port
-            iws_url = f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
+            iws_url = (
+                f"http://{indigo_host}:{indigo_port}/message/{self.pluginId}/web_ui/"
+            )
             self.logger.info(f"IWS Web Configuration Interface available at: {iws_url}")
 
         except Exception as e:
@@ -349,7 +383,7 @@ class Plugin(indigo.PluginBase):
         """
         if self._agent is None:
             return
-            
+
         action_type = action.pluginTypeId
         if action_type == "enable_all_zones":
             self._agent.enable_all_zones()
@@ -471,7 +505,7 @@ class Plugin(indigo.PluginBase):
         """
         if self._agent is None:
             return []
-            
+
         zone = next(
             (z for z in self._agent.config.zones if z.indigo_dev.id == dev.id), None
         )
@@ -553,7 +587,9 @@ class Plugin(indigo.PluginBase):
             reply = indigo.Dict()
             reply["status"] = 503
             reply["headers"] = indigo.Dict({"Content-Type": "text/html; charset=utf-8"})
-            reply["content"] = "<html><body><h1>503 Service Unavailable</h1><p>IWS web handler failed to initialize</p></body></html>"
+            reply["content"] = (
+                "<html><body><h1>503 Service Unavailable</h1><p>IWS web handler failed to initialize</p></body></html>"
+            )
             return reply
 
         # Extract request details from action.props
@@ -575,7 +611,9 @@ class Plugin(indigo.PluginBase):
             self.logger.debug(f"POST body params from action.props: {body_params}")
 
         # Delegate to IWS web handler
-        return self._iws_web_handler.handle_request(method, headers, body_params, url_query_args, request_body)
+        return self._iws_web_handler.handle_request(
+            method, headers, body_params, url_query_args, request_body
+        )
 
     # Static files are now automatically served from Resources/static/ by IWS
     # No custom handler needed - see Actions.xml and SDK example
@@ -585,4 +623,6 @@ class Plugin(indigo.PluginBase):
         dev.stateListOrDisplayStateIdChanged()
         if self._agent is not None:
             self._agent.refresh_indigo_device(dev.id)
-        self.logger.debug(f"deviceStartComm complete for device {dev.id} ('{dev.name}')")
+        self.logger.debug(
+            f"deviceStartComm complete for device {dev.id} ('{dev.name}')"
+        )

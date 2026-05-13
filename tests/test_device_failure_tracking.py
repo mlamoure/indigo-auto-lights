@@ -132,9 +132,11 @@ def test_failure_count_resets_on_success(mock_send, agent_and_zone):
     suppress_device(agent, zone, dev_id, 2)
 
     # send_to_indigo returns True and device state is updated
-    def fake_send(d_id, brightness):
+    def fake_send(d_id, brightness, **kwargs):
         dev = indigo.devices[d_id]
-        dev.brightness = brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        dev.brightness = (
+            brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        )
         dev.states["brightness"] = dev.brightness
         return True
 
@@ -279,7 +281,7 @@ def test_plugin_device_updated_clears_failure_count_when_new_state_reaches_targe
     )
     indigo.devices[dev_id] = new_dev
 
-    fake_plugin = SimpleNamespace(_agent=agent)
+    fake_plugin = SimpleNamespace(_agent=agent, logger=MagicMock())
     Plugin.deviceUpdated(fake_plugin, orig_dev, new_dev)
 
     assert device_fail_count(agent, dev_id) == 0
@@ -337,6 +339,7 @@ def test_check_confirm_unknown_device_no_brightness():
 
     class BareDevice:
         """A device with no brightness attribute or states."""
+
         def __init__(self):
             self.name = "Mystery-701"
             self.pluginId = "some.other.plugin"
@@ -361,7 +364,9 @@ def test_has_brightness_changes_normalizes_relay_bool_targets(agent_and_zone):
     make_device(dev_id, device_cls="relay", onState=True, brightness=100)
     zone.target_brightness = [{"dev_id": dev_id, "brightness": True}]
 
-    assert zone.current_lights_status(include_lock_excluded=True)[0]["brightness"] == 100
+    assert (
+        zone.current_lights_status(include_lock_excluded=True)[0]["brightness"] == 100
+    )
     assert zone.target_brightness[0]["brightness"] is True
     assert zone.has_brightness_changes() is False
 
@@ -372,9 +377,7 @@ def test_has_brightness_changes_normalizes_relay_bool_targets(agent_and_zone):
 @pytest.fixture
 def multi_device_agent(tmp_path):
     """Set up an agent with a zone that has two on_lights and one off_lights device."""
-    data = load_yaml(
-        Path(__file__).parent / "configs" / "scenario_multi_device.yaml"
-    )
+    data = load_yaml(Path(__file__).parent / "configs" / "scenario_multi_device.yaml")
     config_json = {
         "plugin_config": data.get("plugin_config", {}),
         "lighting_periods": data.get("lighting_periods", []),
@@ -386,8 +389,12 @@ def multi_device_agent(tmp_path):
     agent = AutoLightsAgent(cfg)
     zone = cfg.zones[0]
 
-    for dev_id_key in ["on_lights_dev_ids", "off_lights_dev_ids",
-                       "luminance_dev_ids", "presence_dev_ids"]:
+    for dev_id_key in [
+        "on_lights_dev_ids",
+        "off_lights_dev_ids",
+        "luminance_dev_ids",
+        "presence_dev_ids",
+    ]:
         for dev_id in getattr(zone, dev_id_key, []):
             if dev_id not in indigo.devices:
                 make_device(dev_id)
@@ -412,10 +419,14 @@ def test_only_failing_device_suppressed(mock_send, multi_device_agent):
     dev_ok = 101
     dev_bad = 102
 
-    def selective_send(dev_id, brightness):
+    def selective_send(dev_id, brightness, **kwargs):
         if dev_id == dev_ok:
             dev = indigo.devices[dev_id]
-            dev.brightness = brightness if isinstance(brightness, int) else (100 if brightness else 0)
+            dev.brightness = (
+                brightness
+                if isinstance(brightness, int)
+                else (100 if brightness else 0)
+            )
             dev.states["brightness"] = dev.brightness
             return True
         return False  # dev_bad never confirms
@@ -461,9 +472,11 @@ def test_off_lights_suppression(mock_send, multi_device_agent):
         for d in zone.on_lights_dev_ids + zone.off_lights_dev_ids
     ]
 
-    def fake_send(dev_id, brightness):
+    def fake_send(dev_id, brightness, **kwargs):
         d = indigo.devices[dev_id]
-        d.brightness = 100 if isinstance(brightness, bool) and brightness else int(brightness)
+        d.brightness = (
+            100 if isinstance(brightness, bool) and brightness else int(brightness)
+        )
         d.onState = bool(d.brightness)
         d.states["brightness"] = d.brightness
         d.states["onState"] = d.onState
@@ -479,8 +492,9 @@ def test_off_lights_suppression(mock_send, multi_device_agent):
 
     # send_to_indigo should NOT have been called for the suppressed off_lights device
     for call_args in mock_send.call_args_list:
-        assert call_args[0][0] != off_dev, \
-            f"send_to_indigo was called for suppressed off_lights device {off_dev}"
+        assert (
+            call_args[0][0] != off_dev
+        ), f"send_to_indigo was called for suppressed off_lights device {off_dev}"
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -501,10 +515,12 @@ def test_default_off_lights_behavior_does_not_write_off_lights_while_active(
 
     sent_to = []
 
-    def fake_send(dev_id, brightness):
+    def fake_send(dev_id, brightness, **kwargs):
         sent_to.append((dev_id, brightness))
         d = indigo.devices[dev_id]
-        d.brightness = 100 if isinstance(brightness, bool) and brightness else int(brightness)
+        d.brightness = (
+            100 if isinstance(brightness, bool) and brightness else int(brightness)
+        )
         d.onState = bool(d.brightness)
         d.states["brightness"] = d.brightness
         d.states["onState"] = d.onState
@@ -560,10 +576,12 @@ def test_force_off_behavior_writes_off_lights_while_active(mock_send, force_off_
 
     sent_to = []
 
-    def fake_send(dev_id, brightness):
+    def fake_send(dev_id, brightness, **kwargs):
         sent_to.append((dev_id, brightness))
         d = indigo.devices[dev_id]
-        d.brightness = 100 if isinstance(brightness, bool) and brightness else int(brightness)
+        d.brightness = (
+            100 if isinstance(brightness, bool) and brightness else int(brightness)
+        )
         d.onState = bool(d.brightness)
         d.states["brightness"] = d.brightness
         d.states["onState"] = d.onState
@@ -586,6 +604,7 @@ def test_force_off_behavior_writes_off_lights_while_active(mock_send, force_off_
 def test_warning_log_content(mock_send, agent_and_zone, caplog):
     """The warning message includes the device name and failure count."""
     import logging
+
     agent, zone = agent_and_zone
     dev_id = zone.on_lights_dev_ids[0]
 
@@ -600,7 +619,9 @@ def test_warning_log_content(mock_send, agent_and_zone, caplog):
             time.sleep(0.05)
 
     warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
-    assert len(warnings) == 1, f"Expected 1 warning, got {len(warnings)}: {[w.message for w in warnings]}"
+    assert (
+        len(warnings) == 1
+    ), f"Expected 1 warning, got {len(warnings)}: {[w.message for w in warnings]}"
     msg = warnings[0].message
     assert "Dev-101" in msg or str(dev_id) in msg
     assert str(MAX_CONSECUTIVE_FAILURES) in msg
@@ -656,7 +677,9 @@ def test_exception_in_writer_does_not_deadlock(mock_send, agent_and_zone):
     while zone.checked_out and time.monotonic() < deadline:
         time.sleep(0.05)
 
-    assert not zone.checked_out, "Zone is still checked out — _writer exception caused deadlock"
+    assert (
+        not zone.checked_out
+    ), "Zone is still checked out — _writer exception caused deadlock"
     assert zone._pending_writes == 0
 
 
@@ -673,6 +696,7 @@ def test_can_reeval_allows_burst_then_blocks():
     z._reeval_lock = threading.Lock()
     z._reeval_limit_warned = False
     import logging
+
     z.logger = logging.getLogger("Plugin")
 
     for _ in range(MAX_REEVAL_BURST):
@@ -693,6 +717,7 @@ def test_can_reeval_window_drains():
     z._reeval_lock = threading.Lock()
     z._reeval_limit_warned = False
     import logging
+
     z.logger = logging.getLogger("Plugin")
 
     # Pre-fill with stale timestamps that should age out immediately
@@ -741,7 +766,7 @@ def test_rate_limit_caps_runaway_writer_reeval(mock_send, agent_and_zone):
 
     # Without the rate limit, this would loop forever. With it, the writer
     # thread re-eval is gated and the chain terminates within the burst.
-    assert process_count <= MAX_REEVAL_BURST + 2, (
-        f"Re-eval loop ran {process_count} times — rate limit did not engage"
-    )
+    assert (
+        process_count <= MAX_REEVAL_BURST + 2
+    ), f"Re-eval loop ran {process_count} times — rate limit did not engage"
     assert not zone.checked_out

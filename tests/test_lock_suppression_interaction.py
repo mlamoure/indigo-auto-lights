@@ -23,9 +23,7 @@ from tests.helpers import load_yaml, make_device, suppress_device, device_fail_c
 def multi_device_agent(tmp_path):
     """Multi-device zone: two on_lights (101, 102), one off_lights (103),
     one luminance (201, dark), one presence (301, on)."""
-    data = load_yaml(
-        Path(__file__).parent / "configs" / "scenario_multi_device.yaml"
-    )
+    data = load_yaml(Path(__file__).parent / "configs" / "scenario_multi_device.yaml")
     config_json = {
         "plugin_config": data.get("plugin_config", {}),
         "lighting_periods": data.get("lighting_periods", []),
@@ -80,18 +78,21 @@ def test_lock_expiry_writes_healthy_devices_skips_suppressed(
 
     # Lock the zone, then immediately expire it
     import datetime
+
     zone.lock_expiration = datetime.datetime.now() - datetime.timedelta(seconds=1)
     assert not zone.locked  # past expiration → not locked
 
     sent_to: list[int] = []
 
-    def selective_send(dev_id, brightness):
+    def selective_send(dev_id, brightness, **kwargs):
         sent_to.append(dev_id)
         # Healthy device confirms; broken device never confirms
         if dev_id == dev_healthy:
             d = indigo.devices[dev_id]
-            d.brightness = brightness if isinstance(brightness, int) else (
-                100 if brightness else 0
+            d.brightness = (
+                brightness
+                if isinstance(brightness, int)
+                else (100 if brightness else 0)
             )
             d.states["brightness"] = d.brightness
             return True
@@ -132,6 +133,7 @@ def test_locked_zone_does_not_create_new_lock_for_suppressed_flap(
     lock cooldown. The plugin should sit still through it.
     """
     import datetime
+
     agent, zone = multi_device_agent
     dev_broken = 102
 
@@ -187,6 +189,7 @@ def test_recovered_device_clears_suppression_while_locked_and_writes_after_expir
     like a normal device again rather than staying skipped forever.
     """
     import datetime
+
     agent, zone = multi_device_agent
     dev_recovered = 102
 
@@ -216,11 +219,11 @@ def test_recovered_device_clears_suppression_while_locked_and_writes_after_expir
 
     sent_to: list[int] = []
 
-    def fake_send(dev_id, brightness):
+    def fake_send(dev_id, brightness, **kwargs):
         sent_to.append(dev_id)
         d = indigo.devices[dev_id]
-        d.brightness = brightness if isinstance(brightness, int) else (
-            100 if brightness else 0
+        d.brightness = (
+            brightness if isinstance(brightness, int) else (100 if brightness else 0)
         )
         d.onState = bool(d.brightness)
         d.states["brightness"] = d.brightness

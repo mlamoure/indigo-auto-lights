@@ -23,11 +23,33 @@ except ImportError:
 logger = logging.getLogger("Plugin")
 
 
+class PerfClock:
+    """Per-event monotonic clock carried through the pipeline so each stage
+    can stamp its elapsed-from-event-entry delta in a DEBUG log line.
+
+    Constructed once at the deviceUpdated/variableUpdated entry point and
+    threaded down through process_device_change → process_zone →
+    save_brightness_changes → send_to_indigo. Callers that aren't a sensor
+    event (timer-driven flows, recursive re-eval) pass clock=None.
+    """
+
+    __slots__ = ("start", "event_age_ms", "trigger")
+
+    def __init__(self, event_age_ms, trigger: str):
+        self.start = time.monotonic()
+        self.event_age_ms = event_age_ms
+        self.trigger = trigger
+
+    def t(self) -> int:
+        """Milliseconds elapsed since clock construction."""
+        return int((time.monotonic() - self.start) * 1000)
+
+
 def _check_confirm(device, target_level, target_bool) -> bool:
     """Return True if the device's state matches the target values."""
     logger.log(
         5,
-        f"_check_confirm called for '{device.name}' with target_level={target_level}, target_bool={target_bool}"
+        f"_check_confirm called for '{device.name}' with target_level={target_level}, target_bool={target_bool}",
     )
     if isinstance(device, indigo.DimmerDevice):
         result = device.brightness == target_level
@@ -105,6 +127,7 @@ def _send_command(device_id, target_level, target_bool) -> None:
 def send_to_indigo(
     device_id: int,
     desired_brightness: int | bool,
+    clock: "PerfClock | None" = None,
 ) -> bool:
     """
     Send a command to update an Indigo device and wait briefly for confirmation.
@@ -129,10 +152,18 @@ def send_to_indigo(
 
     # Pre-check: skip if device is already at target
     if _check_confirm(device, target, target_bool):
-        logger.debug(
-            f"send_to_indigo: '{device.name}' already at target {target}, skipping"
-        )
+        if clock:
+            logger.debug(
+                f"⏱️ send_skip: '{device.name}' already at target {target} t+{clock.t()}ms"
+            )
+        else:
+            logger.debug(
+                f"send_to_indigo: '{device.name}' already at target {target}, skipping"
+            )
         return True
+
+    if clock:
+        logger.debug(f"⏱️ issued: '{device.name}' target={target} t+{clock.t()}ms")
 
     # Single send — no application-level retries
     _send_command(device_id, target, target_bool)
@@ -147,11 +178,18 @@ def send_to_indigo(
             break
 
     total_time = round(time.monotonic() - start, 2)
+    t_suffix = f" t+{clock.t()}ms" if clock else ""
     if confirmed:
-        logger.debug(f"send_to_indigo: '{device.name}' confirmed in {total_time}s")
+        logger.debug(
+            f"⏱️ confirmed: '{device.name}' settle={total_time}s{t_suffix}"
+            if clock
+            else f"send_to_indigo: '{device.name}' confirmed in {total_time}s"
+        )
     else:
         logger.debug(
-            f"send_to_indigo: '{device.name}' did NOT confirm after {total_time}s"
+            f"⏱️ no_confirm: '{device.name}' settle={total_time}s{t_suffix}"
+            if clock
+            else f"send_to_indigo: '{device.name}' did NOT confirm after {total_time}s"
         )
     return confirmed
 
