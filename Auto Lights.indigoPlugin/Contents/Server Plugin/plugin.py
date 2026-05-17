@@ -256,8 +256,13 @@ class Plugin(indigo.PluginBase):
         self._config_mtime = os.path.getmtime(conf_path)
         config = AutoLightsConfig(conf_path)
         config.log_non_events = self._log_non_events
+        # On reload, stop the previous agent's background threads/timers first.
+        if self._agent is not None:
+            self._agent.shutdown()
         self._agent = AutoLightsAgent(config)
-        
+        # Start the suppression-recovery background thread.
+        self._agent.suppression_manager.start()
+
         # Log info if plugin is globally disabled on startup
         if not config.enabled:
             config_dev_name = config.indigo_dev.name if config.indigo_dev else "Unknown"

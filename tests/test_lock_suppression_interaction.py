@@ -16,8 +16,7 @@ import pytest
 import indigo
 from auto_lights.auto_lights_config import AutoLightsConfig
 from auto_lights.auto_lights_agent import AutoLightsAgent
-from auto_lights.zone import MAX_CONSECUTIVE_FAILURES
-from tests.helpers import load_yaml, make_device
+from tests.helpers import load_yaml, make_device, suppress_device, device_fail_count
 
 
 @pytest.fixture
@@ -77,7 +76,7 @@ def test_lock_expiry_writes_healthy_devices_skips_suppressed(
     dev_broken = 102
 
     # Pre-suppress the broken device at the threshold
-    zone._device_fail_count[dev_broken] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_broken)
 
     # Lock the zone, then immediately expire it
     import datetime
@@ -117,7 +116,7 @@ def test_lock_expiry_writes_healthy_devices_skips_suppressed(
     # Suppression state must persist across the lock cycle
     assert zone._is_device_suppressed(dev_broken)
     # And the healthy device's counter must remain clean
-    assert zone._device_fail_count.get(dev_healthy, 0) == 0
+    assert device_fail_count(agent, dev_healthy) == 0
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -137,7 +136,7 @@ def test_locked_zone_does_not_create_new_lock_for_suppressed_flap(
     dev_broken = 102
 
     # Suppress the broken device at the threshold
-    zone._device_fail_count[dev_broken] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_broken)
 
     # Establish a clear target so is_device_at_target has something to compare
     # against. Target says brightness=100 but device is at 0 — never reaching it.
@@ -167,7 +166,7 @@ def test_locked_zone_does_not_create_new_lock_for_suppressed_flap(
         agent.process_device_change(orig_dev, {"brightness": 0})
 
     # Failure count must remain at the threshold (not cleared)
-    assert zone._device_fail_count.get(dev_broken, 0) == MAX_CONSECUTIVE_FAILURES
+    assert zone._is_device_suppressed(dev_broken)
     # Lock expiration must not have been pushed forward
     assert zone.lock_expiration == initial_expiration
     # Zone must still be locked
@@ -195,7 +194,7 @@ def test_recovered_device_clears_suppression_while_locked_and_writes_after_expir
         {"dev_id": 101, "brightness": 100},
         {"dev_id": 102, "brightness": 100},
     ]
-    zone._device_fail_count[dev_recovered] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_recovered)
     zone.lock_expiration = datetime.datetime.now() + datetime.timedelta(minutes=5)
     assert zone.locked
 
@@ -206,7 +205,7 @@ def test_recovered_device_clears_suppression_while_locked_and_writes_after_expir
     indigo.devices[dev_recovered].states["onState"] = True
     indigo.devices[dev_recovered].states["onOffState"] = True
     agent.process_device_change(indigo.devices[dev_recovered], {"brightness": 100})
-    assert zone._device_fail_count.get(dev_recovered, 0) == 0
+    assert device_fail_count(agent, dev_recovered) == 0
 
     # Drift again before lock expiry so there is real work to do after unlock.
     indigo.devices[dev_recovered].brightness = 0

@@ -44,3 +44,22 @@ def load_yaml(path):
     import yaml
     with open(path, "r") as f:
         return yaml.safe_load(f)
+
+
+def suppress_device(agent, zone, dev_id, count=None):
+    """Seed the SuppressionManager with `count` consecutive failures.
+
+    Defaults to the suppression threshold, so the device ends up suppressed.
+    """
+    from auto_lights.zone import MAX_CONSECUTIVE_FAILURES
+
+    if count is None:
+        count = MAX_CONSECUTIVE_FAILURES
+    for _ in range(count):
+        agent.suppression_manager.record_failure(dev_id, zone)
+
+
+def device_fail_count(agent, dev_id):
+    """Return the SuppressionManager's tracked failure count for a device."""
+    entry = agent.suppression_manager._entries.get(dev_id)
+    return entry.fail_count if entry else 0
