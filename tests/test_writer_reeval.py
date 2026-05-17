@@ -63,9 +63,11 @@ def test_writer_completes_without_deadlock(mock_send, agent_and_zone):
     agent, zone = agent_and_zone
 
     # Simulate device confirming the write (so send_to_indigo returns quickly)
-    def fake_send(dev_id, brightness):
+    def fake_send(dev_id, brightness, **kwargs):
         dev = indigo.devices[dev_id]
-        dev.brightness = brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        dev.brightness = (
+            brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        )
         dev.onState = brightness > 0 if isinstance(brightness, int) else brightness
         dev.states["brightness"] = dev.brightness
         dev.states["onState"] = dev.onState
@@ -82,9 +84,9 @@ def test_writer_completes_without_deadlock(mock_send, agent_and_zone):
     while zone.checked_out and time.monotonic() < deadline:
         time.sleep(0.05)
 
-    assert not zone.checked_out, (
-        "Zone is still checked out after 5s - likely deadlocked"
-    )
+    assert (
+        not zone.checked_out
+    ), "Zone is still checked out after 5s - likely deadlocked"
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -105,11 +107,13 @@ def test_reeval_with_state_change_during_write(mock_send, agent_and_zone):
 
     call_count = 0
 
-    def fake_send_with_state_change(dev_id, brightness):
+    def fake_send_with_state_change(dev_id, brightness, **kwargs):
         nonlocal call_count
         call_count += 1
         dev = indigo.devices[dev_id]
-        dev.brightness = brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        dev.brightness = (
+            brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        )
         dev.onState = brightness > 0 if isinstance(brightness, int) else brightness
         dev.states["brightness"] = dev.brightness
         dev.states["onState"] = dev.onState
@@ -124,9 +128,9 @@ def test_reeval_with_state_change_during_write(mock_send, agent_and_zone):
     while zone.checked_out and time.monotonic() < deadline:
         time.sleep(0.05)
 
-    assert not zone.checked_out, (
-        "Zone is still checked out after 5s - likely deadlocked"
-    )
+    assert (
+        not zone.checked_out
+    ), "Zone is still checked out after 5s - likely deadlocked"
     # process_zone should have been called at least once (the initial call)
     assert len(process_zone_calls) >= 1
 
@@ -136,9 +140,11 @@ def test_pending_writes_reaches_zero(mock_send, agent_and_zone):
     """After all writer threads complete, _pending_writes must be 0."""
     agent, zone = agent_and_zone
 
-    def fake_send(dev_id, brightness):
+    def fake_send(dev_id, brightness, **kwargs):
         dev = indigo.devices[dev_id]
-        dev.brightness = brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        dev.brightness = (
+            brightness if isinstance(brightness, int) else (100 if brightness else 0)
+        )
         dev.onState = brightness > 0 if isinstance(brightness, int) else brightness
         dev.states["brightness"] = dev.brightness
         dev.states["onState"] = dev.onState

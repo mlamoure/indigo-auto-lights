@@ -60,6 +60,7 @@ MAX_CONSECUTIVE_FAILURES = 3
 MAX_REEVAL_BURST = 5
 REEVAL_WINDOW_SECONDS = 30.0
 
+
 class Zone(AutoLightsBase):
     """
     Zone abstraction for Auto Lights.
@@ -102,7 +103,9 @@ class Zone(AutoLightsBase):
             "type": "string",
             "label": "Mode",
             "getter": lambda z: (
-                z.current_lighting_period.mode.value if z.current_lighting_period else ""
+                z.current_lighting_period.mode.value
+                if z.current_lighting_period
+                else ""
             ),
         },
         {
@@ -812,7 +815,9 @@ class Zone(AutoLightsBase):
         try:
             self.sync_indigo_device()
         except Exception as e:
-            self.logger.exception(f"Failed to sync onOffState after lock change for zone '{self._name}': {e}")
+            self.logger.exception(
+                f"Failed to sync onOffState after lock change for zone '{self._name}': {e}"
+            )
 
     @property
     def lock_expiration_str(self) -> str:
@@ -1048,7 +1053,7 @@ class Zone(AutoLightsBase):
         self._debug_log("has_brightness_changes: no brightness changes detected")
         return False
 
-    def save_brightness_changes(self) -> None:
+    def save_brightness_changes(self, clock: "utils.PerfClock | None" = None) -> None:
         """
         Apply and confirm the target brightness changes for this zone's devices.
 
@@ -1057,6 +1062,8 @@ class Zone(AutoLightsBase):
         thread to complete will call check_in(), so we don’t prematurely check
         in.
         """
+        if clock:
+            self.logger.debug(f"⏱️ save_in: '{self._name}' t+{clock.t()}ms")
         # 1) Gather all writes from the computed target plan.
         writes: List[tuple[int, Union[int, bool]]] = []
         ordered_targets = list(self.target_brightness or [])
@@ -1094,13 +1101,19 @@ class Zone(AutoLightsBase):
         # 3) Spawn one thread per write
         for dev_id, desired in writes:
 
-            def _writer(dev_id=dev_id, desired_brightness=desired):
+            def _writer(dev_id=dev_id, desired_brightness=desired, clock=clock):
+                if clock:
+                    self.logger.debug(
+                        f"⏱️ writer_in: '{self._name}' dev_id={dev_id} t+{clock.t()}ms"
+                    )
                 self._debug_log(
                     f"starting write for device {dev_id}, value {desired_brightness}"
                 )
                 should_process = False
                 try:
-                    confirmed = utils.send_to_indigo(dev_id, desired_brightness)
+                    confirmed = utils.send_to_indigo(
+                        dev_id, desired_brightness, clock=clock
+                    )
                 except Exception:
                     self.logger.exception(
                         f"Exception sending command to device {dev_id}"
@@ -1260,7 +1273,12 @@ class Zone(AutoLightsBase):
             for dev_id in self.on_lights_dev_ids:
                 excluded = self.has_dev_lighting_mapping_exclusion(dev_id, period)
                 if excluded:
-                    plan_exclusions.append(["❌", f"{indigo.devices[dev_id].name} is excluded from current period"])
+                    plan_exclusions.append(
+                        [
+                            "❌",
+                            f"{indigo.devices[dev_id].name} is excluded from current period",
+                        ]
+                    )
                     continue
                 if not self.adjust_brightness:
                     brightness = 100
@@ -1506,7 +1524,9 @@ class Zone(AutoLightsBase):
                     if hasattr(dev, "replaceOnServer"):
                         dev.replaceOnServer()
                     else:
-                        self.logger.debug("Device does not support replaceOnServer, skipping rename update")
+                        self.logger.debug(
+                            "Device does not support replaceOnServer, skipping rename update"
+                        )
                 except Exception as e:
                     self.logger.error(
                         f"Failed to rename Indigo device for Zone '{self._name}': {e}"
@@ -1521,7 +1541,9 @@ class Zone(AutoLightsBase):
                 if hasattr(dev, "updateStatesOnServer"):
                     dev.updateStatesOnServer(state_list)
                 else:
-                    self.logger.debug("Device does not support updateStatesOnServer, skipping update")
+                    self.logger.debug(
+                        "Device does not support updateStatesOnServer, skipping update"
+                    )
             except Exception as e:
                 self.logger.error(f"Failed to sync states for zone '{self._name}': {e}")
             # Update onOffState with UI value
@@ -1539,9 +1561,13 @@ class Zone(AutoLightsBase):
                 if hasattr(dev, "updateStateOnServer"):
                     dev.updateStateOnServer("onOffState", on_state, uiValue=ui)
                 else:
-                    self.logger.debug("Device does not support updateStateOnServer, skipping onOffState update")
+                    self.logger.debug(
+                        "Device does not support updateStateOnServer, skipping onOffState update"
+                    )
             except Exception as e:
-                self.logger.error(f"Failed to update onOffState for zone '{self._name}': {e}")
+                self.logger.error(
+                    f"Failed to update onOffState for zone '{self._name}': {e}"
+                )
         finally:
             # Always clear the flag when done
             self._syncing = False
@@ -1655,7 +1681,11 @@ class Zone(AutoLightsBase):
         Otherwise, unlocks the zone.
         """
         self._runtime_cache.pop("presence", None)
-        if self.enabled and self.extend_lock_when_active and self.has_presence_detected():
+        if (
+            self.enabled
+            and self.extend_lock_when_active
+            and self.has_presence_detected()
+        ):
             new_expiration = datetime.datetime.now() + datetime.timedelta(
                 minutes=self.lock_extension_duration
             )

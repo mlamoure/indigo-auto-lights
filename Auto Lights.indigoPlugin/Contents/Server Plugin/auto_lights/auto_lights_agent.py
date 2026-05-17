@@ -32,12 +32,18 @@ class AutoLightsAgent(AutoLightsBase):
             z._config.agent = self
             z.schedule_next_transition()
 
-    def process_zone(self, zone: Zone) -> bool:
+    def process_zone(self, zone: Zone, clock: "utils.PerfClock | None" = None) -> bool:
         """
         Main automation function that processes a single lighting zone.
         """
+        if clock:
+            self.logger.debug(
+                f"⏱️ zone_in: '{zone.name}' t+{clock.t()}ms event_age={clock.event_age_ms}ms trigger='{clock.trigger}'"
+            )
         # sync the indigo device for any runtime changes
         zone.sync_indigo_device()
+        if clock:
+            self.logger.debug(f"⏱️ sync1: '{zone.name}' t+{clock.t()}ms")
 
         # GUARD: skip if already running
         if zone.checked_out:
@@ -48,8 +54,12 @@ class AutoLightsAgent(AutoLightsBase):
 
         # GUARD: plugin globally disabled
         if not self.config.enabled:
-            config_dev_name = self.config.indigo_dev.name if self.config.indigo_dev else "Unknown"
-            config_dev_state = self.config.indigo_dev.onState if self.config.indigo_dev else False
+            config_dev_name = (
+                self.config.indigo_dev.name if self.config.indigo_dev else "Unknown"
+            )
+            config_dev_state = (
+                self.config.indigo_dev.onState if self.config.indigo_dev else False
+            )
             self._debug_log(
                 f"Skipping process_zone: plugin globally DISABLED "
                 f"(config device '{config_dev_name}' onState={config_dev_state})"
@@ -81,6 +91,8 @@ class AutoLightsAgent(AutoLightsBase):
             self._debug_log(
                 f"Zone '{zone.name}' is locked until {zone.lock_expiration}"
             )
+            if clock:
+                self.logger.debug(f"⏱️ lock_skip: '{zone.name}' t+{clock.t()}ms")
             zone.check_in()
             return False
 
@@ -113,6 +125,9 @@ class AutoLightsAgent(AutoLightsBase):
             plan = zone.calculate_target_brightness()
             zone.target_brightness = plan.new_targets
 
+        if clock:
+            self.logger.debug(f"⏱️ plan: '{zone.name}' t+{clock.t()}ms")
+
         # EXECUTE: apply or skip changes
         if zone.has_brightness_changes():
             self.logger.info(f"💡 Zone '{zone.name}': applying lighting changes")
@@ -127,9 +142,11 @@ class AutoLightsAgent(AutoLightsBase):
             self.logger.info(f"\t⚙️ Changes made:")
             for emoji, msg in plan.device_changes:
                 self.logger.info(f"\t\t{emoji} {msg}")
-            zone.save_brightness_changes()
+            zone.save_brightness_changes(clock=clock)
         else:
             self._debug_log(f"Zone '{zone.name}': no changes to make")
+            if clock:
+                self.logger.debug(f"⏱️ no_change: '{zone.name}' t+{clock.t()}ms")
             zone.check_in()
 
         # sync the indigo device for any runtime changes
@@ -142,6 +159,7 @@ class AutoLightsAgent(AutoLightsBase):
         current_dev: indigo.Device,
         diff: dict,
         previous_dev: indigo.Device | None = None,
+        clock: "utils.PerfClock | None" = None,
     ) -> List[Zone]:
         """
         Process a device change event.
@@ -255,7 +273,11 @@ class AutoLightsAgent(AutoLightsBase):
                         if t:
                             t.cancel()
 
-                if self.process_zone(zone):
+                if clock:
+                    self.logger.debug(
+                        f"⏱️ classify: zone='{zone.name}' prop={device_prop} t+{clock.t()}ms"
+                    )
+                if self.process_zone(zone, clock=clock):
                     processed.append(zone)
 
         return processed
@@ -278,8 +300,7 @@ class AutoLightsAgent(AutoLightsBase):
             and not zone.has_presence_detected()
         ):
             self.reset_locks(
-                zone.name,
-                f"no presence held ≥ {LOCK_HOLD_GRACE_SECONDS}s (grace)"
+                zone.name, f"no presence held ≥ {LOCK_HOLD_GRACE_SECONDS}s (grace)"
             )
 
     def process_all_zones(self) -> None:
@@ -293,7 +314,10 @@ class AutoLightsAgent(AutoLightsBase):
             self.process_zone(zone)
 
     def process_variable_change(
-        self, orig_var: indigo.Variable, new_var: indigo.Variable
+        self,
+        orig_var: indigo.Variable,
+        new_var: indigo.Variable,
+        clock: "utils.PerfClock | None" = None,
     ) -> List[Zone]:
         """
         Process a variable change event.
@@ -310,6 +334,8 @@ class AutoLightsAgent(AutoLightsBase):
             self.logger.debug(
                 f"Global config has variable: {indigo.variables[orig_var.id].name}; running process_all_zones"
             )
+            # process_all_zones doesn't carry a clock — variable changes that
+            # affect every zone are conceptually a fan-out, not a single event.
             self.process_all_zones()
             return self.config.zones
 
@@ -318,7 +344,7 @@ class AutoLightsAgent(AutoLightsBase):
                 self.logger.debug(
                     f"has_variable: var_id {indigo.variables[orig_var.id].name}"
                 )
-                if self.process_zone(zone):
+                if self.process_zone(zone, clock=clock):
                     processed.append(zone)
         return processed
 
