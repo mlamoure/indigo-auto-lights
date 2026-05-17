@@ -154,3 +154,19 @@ def send_to_indigo(
             f"send_to_indigo: '{device.name}' did NOT confirm after {total_time}s"
         )
     return confirmed
+
+
+def send_command(device_id: int, desired_brightness: int | bool) -> None:
+    """Send a device command without waiting for confirmation.
+
+    Unlike send_to_indigo(), this does not busy-wait for a settle window. It is
+    used by SuppressionManager retries, which confirm asynchronously (via the
+    deviceUpdated callback or the next scan cycle) rather than blocking a thread.
+    """
+    if isinstance(desired_brightness, bool):
+        target_bool = desired_brightness
+        target = 100 if desired_brightness else 0
+    else:
+        target_bool = None
+        target = desired_brightness
+    _send_command(device_id, target, target_bool)

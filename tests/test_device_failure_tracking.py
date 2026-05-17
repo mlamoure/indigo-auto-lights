@@ -20,7 +20,7 @@ from auto_lights.auto_lights_agent import AutoLightsAgent
 from auto_lights.zone import MAX_CONSECUTIVE_FAILURES
 from auto_lights import utils
 from plugin import Plugin
-from tests.helpers import load_yaml, make_device
+from tests.helpers import load_yaml, make_device, suppress_device, device_fail_count
 
 
 @pytest.fixture
@@ -119,7 +119,7 @@ def test_failure_count_increments(mock_send, agent_and_zone):
     while not zone._is_device_suppressed(dev_id) and time.monotonic() < deadline:
         time.sleep(0.05)
 
-    assert zone._device_fail_count.get(dev_id, 0) == MAX_CONSECUTIVE_FAILURES
+    assert zone._is_device_suppressed(dev_id)
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -129,7 +129,7 @@ def test_failure_count_resets_on_success(mock_send, agent_and_zone):
     dev_id = zone.on_lights_dev_ids[0]
 
     # Pre-seed a failure count
-    zone._device_fail_count[dev_id] = 2
+    suppress_device(agent, zone, dev_id, 2)
 
     # send_to_indigo returns True and device state is updated
     def fake_send(d_id, brightness):
@@ -146,7 +146,7 @@ def test_failure_count_resets_on_success(mock_send, agent_and_zone):
     while zone.checked_out and time.monotonic() < deadline:
         time.sleep(0.05)
 
-    assert zone._device_fail_count.get(dev_id, 0) == 0
+    assert device_fail_count(agent, dev_id) == 0
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -156,7 +156,7 @@ def test_suppression_after_max_failures(mock_send, agent_and_zone):
     dev_id = zone.on_lights_dev_ids[0]
 
     # Pre-seed failure count at the threshold
-    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_id)
 
     # Set target brightness to differ from actual
     zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
@@ -172,7 +172,7 @@ def test_suppressed_device_not_written(mock_send, agent_and_zone):
     dev_id = zone.on_lights_dev_ids[0]
 
     # Pre-seed failure count at the threshold
-    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_id)
 
     # Set target brightness
     zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
@@ -238,7 +238,7 @@ def test_device_change_clears_failure_count_when_at_target(mock_send, agent_and_
     zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
 
     # Pre-seed failure count at the threshold
-    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_id)
 
     # Simulate the device actually reaching brightness 100
     orig_dev = indigo.devices[dev_id]
@@ -250,7 +250,7 @@ def test_device_change_clears_failure_count_when_at_target(mock_send, agent_and_
     agent.process_device_change(orig_dev, diff)
 
     # Fail count should be cleared
-    assert zone._device_fail_count.get(dev_id, 0) == 0
+    assert device_fail_count(agent, dev_id) == 0
 
 
 def test_plugin_device_updated_clears_failure_count_when_new_state_reaches_target(
@@ -263,7 +263,7 @@ def test_plugin_device_updated_clears_failure_count_when_new_state_reaches_targe
     dev_id = zone.on_lights_dev_ids[0]
 
     zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
-    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_id)
 
     orig_dev = indigo.DimmerDevice(
         dev_id,
@@ -282,7 +282,7 @@ def test_plugin_device_updated_clears_failure_count_when_new_state_reaches_targe
     fake_plugin = SimpleNamespace(_agent=agent)
     Plugin.deviceUpdated(fake_plugin, orig_dev, new_dev)
 
-    assert zone._device_fail_count.get(dev_id, 0) == 0
+    assert device_fail_count(agent, dev_id) == 0
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -301,7 +301,7 @@ def test_device_change_unrelated_does_not_clear(mock_send, agent_and_zone):
     zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
 
     # Pre-seed at the suppression threshold
-    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_id)
 
     # Device is still at 0 — the deviceUpdated diff is irrelevant noise
     orig_dev = indigo.devices[dev_id]
@@ -311,7 +311,7 @@ def test_device_change_unrelated_does_not_clear(mock_send, agent_and_zone):
     agent.process_device_change(orig_dev, {"brightness": 0})
 
     # Counter must remain at the threshold; device stays suppressed
-    assert zone._device_fail_count.get(dev_id, 0) == MAX_CONSECUTIVE_FAILURES
+    assert zone._is_device_suppressed(dev_id)
     assert zone._is_device_suppressed(dev_id)
 
 
@@ -431,7 +431,7 @@ def test_only_failing_device_suppressed(mock_send, multi_device_agent):
     # dev_bad should be suppressed, dev_ok should not
     assert zone._is_device_suppressed(dev_bad)
     assert not zone._is_device_suppressed(dev_ok)
-    assert zone._device_fail_count.get(dev_ok, 0) == 0
+    assert device_fail_count(agent, dev_ok) == 0
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -441,7 +441,7 @@ def test_off_lights_suppression(mock_send, multi_device_agent):
     off_dev = zone.off_lights_dev_ids[0]
 
     # Pre-seed the suppression
-    zone._device_fail_count[off_dev] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, off_dev)
 
     # Put every light in the wrong state, then target everything off.
     for dev_id in zone.on_lights_dev_ids:
@@ -614,7 +614,7 @@ def test_recovery_then_refailure(mock_send, agent_and_zone):
     dev_id = zone.on_lights_dev_ids[0]
 
     # Simulate prior suppression
-    zone._device_fail_count[dev_id] = MAX_CONSECUTIVE_FAILURES
+    suppress_device(agent, zone, dev_id)
     zone.target_brightness = [{"dev_id": dev_id, "brightness": 100}]
 
     # Device recovers via state change — it actually reaches target this time
@@ -622,7 +622,7 @@ def test_recovery_then_refailure(mock_send, agent_and_zone):
     orig_dev.brightness = 100
     orig_dev.states["brightness"] = 100
     agent.process_device_change(orig_dev, {"brightness": 100})
-    assert zone._device_fail_count.get(dev_id, 0) == 0
+    assert device_fail_count(agent, dev_id) == 0
 
     # Drop the device back to 0 so the next plan computation has work to do
     orig_dev.brightness = 0
@@ -640,7 +640,7 @@ def test_recovery_then_refailure(mock_send, agent_and_zone):
         time.sleep(0.05)
 
     # Counter should restart from 0, reaching MAX again
-    assert zone._device_fail_count.get(dev_id, 0) == MAX_CONSECUTIVE_FAILURES
+    assert zone._is_device_suppressed(dev_id)
 
 
 @patch("auto_lights.utils.send_to_indigo")
@@ -727,7 +727,7 @@ def test_rate_limit_caps_runaway_writer_reeval(mock_send, agent_and_zone):
         nonlocal process_count
         process_count += 1
         # Defeat suppression so the only stop is the rate limit
-        z._device_fail_count.clear()
+        agent.suppression_manager.reset()
         return original_process(z)
 
     agent.process_zone = counting_process

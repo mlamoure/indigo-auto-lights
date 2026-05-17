@@ -218,9 +218,6 @@ class Zone(AutoLightsBase):
         self._pending_writes = 0
         self._write_lock = threading.Lock()
 
-        # track consecutive send failures per device to prevent infinite loops
-        self._device_fail_count: dict[int, int] = {}
-
         # Sliding window of writer-thread re-eval timestamps (monotonic).
         # Guarded by _reeval_lock; only touched from save_brightness_changes
         # writer threads via _can_reeval().
@@ -968,8 +965,11 @@ class Zone(AutoLightsBase):
         self.logger.info(f"🔓 Zone '{self._name}' lock reset: {reason}")
 
     def _is_device_suppressed(self, dev_id: int) -> bool:
-        """Return True if device has been suppressed due to repeated command failures."""
-        return self._device_fail_count.get(dev_id, 0) >= MAX_CONSECUTIVE_FAILURES
+        """Return True if the device is suppressed (delegates to SuppressionManager)."""
+        agent = self._config.agent
+        if agent is None or agent.suppression_manager is None:
+            return False
+        return agent.suppression_manager.is_suppressed(dev_id)
 
     def _can_reeval(self) -> bool:
         """Decide whether the writer-thread re-eval path may fire again.
@@ -1107,26 +1107,14 @@ class Zone(AutoLightsBase):
                     )
                     confirmed = False
 
-                # Track consecutive failures per device.
-                # Pop on success so device change events have a clean
-                # recovery path (process_device_change checks > 0).
-                if confirmed:
-                    self._device_fail_count.pop(dev_id, None)
-                else:
-                    count = self._device_fail_count.get(dev_id, 0) + 1
-                    self._device_fail_count[dev_id] = count
-                    # Warn exactly at the threshold — once per suppression
-                    # event, not on every subsequent attempt.
-                    if count == MAX_CONSECUTIVE_FAILURES:
-                        try:
-                            dev_name = indigo.devices[dev_id].name
-                        except Exception:
-                            dev_name = str(dev_id)
-                        self.logger.warning(
-                            f"⚠️ Device '{dev_name}' failed to confirm "
-                            f"{count} consecutive commands — suppressing "
-                            f"until it responds"
-                        )
+                # Report the outcome to the SuppressionManager, which owns
+                # failure tracking, suppression and background retry/recovery.
+                agent = self._config.agent
+                if agent is not None and agent.suppression_manager is not None:
+                    if confirmed:
+                        agent.suppression_manager.record_success(dev_id)
+                    else:
+                        agent.suppression_manager.record_failure(dev_id, self)
 
                 # Always decrement pending_writes, even if send threw.
                 # Without this, the zone stays permanently checked out.
@@ -1322,17 +1310,30 @@ class Zone(AutoLightsBase):
             if old_b is not None and old_b != new_b:
                 device = indigo.devices[did]
 
+                # A suppressed device is skipped by save_brightness_changes(),
+                # so annotate it rather than reporting a change that the writer
+                # will not actually perform.
+                suffix = (
+                    " (suppressed — retry pending)"
+                    if self._is_device_suppressed(did)
+                    else ""
+                )
+
                 # Determine change style: off always on/off, on for relays, brightness-up for dimmers
                 if new_b == 0:
-                    emoji = "🔌"
-                    device_changes.append(["🔌", f"turned off '{device.name}'"])
+                    device_changes.append(
+                        ["🔌", f"turned off '{device.name}'{suffix}"]
+                    )
                 elif not isinstance(device, indigo.DimmerDevice):
-                    emoji = "💡"
-                    device_changes.append(["💡", f"turned on '{device.name}'"])
+                    device_changes.append(
+                        ["💡", f"turned on '{device.name}'{suffix}"]
+                    )
                 else:
                     emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
                     # always use device name for clarity
-                    device_changes.append([emoji, f"{device.name}: {old_b} → {new_b}"])
+                    device_changes.append(
+                        [emoji, f"{device.name}: {old_b} → {new_b}{suffix}"]
+                    )
 
         return BrightnessPlan(
             contributions=plan_contribs,

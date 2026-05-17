@@ -5,6 +5,7 @@ from typing import List
 from . import utils
 from .auto_lights_base import AutoLightsBase
 from .auto_lights_config import AutoLightsConfig
+from .suppression_manager import SuppressionManager
 from .zone import Zone, LOCK_HOLD_GRACE_SECONDS
 
 try:
@@ -20,6 +21,10 @@ class AutoLightsAgent(AutoLightsBase):
         self._timers = {}
         # Timers for presence-based unlock grace periods
         self._no_presence_timers = {}
+
+        # Owns device-command failure suppression + background recovery.
+        # The thread is started by the plugin (see _init_config_and_agent).
+        self.suppression_manager = SuppressionManager(self)
 
         # Initialize per-zone transition timers
         for z in self.config.zones:
@@ -153,31 +158,12 @@ class AutoLightsAgent(AutoLightsBase):
             List[Zone]: List of Zone's processed
         """
         processed = []
+        # A device event may confirm a pending suppression retry — the
+        # SuppressionManager clears suppression and re-evaluates the zone.
+        self.suppression_manager.note_device_event(current_dev.id)
         for zone in self.config.zones:
             device_prop = zone._has_device(current_dev.id)
             if device_prop in ["on_lights_dev_ids", "off_lights_dev_ids"]:
-                # Clear failure suppression only when the device has actually
-                # reached the target state the zone is trying to write. A bare
-                # deviceUpdated isn't enough — for a flaky Z-Wave node, Indigo
-                # emits state diffs (lastChanged, partial reports, polling
-                # responses) that look like activity but mean nothing. If we
-                # cleared on those, suppression would never engage and the
-                # writer-thread re-eval loop would flood the network.
-                if zone._device_fail_count.get(current_dev.id, 0) > 0:
-                    target_map = {
-                        t["dev_id"]: t["brightness"]
-                        for t in (zone.target_brightness or [])
-                    }
-                    desired = target_map.get(current_dev.id)
-                    if desired is not None and utils.is_device_at_target(
-                        current_dev, desired
-                    ):
-                        zone._device_fail_count.pop(current_dev.id, None)
-                        self.logger.info(
-                            f"✅ Device '{current_dev.name}' reached target state "
-                            f"— resuming automation for zone '{zone.name}'"
-                        )
-
                 if not zone.enabled:
                     if (
                         any(k in diff for k in ["brightness", "onState", "onOffState"])
@@ -498,8 +484,12 @@ class AutoLightsAgent(AutoLightsBase):
     def shutdown(self) -> None:
         """
         Cancel all outstanding timers (lock-expiration timers in self._timers,
-        plus each zone's transition-timer and lock-timer).
+        plus each zone's transition-timer and lock-timer) and stop the
+        suppression-recovery background thread.
         """
+        # Stop the suppression-recovery background thread.
+        self.suppression_manager.shutdown()
+
         # Cancel agent-level timers
         for t in self._timers.values():
             t.cancel()
