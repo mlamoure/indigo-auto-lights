@@ -7,6 +7,7 @@ all live where the two systems meet.
 """
 
 import json
+import threading
 import time
 from pathlib import Path
 from unittest.mock import patch
@@ -100,7 +101,11 @@ def test_lock_expiry_writes_healthy_devices_skips_suppressed(
 
     mock_send.side_effect = selective_send
 
-    # Trigger the expired-lock handler — this is what the timer fires
+    # Model the single expiry timer firing: it must be registered (the agent's
+    # process_expired_lock ignores stale/unregistered fires) and the lock must
+    # genuinely expire rather than re-extend.
+    zone.extend_lock_when_active = False
+    agent._timers[zone.name] = threading.Timer(3600, lambda: None)
     agent.process_expired_lock(zone)
 
     # Wait for writer threads
@@ -235,6 +240,9 @@ def test_recovered_device_clears_suppression_while_locked_and_writes_after_expir
 
     zone.lock_expiration = datetime.datetime.now() - datetime.timedelta(seconds=1)
     assert not zone.locked
+    # Model the single expiry timer firing (registered + genuinely expiring).
+    zone.extend_lock_when_active = False
+    agent._timers[zone.name] = threading.Timer(3600, lambda: None)
     agent.process_expired_lock(zone)
 
     deadline = time.monotonic() + 5.0

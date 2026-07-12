@@ -14,6 +14,11 @@ except ImportError:
     pass
 
 
+# Seconds added after a lock's expiration before the single expiry timer fires,
+# so the extend-or-unlock decision is always made at/after the true expiration.
+LOCK_EXPIRY_GRACE_SECONDS = 2
+
+
 class AutoLightsAgent(AutoLightsBase):
     def __init__(self, config: AutoLightsConfig) -> None:
         super().__init__()
@@ -239,22 +244,8 @@ class AutoLightsAgent(AutoLightsBase):
                             f"    🗝️ unlock_when_no_presence: {zone.unlock_when_no_presence}"
                         )
                     processed.append(zone)
-                    # Schedule processing of expired lock after expiration + 2 seconds
-                    delay = (
-                        zone.lock_expiration
-                        + datetime.timedelta(seconds=2)
-                        - datetime.datetime.now()
-                    ).total_seconds()
-                    if delay > 0:
-                        # Cancel any existing timer for this zone
-                        if zone.name in self._timers:
-                            self._timers[zone.name].cancel()
-                        timer = threading.Timer(
-                            delay, self.process_expired_lock, args=[zone]
-                        )
-                        timer.daemon = True
-                        self._timers[zone.name] = timer
-                        timer.start()
+                    # Arm the single lock-expiry timer for this zone.
+                    self._schedule_lock_check(zone)
             elif device_prop in ["presence_dev_ids", "luminance_dev_ids"]:
                 # Invalidate the corresponding runtime cache so the next
                 # process_zone reads fresh sensor state. Without this, a
@@ -376,33 +367,60 @@ class AutoLightsAgent(AutoLightsBase):
                         self._timers[zone.name].cancel()
                         del self._timers[zone.name]
 
-    def process_expired_lock(self, unlocked_zone: Zone) -> None:
+    def _schedule_lock_check(self, zone: Zone) -> None:
         """
-        Called when a zone's lock expiration triggers. If the zone is no longer locked, process the zone.  Without this, no changes will be made once the lock expires.
-        Otherwise, schedule process_expired_lock again at the new lock_expiration.
+        (Re)arm the single lock-expiry timer for a zone.
+
+        Fires process_expired_lock shortly after the zone's current
+        lock_expiration (plus a small grace so the decision is made at/after the
+        true expiration). Any existing timer for the zone is cancelled first, so
+        this is safe to call both when a lock is created and each time it is
+        extended.
         """
-        self._debug_log(
-            f"[AutoLightsAgent.process_expired_lock] Called for zone '{unlocked_zone.name}', locked={unlocked_zone.locked}"
+        delay = (
+            max(0.0, (zone.lock_expiration - datetime.datetime.now()).total_seconds())
+            + LOCK_EXPIRY_GRACE_SECONDS
         )
-        if not unlocked_zone.locked:
-            # Cancel and remove any existing timer for this zone
-            if unlocked_zone.name in self._timers:
-                self._timers[unlocked_zone.name].cancel()
-                del self._timers[unlocked_zone.name]
-            self.process_zone(unlocked_zone)
+        if zone.name in self._timers:
+            self._timers[zone.name].cancel()
+        timer = threading.Timer(delay, self.process_expired_lock, args=[zone])
+        timer.daemon = True
+        self._timers[zone.name] = timer
+        timer.start()
+
+    def process_expired_lock(self, zone: Zone) -> None:
+        """
+        Single authority for lock expiration, fired by the one per-zone timer in
+        self._timers. Asks the zone to make the extend-or-unlock decision
+        (Zone._process_expired_lock), then either re-arms the timer at the new
+        expiration (lock extended / still held) or applies the now-unlocked plan.
+
+        Consolidating both the extend decision and the re-evaluation here fixes
+        the prior bug where a lock could only extend once: the old extend-aware
+        zone timer fired a single time and was never rescheduled, so the second
+        expiration reverted the zone even while presence was still active.
+        """
+        # Ignore a stale/cancelled fire: reset_locks() deletes the registration,
+        # so an in-flight callback must not resurrect the lock.
+        if zone.name not in self._timers:
+            return
+
+        self._debug_log(
+            f"[AutoLightsAgent.process_expired_lock] Called for zone '{zone.name}', locked={zone.locked}"
+        )
+
+        # Extend (presence + extend_lock_when_active) or unlock.
+        zone._process_expired_lock()
+
+        if zone.locked:
+            # Lock was extended; re-arm the timer for the new expiration.
+            self._schedule_lock_check(zone)
         else:
-            # zone still locked; schedule next check at new expiration
-            now = datetime.datetime.now()
-            delay = (unlocked_zone.lock_expiration - now).total_seconds()
-            if delay > 0:
-                # Cancel any existing timer for this zone
-                if unlocked_zone.name in self._timers:
-                    self._timers[unlocked_zone.name].cancel()
-                timer = threading.Timer(
-                    delay, self.process_expired_lock, args=[unlocked_zone]
-                )
-                self._timers[unlocked_zone.name] = timer
-                timer.start()
+            # Truly expired: drop the timer and apply the now-unlocked plan.
+            if zone.name in self._timers:
+                self._timers[zone.name].cancel()
+                del self._timers[zone.name]
+            self.process_zone(zone)
 
     def print_locked_zones(self) -> None:
         """
@@ -510,8 +528,8 @@ class AutoLightsAgent(AutoLightsBase):
     def shutdown(self) -> None:
         """
         Cancel all outstanding timers (lock-expiration timers in self._timers,
-        plus each zone's transition-timer and lock-timer) and stop the
-        suppression-recovery background thread.
+        plus each zone's transition-timer) and stop the suppression-recovery
+        background thread.
         """
         # Stop the suppression-recovery background thread.
         self.suppression_manager.shutdown()
@@ -526,9 +544,6 @@ class AutoLightsAgent(AutoLightsBase):
             if getattr(zone, "_transition_timer", None):
                 zone._transition_timer.cancel()
                 zone._transition_timer = None
-            if getattr(zone, "_lock_timer", None):
-                zone._lock_timer.cancel()
-                zone._lock_timer = None
 
     def refresh_all_indigo_devices(self) -> None:
         """
