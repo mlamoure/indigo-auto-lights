@@ -200,7 +200,6 @@ class Zone(AutoLightsBase):
         self._off_lights_behavior = "do not adjust unless no presence"
 
         self._lock_expiration = None
-        self._lock_timer = None
         self._config = config
         # compute which schema-driven fields we sync back to the Indigo zone device
         self.zone_indigo_device_config_states = {
@@ -776,15 +775,9 @@ class Zone(AutoLightsBase):
             )
             self.lock_expiration = new_expiration
 
-            # Schedule a background event to process the expiration of the lock.
-            now = datetime.datetime.now()
-            delay = (self._lock_expiration - now).total_seconds()
-            if delay > 0:
-                if self._lock_timer:
-                    self._lock_timer.cancel()
-                self._lock_timer = threading.Timer(delay, self._process_expired_lock)
-                self._lock_timer.daemon = True
-                self._lock_timer.start()
+            # The single lock-expiry timer is armed by the agent
+            # (AutoLightsAgent._schedule_lock_check) when the lock is created and
+            # re-armed on each extension. The zone no longer schedules its own.
 
             # schedule no-presence grace timer at lock-time
             if self.unlock_when_no_presence and not self.has_presence_detected():
@@ -804,9 +797,6 @@ class Zone(AutoLightsBase):
                 f"Zone '{self._name}' locked until {self.lock_expiration_str}"
             )
         else:
-            if self._lock_timer is not None:
-                self._lock_timer.cancel()
-                self._lock_timer = None
             self._lock_expiration = datetime.datetime.now() - datetime.timedelta(
                 minutes=1
             )
@@ -1339,13 +1329,9 @@ class Zone(AutoLightsBase):
 
                 # Determine change style: off always on/off, on for relays, brightness-up for dimmers
                 if new_b == 0:
-                    device_changes.append(
-                        ["🔌", f"turned off '{device.name}'{suffix}"]
-                    )
+                    device_changes.append(["🔌", f"turned off '{device.name}'{suffix}"])
                 elif not isinstance(device, indigo.DimmerDevice):
-                    device_changes.append(
-                        ["💡", f"turned on '{device.name}'{suffix}"]
-                    )
+                    device_changes.append(["💡", f"turned on '{device.name}'{suffix}"])
                 else:
                     emoji = "🔆" if isinstance(new_b, int) and new_b > old_b else "⬇️"
                     # always use device name for clarity
