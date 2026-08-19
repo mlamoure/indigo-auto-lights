@@ -145,13 +145,43 @@ Lighting Periods let you define windows of time that set different behaviors for
     - **Off Only**: If selected, Auto Lights only turns lights off (both on / off lights, as well as off lights) if
       they’ve been left on while presence is not detected.
 - **Override Lock Duration**: A specific period can override the default Zone lock duration.
-- **Limit Brightness**: Cap the maximum brightness if you don’t want lights going above, say, 50% at night.
+- **Limit Brightness**: Cap the maximum brightness if you don’t want lights going above, say, 50% at night. This applies
+  to every brightness Auto Lights calculates for the period, whether it came from Adjust Dimmer Brightness, a per-device
+  level, or the default.
 
 > **NOTE:** The configuration editor does not enforce non-overlapping lighting periods. It's up to you to align this.
 > Auto Lights will choose the first lighting period that matches the current time to execute against.
 
 > **NOTE:** A time of day that does not have a lighting period assigned will be attuned to "do nothing" for the plugin
 > during that time.
+
+---
+
+## Per-Device Brightness
+
+By default every light in a Zone is turned on to the same level. The **Device to Lighting Period Mappings** matrix in
+the Zone configuration lets you override that per light, per period.
+
+Each cell in the matrix offers three kinds of answer:
+
+- **Include in Period** — the light participates and takes the Zone's normal brightness. This is the default.
+- **Exclude from Period** — Auto Lights will not turn this light on during the period. It is still turned off when the
+  Zone becomes unoccupied.
+- **A brightness (1–100)** — the light participates and is driven to exactly this level for this period.
+
+This is what you want when the fixtures in a room shouldn't all sit at the same level. A kitchen might run its task
+spots at 10% late in the evening while the pendants stay at 60% and the cabinet strip sits at 40% — three levels, one
+Zone, one period.
+
+Notes:
+
+- A per-device level takes precedence over **Adjust Dimmer Brightness**. If you set both, the explicit level wins for
+  that light, and the luminance calculation still applies to every other light in the Zone.
+- The period's **Limit Brightness** is still a ceiling. A light set to 80 in a period capped at 30 is driven to 30.
+- Levels are 1–100. Use *Exclude from Period* rather than 0 to keep a light off — 0 is not a valid level, and a cell
+  holding one is ignored with a warning in the Indigo log.
+- Leaving every cell on *Include in Period* reproduces the behaviour of earlier versions exactly, so existing
+  configurations are unaffected.
 
 ---
 
