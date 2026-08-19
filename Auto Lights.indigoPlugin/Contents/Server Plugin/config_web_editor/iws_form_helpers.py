@@ -6,6 +6,7 @@ without Flask dependencies. Forms are used for validation and rendering in
 templates.
 """
 
+import logging
 from collections import OrderedDict
 from wtforms import (
     Form, FormField, SubmitField, StringField, IntegerField,
@@ -13,6 +14,8 @@ from wtforms import (
 )
 from wtforms.validators import DataRequired, Optional
 from markupsafe import Markup
+
+logger = logging.getLogger("Plugin")
 
 
 def create_field(field_name, field_schema):
@@ -257,6 +260,11 @@ class GlobalBehaviorMapField(Field):
             self.data = data or {}
 
 
+# Preset brightness levels offered per device/period cell. Anything 1-100 is
+# valid in the config; this is just the ladder the dropdown offers.
+BRIGHTNESS_CHOICES = list(range(100, 0, -5)) + [1]
+
+
 class DevicePeriodMapWidget:
     """Widget for rendering Device to Lighting Period Mappings as an HTML table."""
 
@@ -298,17 +306,34 @@ class DevicePeriodMapWidget:
             for period in self.lighting_periods:
                 dev_id_str = str(dev["id"])
                 period_id_str = str(period["id"])
-                # Get the value from field.data, defaulting to True (include)
-                is_included = field.data.get(dev_id_str, {}).get(period_id_str, True)
+                # Cell value: True (include), False (exclude), or 1-100 (explicit
+                # brightness). Defaults to True.
+                value = field.data.get(dev_id_str, {}).get(period_id_str, True)
+                # bool is a subclass of int, so check it first
+                if isinstance(value, bool) or not isinstance(value, int):
+                    selected = "include" if value else "exclude"
+                else:
+                    selected = str(value)
+
                 name = f'device_period_map-{dev["id"]}-{period["id"]}'
-                html.append(
-                    f'<td>'
-                    f'<select name="{name}">'
-                    f'<option value="include" {"selected" if is_included else ""}>Include in Period</option>'
-                    f'<option value="exclude" {"selected" if not is_included else ""}>Exclude from Period</option>'
-                    f'</select>'
-                    f'</td>'
-                )
+                options = [
+                    ("include", "Include in Period"),
+                    ("exclude", "Exclude from Period"),
+                ] + [(str(b), f"{b}%") for b in BRIGHTNESS_CHOICES]
+
+                # An explicit level saved outside the preset ladder (hand-edited
+                # config) still needs to render as the selected option
+                if selected not in {opt for opt, _ in options}:
+                    options.append((selected, f"{selected}%"))
+
+                cell = [f'<td><select name="{name}">']
+                for opt_value, opt_label in options:
+                    is_selected = " selected" if opt_value == selected else ""
+                    cell.append(
+                        f'<option value="{opt_value}"{is_selected}>{opt_label}</option>'
+                    )
+                cell.append('</select></td>')
+                html.append(''.join(cell))
             html.append('</tr>')
         html.append('</tbody></table>')
         return Markup(''.join(html))
@@ -373,10 +398,35 @@ class DevicePeriodMapField(Field):
                     continue
                 _, dev_id, period_id = parts
                 val = formdata.get(key)
-                include = (val == "include")
+                if val == "include":
+                    cell = True
+                elif val == "exclude":
+                    cell = False
+                else:
+                    # An explicit brightness level. Anything unparseable or out
+                    # of range falls back to plain inclusion rather than being
+                    # written into the config.
+                    try:
+                        level = int(val)
+                    except (TypeError, ValueError):
+                        logger.warning(
+                            f"device_period_map: device {dev_id} period {period_id} "
+                            f"got un-parseable value {val!r}; treating as included"
+                        )
+                        cell = True
+                    else:
+                        if 1 <= level <= 100:
+                            cell = level
+                        else:
+                            logger.warning(
+                                f"device_period_map: device {dev_id} period {period_id} "
+                                f"got out-of-range brightness {level} (expected 1-100); "
+                                f"treating as included"
+                            )
+                            cell = True
                 if dev_id not in mapping:
                     mapping[dev_id] = {}
-                mapping[dev_id][period_id] = include
+                mapping[dev_id][period_id] = cell
             self.data = mapping
         else:
             # Use the passed-in dict from zone config
