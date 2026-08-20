@@ -147,6 +147,12 @@ class Zone(AutoLightsBase):
             "getter": lambda z: z.is_dark(),
         },
         {
+            "key": "luminance_hysteresis",
+            "type": "number",
+            "label": "Luminance Hysteresis",
+            "getter": lambda z: z.luminance_hysteresis,
+        },
+        {
             "key": "zone_locked",
             "type": "boolean",
             "label": "Locked",
@@ -189,6 +195,12 @@ class Zone(AutoLightsBase):
         self._presence_dev_ids = []
         self._minimum_luminance = 10000
         self._minimum_luminance_var_id = None
+        self._luminance_hysteresis = 0
+        # Last darkness decision. Distinct from _runtime_cache["is_dark"], which
+        # is a within-one-evaluation memo that gets popped on every luminance
+        # change; this survives across evaluations so hysteresis has something
+        # to be sticky about. None means "no decision yet".
+        self._is_dark_state = None
 
         self._target_brightness = None
 
@@ -285,6 +297,8 @@ class Zone(AutoLightsBase):
                     self._minimum_luminance_var_id = None
             if "minimum_luminance_var_id" in mls:
                 self.minimum_luminance_var_id = mls["minimum_luminance_var_id"]
+            if "luminance_hysteresis" in mls:
+                self.luminance_hysteresis = mls["luminance_hysteresis"]
             if "adjust_brightness" in mls:
                 self.adjust_brightness = mls["adjust_brightness"]
         if "behavior_settings" in cfg:
@@ -463,6 +477,42 @@ class Zone(AutoLightsBase):
     @minimum_luminance.setter
     def minimum_luminance(self, value: int) -> None:
         self._minimum_luminance = value
+
+    @property
+    def luminance_hysteresis(self) -> float:
+        """
+        Extra luminance required to leave the "dark" state, in the same units as
+        minimum_luminance.
+
+        A bare `avg < minimum_luminance` test oscillates when the reading sits
+        near the threshold. This matters more than ordinary sensor noise would
+        suggest: a luminance sensor mounted in the room it gates also measures
+        the lights it controls, so switching them on raises the reading and can
+        push it back over the threshold, which switches them off again. Set this
+        wider than the lights' own contribution at the sensor to break that loop.
+
+        0 (the default) disables hysteresis and reproduces the original
+        behaviour exactly.
+        """
+        return self._luminance_hysteresis or 0
+
+    @luminance_hysteresis.setter
+    def luminance_hysteresis(self, value) -> None:
+        try:
+            coerced = float(value)
+        except (TypeError, ValueError):
+            self.logger.warning(
+                f"Zone '{self._name}': luminance_hysteresis {value!r} is not a "
+                f"number; treating as 0 (no hysteresis)."
+            )
+            coerced = 0.0
+        if coerced < 0:
+            self.logger.warning(
+                f"Zone '{self._name}': luminance_hysteresis {coerced} is "
+                f"negative; treating as 0 (no hysteresis)."
+            )
+            coerced = 0.0
+        self._luminance_hysteresis = coerced
 
     @property
     def minimum_luminance_var_id(self) -> int:
@@ -900,24 +950,59 @@ class Zone(AutoLightsBase):
             )
             return True
 
-        # Fetch sensor values safely; if a device doesn't have a sensorValue, you can decide on a default behavior.
-        sensor_values = [
-            indigo.devices[dev_id].sensorValue
-            for dev_id in self.luminance_dev_ids
-            if hasattr(indigo.devices[dev_id], "sensorValue")
-        ]
+        # A device may be missing sensorValue entirely, or carry a non-numeric
+        # one (None while a plugin is still starting up, a string from a badly
+        # behaved plugin). Both are unreadable. bool is excluded deliberately:
+        # it is a subclass of int and would otherwise average as 0/1 lux.
+        sensor_values = []
+        unreadable = []
+        for dev_id in self.luminance_dev_ids:
+            value = getattr(indigo.devices[dev_id], "sensorValue", None)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                unreadable.append(dev_id)
+                continue
+            sensor_values.append(value)
 
         if not sensor_values:
-            self._debug_log(
-                f"Zone '{self._name}': is_dark: No valid sensor values available, returning True"
+            # Configured luminance devices that cannot be read is a FAILURE, and
+            # it is not the same thing as "no luminance devices configured"
+            # (handled above). Returning True here would be indistinguishable
+            # from a genuine darkness reading and would silently switch the
+            # zone's lights on. Hold the last real decision instead, and say so.
+            held = self._is_dark_state if self._is_dark_state is not None else True
+            self.logger.warning(
+                f"Zone '{self._name}': no readable luminance value from "
+                f"{len(self.luminance_dev_ids)} configured device(s) "
+                f"{unreadable} — holding is_dark={held}. Lights are being "
+                f"driven on a stale darkness reading; check those devices."
             )
-            return True
+            # Deliberately not committing this to _is_dark_state: a failure
+            # must not seed the hysteresis state for later real readings.
+            self._runtime_cache["is_dark"] = held
+            return held
+
+        if unreadable:
+            self.logger.warning(
+                f"Zone '{self._name}': luminance device(s) {unreadable} "
+                f"unreadable; averaging the remaining {len(sensor_values)}."
+            )
 
         avg = sum(sensor_values) / len(sensor_values)
+
+        # Schmitt trigger: the band is applied only when leaving the dark state,
+        # so it never delays turning lights ON, only turning them off.
+        threshold = self.minimum_luminance
+        if self._is_dark_state:
+            threshold += self.luminance_hysteresis
+
         self._debug_log(
-            f"Zone '{self._name}': Calculated average luminance: {avg} (minimum required: {self.minimum_luminance})."
+            f"Zone '{self._name}': Calculated average luminance: {avg} "
+            f"(minimum required: {self.minimum_luminance}, effective threshold: "
+            f"{threshold}, hysteresis: {self.luminance_hysteresis}, "
+            f"previously dark: {self._is_dark_state})."
         )
-        result = avg < self.minimum_luminance
+        result = avg < threshold
+        self._is_dark_state = result
         self._runtime_cache["is_dark"] = result
         return result
 

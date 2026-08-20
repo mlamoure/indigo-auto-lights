@@ -131,6 +131,25 @@ Luminance, if provided, is used in a number of ways:
 Setting a minimum brightness:
 
 - **Minimum Luminance**: Minimum luminance can be set via Indigo variable, or statically in the Zone configuration.
+- **Luminance Hysteresis**: Extra luminance required before the Zone stops being considered dark, in the same units as
+  Minimum Luminance. Defaults to `0`, which disables it and reproduces the original behaviour exactly.
+
+#### Why hysteresis matters
+
+With no hysteresis, darkness is a bare `average luminance < minimum luminance` test. A reading that hovers near the
+threshold therefore turns the lights on and off repeatedly — on a broken-cloud afternoon this can cycle every couple of
+minutes for as long as someone is in the room.
+
+This is worse than ordinary sensor noise would suggest whenever **the luminance sensor is in the room it controls**,
+because it also measures the lights it is gating. Turning them on raises its own reading, which can push it back over
+the threshold, which turns them off, which lowers the reading again. That is a feedback loop, not just jitter.
+
+Hysteresis is applied **only when leaving the dark state**, so it never delays turning lights on — only turning them
+off. With a Minimum Luminance of `2500` and a hysteresis of `500`, lights come on below `2500` and do not go off until
+the Zone reaches `3000`.
+
+> **NOTE:** Set the value wider than your lights' own contribution at the sensor, or the loop will still ring. Measure
+> it by reading the sensor with the Zone's lights off and then at full brightness, after dark, and take the difference.
 
 ---
 
