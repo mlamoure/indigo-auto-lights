@@ -60,6 +60,13 @@ MAX_CONSECUTIVE_FAILURES = 3
 MAX_REEVAL_BURST = 5
 REEVAL_WINDOW_SECONDS = 30.0
 
+# How long is_dark() may keep reporting the last real darkness decision while
+# the zone's luminance sensors are unreadable. Holding is a bridge across a
+# dropped report; past this the reading is not credible (a flat battery would
+# otherwise pin a zone dark and run its lights all day) and the warning is
+# escalated to an error on every evaluation.
+LUMINANCE_HOLD_MAX_SECONDS = 300.0
+
 
 class Zone(AutoLightsBase):
     """
@@ -146,12 +153,10 @@ class Zone(AutoLightsBase):
             "label": "Is Dark",
             "getter": lambda z: z.is_dark(),
         },
-        {
-            "key": "luminance_hysteresis",
-            "type": "number",
-            "label": "Luminance Hysteresis",
-            "getter": lambda z: z.luminance_hysteresis,
-        },
+        # NOTE: luminance_hysteresis is deliberately NOT listed here. It is a
+        # config field and is already published via "x-sync_to_indigo" in
+        # config_schema.json; listing it in both makes plugin.getDeviceStateList
+        # emit the key twice. This list is for derived runtime values only.
         {
             "key": "zone_locked",
             "type": "boolean",
@@ -197,10 +202,18 @@ class Zone(AutoLightsBase):
         self._minimum_luminance_var_id = None
         self._luminance_hysteresis = 0
         # Last darkness decision. Distinct from _runtime_cache["is_dark"], which
-        # is a within-one-evaluation memo that gets popped on every luminance
-        # change; this survives across evaluations so hysteresis has something
-        # to be sticky about. None means "no decision yet".
+        # is cleared wholesale at the top of every AutoLightsAgent.process_zone
+        # run (and popped again on luminance-device changes); this survives
+        # across evaluations so hysteresis has something to be sticky about.
+        # None means "no decision yet" — including after a plugin restart, which
+        # deliberately re-evaluates against the bare threshold.
         self._is_dark_state = None
+        # Edge-trigger flags so a permanently dead sensor warns once per outage
+        # rather than once per evaluation, plus the timestamp the staleness
+        # escalation is measured from.
+        self._luminance_unreadable_warned = False
+        self._luminance_partial_warned = False
+        self._last_luminance_read = None
 
         self._target_brightness = None
 
@@ -491,10 +504,12 @@ class Zone(AutoLightsBase):
         push it back over the threshold, which switches them off again. Set this
         wider than the lights' own contribution at the sensor to break that loop.
 
-        0 (the default) disables hysteresis and reproduces the original
-        behaviour exactly.
+        0 (the default) disables the band, so darkness is the same bare
+        comparison as before. Note this scopes to the band only — the
+        unreadable-sensor handling in is_dark() changed unconditionally and is
+        not gated by this setting.
         """
-        return self._luminance_hysteresis or 0
+        return self._luminance_hysteresis
 
     @luminance_hysteresis.setter
     def luminance_hysteresis(self, value) -> None:
@@ -506,10 +521,15 @@ class Zone(AutoLightsBase):
                 f"number; treating as 0 (no hysteresis)."
             )
             coerced = 0.0
-        if coerced < 0:
+        # isfinite covers nan and inf as well as the obvious negative case, and
+        # they are the values that matter most: float("nan") and the string
+        # "1e400" both pass float() and a `< 0` test, and a nan band makes
+        # `avg < threshold` always False — the zone silently never turns its
+        # lights on again, with no error anywhere.
+        if not math.isfinite(coerced) or coerced < 0:
             self.logger.warning(
-                f"Zone '{self._name}': luminance_hysteresis {coerced} is "
-                f"negative; treating as 0 (no hysteresis)."
+                f"Zone '{self._name}': luminance_hysteresis {value!r} is not a "
+                f"usable value; treating as 0 (no hysteresis)."
             )
             coerced = 0.0
         self._luminance_hysteresis = coerced
@@ -537,9 +557,14 @@ class Zone(AutoLightsBase):
         self._luminance = 0
         if len(self.luminance_dev_ids) == 0:
             return 0
-        for devId in self.luminance_dev_ids:
-            self._luminance += indigo.devices[devId].sensorValue
-        self._luminance = int(self._luminance / len(self.luminance_dev_ids))
+        # Shares _read_luminance_values() with is_dark() on purpose. These were
+        # two loops with different notions of "readable", so an unreadable
+        # sensor could crash here (TypeError on None) or be averaged as 1 lux
+        # (bool) while is_dark() had discarded the very same reading.
+        values, _unreadable = self._read_luminance_values()
+        if not values:
+            return self._luminance
+        self._luminance = int(sum(values) / len(values))
         self._debug_log(f"computed luminance: {self._luminance}")
         self._runtime_cache["luminance"] = self._luminance
         return self._luminance
@@ -934,12 +959,22 @@ class Zone(AutoLightsBase):
 
     def is_dark(self) -> bool:
         """
-        Determine if the zone is considered dark based on sensor readings by averaging
-        luminance devices' sensor values.
+        Determine whether the zone is dark, with hysteresis.
+
+        Three distinct outcomes, deliberately not collapsed into one another:
+
+        * **No luminance devices configured** — returns True. That is a
+          configuration choice ("this zone does not use a luminance gate"), not
+          a failure, so it is silent.
+        * **Configured devices, none readable** — a FAILURE. Holds the last real
+          decision rather than asserting darkness, warns, and escalates to an
+          error once the held value goes stale (see LUMINANCE_HOLD_MAX_SECONDS).
+        * **Otherwise** — True when the average of the readable sensors is below
+          the *effective* threshold, which is `minimum_luminance` normally and
+          `minimum_luminance + luminance_hysteresis` while already dark.
 
         Returns:
-            bool: True if the calculated average luminance is below the minimum threshold,
-                  or if no valid sensor values are available; otherwise False.
+            bool: True if the zone should be treated as dark.
         """
         if "is_dark" in self._runtime_cache:
             return self._runtime_cache["is_dark"]
@@ -950,18 +985,7 @@ class Zone(AutoLightsBase):
             )
             return True
 
-        # A device may be missing sensorValue entirely, or carry a non-numeric
-        # one (None while a plugin is still starting up, a string from a badly
-        # behaved plugin). Both are unreadable. bool is excluded deliberately:
-        # it is a subclass of int and would otherwise average as 0/1 lux.
-        sensor_values = []
-        unreadable = []
-        for dev_id in self.luminance_dev_ids:
-            value = getattr(indigo.devices[dev_id], "sensorValue", None)
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
-                unreadable.append(dev_id)
-                continue
-            sensor_values.append(value)
+        sensor_values, unreadable = self._read_luminance_values()
 
         if not sensor_values:
             # Configured luminance devices that cannot be read is a FAILURE, and
@@ -969,31 +993,59 @@ class Zone(AutoLightsBase):
             # (handled above). Returning True here would be indistinguishable
             # from a genuine darkness reading and would silently switch the
             # zone's lights on. Hold the last real decision instead, and say so.
+            #
+            # Holding is a bridge across a dropped report, not a steady state: a
+            # sensor whose battery dies overnight would otherwise pin the zone
+            # dark and run its lights all day. Past LUMINANCE_HOLD_MAX_SECONDS
+            # the hold stops being credible and is escalated to an error.
             held = self._is_dark_state if self._is_dark_state is not None else True
-            self.logger.warning(
+            stale_for = self._luminance_hold_age()
+            names = self._describe_devices(unreadable)
+            detail = (
                 f"Zone '{self._name}': no readable luminance value from "
-                f"{len(self.luminance_dev_ids)} configured device(s) "
-                f"{unreadable} — holding is_dark={held}. Lights are being "
-                f"driven on a stale darkness reading; check those devices."
+                f"{len(self.luminance_dev_ids)} configured device(s) {names} — "
+                f"holding the previous decision (is_dark={held}); this zone's "
+                f"lighting is running on a stale luminance reading"
             )
+            if stale_for is not None and stale_for > LUMINANCE_HOLD_MAX_SECONDS:
+                # Escalate every time once stale: at this point it is not noise,
+                # the zone has been running blind for minutes.
+                self.logger.error(
+                    f"{detail} that is {int(stale_for)}s old. Check those devices."
+                )
+            elif not self._luminance_unreadable_warned:
+                # Warn once per outage. is_dark() runs on every device change in
+                # the zone, so an unconditional warning here floods the event log
+                # precisely when the user needs to read it.
+                self.logger.warning(f"{detail}. Check those devices.")
+                self._luminance_unreadable_warned = True
+            else:
+                self._debug_log(detail)
             # Deliberately not committing this to _is_dark_state: a failure
             # must not seed the hysteresis state for later real readings.
             self._runtime_cache["is_dark"] = held
             return held
 
-        if unreadable:
+        if unreadable and not self._luminance_partial_warned:
             self.logger.warning(
-                f"Zone '{self._name}': luminance device(s) {unreadable} "
-                f"unreadable; averaging the remaining {len(sensor_values)}."
+                f"Zone '{self._name}': luminance device(s) "
+                f"{self._describe_devices(unreadable)} unreadable; averaging the "
+                f"remaining {len(sensor_values)}."
             )
+            self._luminance_partial_warned = True
+        elif not unreadable:
+            self._luminance_partial_warned = False
+
+        if self._luminance_unreadable_warned:
+            self.logger.info(f"Zone '{self._name}': luminance readings have recovered.")
+        self._luminance_unreadable_warned = False
+        self._last_luminance_read = time.time()
 
         avg = sum(sensor_values) / len(sensor_values)
 
         # Schmitt trigger: the band is applied only when leaving the dark state,
         # so it never delays turning lights ON, only turning them off.
-        threshold = self.minimum_luminance
-        if self._is_dark_state:
-            threshold += self.luminance_hysteresis
+        threshold = self.effective_darkness_threshold
 
         self._debug_log(
             f"Zone '{self._name}': Calculated average luminance: {avg} "
@@ -1005,6 +1057,80 @@ class Zone(AutoLightsBase):
         self._is_dark_state = result
         self._runtime_cache["is_dark"] = result
         return result
+
+    @property
+    def effective_darkness_threshold(self) -> float:
+        """The threshold is_dark() actually compares against, band included.
+
+        Exposed because the user-facing plan log needs to report the widened
+        value: printing the bare minimum next to a `is dark = True` computed
+        from the widened one reads as a bug.
+        """
+        if self._is_dark_state:
+            return self.minimum_luminance + self.luminance_hysteresis
+        return self.minimum_luminance
+
+    def _luminance_hold_age(self) -> Optional[float]:
+        """Seconds since the last real luminance reading, or None if never."""
+        if self._last_luminance_read is None:
+            return None
+        return time.time() - self._last_luminance_read
+
+    def _describe_devices(self, dev_ids: List[int]) -> str:
+        """Render device ids with names where resolvable, for log messages."""
+        parts = []
+        for dev_id in dev_ids:
+            try:
+                parts.append(f"'{indigo.devices[dev_id].name}' ({dev_id})")
+            except Exception:
+                parts.append(f"id {dev_id} (no such device)")
+        return ", ".join(parts) if parts else "none"
+
+    def _read_luminance_values(self) -> Tuple[List[float], List[int]]:
+        """Read the zone's luminance sensors, separating readable from not.
+
+        Single source of truth for "what does this zone's luminance hardware say
+        right now", shared by is_dark() and the luminance property. They were
+        previously separate loops with different ideas of what counted as
+        readable — one rejected bools, the other averaged True as 1 lux — which
+        let the plan report a luminance the darkness decision had discarded.
+
+        A device may be absent from indigo.devices (deleted while still listed in
+        the zone config), missing sensorValue entirely, or carry a non-numeric
+        one (None while its plugin is still starting up, a string from a badly
+        behaved plugin). All are unreadable. bool is excluded deliberately: it is
+        a subclass of int and would otherwise average as 0/1 lux — a false
+        "pitch dark" that switches the zone's lights on.
+
+        Returns:
+            (values, unreadable_dev_ids)
+        """
+        values: List[float] = []
+        unreadable: List[int] = []
+        for dev_id in self.luminance_dev_ids:
+            try:
+                device = indigo.devices[dev_id]
+            except KeyError:
+                # No such device — a config problem the user must fix, not a
+                # transient one. Treated as unreadable so the caller's failure
+                # handling reports it rather than crashing the evaluation.
+                unreadable.append(dev_id)
+                continue
+            except Exception as exc:
+                # The lookup itself failed, which is a different condition and
+                # may well be transient. Still unreadable, but say which.
+                self.logger.exception(
+                    f"Zone '{self._name}': luminance device {dev_id} lookup "
+                    f"failed: {exc}"
+                )
+                unreadable.append(dev_id)
+                continue
+            value = getattr(device, "sensorValue", None)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                unreadable.append(dev_id)
+                continue
+            values.append(value)
+        return values, unreadable
 
     def _current_state_any_light_is_on(self) -> bool:
         """
@@ -1297,12 +1423,37 @@ class Zone(AutoLightsBase):
 
         plan_contribs.append(("👫", f"presence detected = {presence}"))
         if self.luminance_dev_ids:
-            plan_contribs.append(
-                (
-                    "🌝",
-                    f"is dark = {darkness} (luminance={self.luminance}, minimum brightness={int(self.minimum_luminance)})",
+            # Report the threshold actually used. With hysteresis engaged the
+            # effective one is wider than the configured minimum, and printing
+            # the bare minimum next to "is dark = True" reads as a bug.
+            threshold_note = f"minimum brightness={int(self.minimum_luminance)}"
+            effective = self.effective_darkness_threshold
+            if effective != self.minimum_luminance:
+                threshold_note += f", effective threshold={int(effective)}"
+            _values, unreadable = self._read_luminance_values()
+            if not _values:
+                # The degradation belongs in the payload the user reads, not
+                # only in a log line emitted at a different level minutes ago.
+                stale_for = self._luminance_hold_age()
+                age = f" for {int(stale_for)}s" if stale_for is not None else ""
+                plan_contribs.append(
+                    (
+                        "⚠️",
+                        f"luminance unreadable from "
+                        f"{self._describe_devices(unreadable)} — holding "
+                        f"is dark = {darkness}{age}",
+                    )
                 )
-            )
+            else:
+                if unreadable:
+                    threshold_note += f", {len(unreadable)} sensor(s) unreadable"
+                plan_contribs.append(
+                    (
+                        "🌝",
+                        f"is dark = {darkness} (luminance={self.luminance}, "
+                        f"{threshold_note})",
+                    )
+                )
 
         # we know `period` is non-None here, so just log its name/limits
         plan_contribs.append(
@@ -1367,8 +1518,19 @@ class Zone(AutoLightsBase):
                 elif not self.adjust_brightness:
                     brightness = 100
                 else:
-                    brightness = math.ceil(
-                        (1 - (self.luminance / self.minimum_luminance)) * 100
+                    # Clamped because hysteresis breaks the old invariant that
+                    # darkness implies luminance < minimum_luminance: while the
+                    # band holds the zone dark, luminance can exceed the minimum
+                    # and this term goes negative (e.g. 2600/2500 -> -4), which
+                    # was passed straight to the device unclamped.
+                    brightness = max(
+                        0,
+                        min(
+                            100,
+                            math.ceil(
+                                (1 - (self.luminance / self.minimum_luminance)) * 100
+                            ),
+                        ),
                     )
                 # limit_brightness is a ceiling on whichever source produced the
                 # value above, not just the luminance-derived one

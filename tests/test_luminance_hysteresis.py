@@ -1,54 +1,86 @@
-"""Unit tests for Zone.is_dark() hysteresis and sensor-failure handling.
-
-Two behaviours are covered here.
+"""Unit tests for Zone.is_dark() hysteresis and luminance-sensor failure handling.
 
 **Hysteresis.** A bare `avg < minimum_luminance` comparison oscillates when the
 reading sits near the threshold. That is not merely sensor noise: a luminance
 sensor mounted in the room it gates measures the very lights it controls, so
 switching them on raises the reading and can push it back over the threshold.
-The band must therefore be applied on the *getting brighter* side, and must be
-wider than the lights' own contribution, or the loop still rings.
+The band is therefore applied on the *getting brighter* side only, and must be
+wider than the lights' own contribution or the loop still rings.
 
 **Sensor failure.** "No luminance devices configured" and "configured devices
 that cannot be read" are different conditions that previously collapsed to the
 same silent `True`. The first is deliberate configuration; the second is a
-failure and must be visible.
+failure, must be visible, and must not be held indefinitely.
+
+Several tests here exist specifically to kill mutations that survived an earlier
+version of this file: latching dark forever, seeding the hysteresis state from a
+failure, dropping the bool exclusion, and silently thinning the sensor set.
 """
 
 import logging
+import math
 
 import pytest
 
 
 @pytest.fixture
 def zone():
-    """A bare Zone carrying only the attributes is_dark() touches."""
+    """A bare Zone carrying only the attributes these paths touch.
+
+    Deliberately `Zone.__new__` rather than a constructed Zone: a newly
+    introduced dependency then fails loudly here instead of being silently
+    satisfied by an `__init__` default.
+    """
     from auto_lights.zone import Zone
 
     z = Zone.__new__(Zone)
     z._name = "TestZone"
     z.logger = logging.getLogger("Plugin")
     z._runtime_cache = {}
+    z._luminance = 0
     z._luminance_dev_ids = []
     z._minimum_luminance = 2500
     z._minimum_luminance_var_id = None
     z._luminance_hysteresis = 0
     z._is_dark_state = None
+    z._luminance_unreadable_warned = False
+    z._luminance_partial_warned = False
+    z._last_luminance_read = None
     return z
 
 
 def _sensors(zone, *values):
-    """Attach luminance devices reporting `values`, and clear the eval cache."""
+    """Attach luminance devices reporting `values`, and clear the eval cache.
+
+    Clears both cached luminance keys, matching what process_zone does, so a
+    test reading `zone.luminance` after `is_dark()` sees the same generation.
+    """
     import indigo
 
     ids = []
     for i, v in enumerate(values):
         dev_id = 90000 + i
-        indigo.devices[dev_id] = type("Dev", (), {"sensorValue": v, "id": dev_id})()
+        indigo.devices[dev_id] = type(
+            "Dev", (), {"sensorValue": v, "id": dev_id, "name": f"Lux {i}"}
+        )()
         ids.append(dev_id)
     zone._luminance_dev_ids = ids
     zone._runtime_cache.pop("is_dark", None)
+    zone._runtime_cache.pop("luminance", None)
     return ids
+
+
+def _broken_sensor(zone, dev_id=90500, **attrs):
+    """Attach a single device that cannot produce a usable sensorValue."""
+    import indigo
+
+    attrs.setdefault("id", dev_id)
+    attrs.setdefault("name", f"Broken {dev_id}")
+    indigo.devices[dev_id] = type("Dev", (), attrs)()
+    zone._luminance_dev_ids = [dev_id]
+    zone._runtime_cache.pop("is_dark", None)
+    zone._runtime_cache.pop("luminance", None)
+    return dev_id
 
 
 # --------------------------------------------------------------------------
@@ -61,14 +93,11 @@ def test_falling_below_threshold_becomes_dark(zone):
     zone._is_dark_state = False
     _sensors(zone, 2400)
     assert zone.is_dark() is True
+    assert zone._is_dark_state is True
 
 
 def test_rising_within_band_stays_dark(zone):
-    """The behaviour that did not previously exist.
-
-    2600 is above the 2500 threshold, so the old code called it light. With a
-    500 band it must stay dark until 3000.
-    """
+    """2600 is above the 2500 threshold; the 500 band holds it dark to 3000."""
     zone._luminance_hysteresis = 500
     zone._is_dark_state = True
     _sensors(zone, 2600)
@@ -83,35 +112,76 @@ def test_rising_past_band_becomes_light(zone):
 
 
 def test_band_is_not_applied_when_currently_light(zone):
-    """The band must be one-sided: it must not delay turning lights ON.
-
-    2400 is below the threshold; a symmetric band would keep it 'light' down to
-    2000 and leave the room dark while occupied.
-    """
+    """One-sided: a symmetric band would leave an occupied room dark to 2000."""
     zone._luminance_hysteresis = 500
     zone._is_dark_state = False
     _sensors(zone, 2400)
     assert zone.is_dark() is True
 
 
-def test_real_world_oscillation_produces_one_transition(zone):
-    """Replay of 2026-08-20 midday readings that crossed 2500 four times."""
+def test_staying_light_within_the_band_stays_light(zone):
+    """The light -> light transition: the band must not pull it dark early."""
     zone._luminance_hysteresis = 500
     zone._is_dark_state = False
+    _sensors(zone, 2600)
+    assert zone.is_dark() is False
+    assert zone._is_dark_state is False
+
+
+def test_leaving_dark_clears_the_band_for_the_next_evaluation(zone):
+    """Kills the "latch dark forever" mutation.
+
+    Asserting only the return value of the exit lets an implementation that
+    never writes False back to _is_dark_state pass, and such a zone never turns
+    its lights off again.
+    """
+    zone._luminance_hysteresis = 500
+    zone._is_dark_state = True
+
+    _sensors(zone, 3000)
+    assert zone.is_dark() is False
+    assert zone._is_dark_state is False
+
+    # Now on the bare threshold again: 2600 must read light, not dark.
+    _sensors(zone, 2600)
+    assert zone.is_dark() is False
+
+
+def test_hysteresis_changes_the_outcome_versus_no_hysteresis(zone):
+    """The real-data replay, run as an experiment rather than a snapshot.
+
+    These are readings taken 2026-08-20 around midday from a kitchen whose
+    luminance sensor is in the room it gates. They cross 2500 twice. Asserting
+    only that the banded run is all-True would also pass for `return True`, so
+    the contrast with hysteresis=0 is the whole point.
+    """
     readings = [2293.5, 2587.6, 2218.33, 2022.97, 2228.18, 1254.76]
 
-    results = []
-    for r in readings:
-        _sensors(zone, r)
-        results.append(zone.is_dark())
+    def replay(hyst):
+        zone._luminance_hysteresis = hyst
+        zone._is_dark_state = False
+        out = []
+        for r in readings:
+            _sensors(zone, r)
+            out.append(zone.is_dark())
+        return out
 
-    # Once dark, it stays dark: nothing here reaches 3000.
-    assert results == [True, True, True, True, True, True]
-    assert sum(1 for a, b in zip(results, results[1:]) if a != b) == 0
+    banded = replay(500)
+    bare = replay(0)
+
+    assert bare[1] is False, "without hysteresis the 2587.6 reading flaps to light"
+    assert all(banded), "with a 500 band nothing reaches 3000, so it stays dark"
+    assert sum(a != b for a, b in zip(bare, bare[1:])) == 2  # two crossings
+    assert sum(a != b for a, b in zip(banded, banded[1:])) == 0
 
 
 def test_zero_hysteresis_is_exactly_legacy_behaviour(zone):
-    """Regression guard: the default must not change any existing install."""
+    """Regression guard on the band only.
+
+    With readable sensors and hysteresis 0, the decision must be the same bare
+    comparison as before. This does NOT claim the whole function is unchanged:
+    the unreadable-sensor handling changed unconditionally.
+    """
     zone._luminance_hysteresis = 0
     for prior in (None, True, False):
         for value, expected in ((2499, True), (2500, False), (2501, False)):
@@ -121,7 +191,7 @@ def test_zero_hysteresis_is_exactly_legacy_behaviour(zone):
 
 
 def test_first_evaluation_uses_plain_threshold(zone):
-    """With no prior state there is nothing to be sticky about."""
+    """No prior state (including right after a plugin restart) -> bare threshold."""
     zone._luminance_hysteresis = 500
     zone._is_dark_state = None
     _sensors(zone, 2600)
@@ -142,9 +212,35 @@ def test_state_persists_across_evaluations(zone):
     assert zone._is_dark_state is True
 
 
+def test_is_dark_is_idempotent_across_a_cache_clear(zone):
+    """is_dark() is a mutating getter called twice per evaluation.
+
+    sync_indigo_device() renders it as a device state, then
+    calculate_target_brightness clears the cache and calls it again. The two
+    calls agree only because the trigger is a fixpoint; pin that.
+    """
+    for hyst in (0, 500):
+        for prior in (None, True, False):
+            for reading in (2400, 2600, 3000):
+                zone._luminance_hysteresis = hyst
+                zone._is_dark_state = prior
+                _sensors(zone, reading)
+                first = zone.is_dark()
+                zone._runtime_cache.clear()
+                second = zone.is_dark()
+                assert first is second, (hyst, prior, reading)
+
+
 def test_runtime_cache_short_circuits_within_one_evaluation(zone):
+    """The cache must be the only reason this returns True.
+
+    Previously this test set _luminance_dev_ids = [], which returns True on the
+    no-devices path regardless of the cache, so it could not fail.
+    """
+    zone._luminance_hysteresis = 0
+    zone._is_dark_state = None
+    _sensors(zone, 9999)  # would compute False
     zone._runtime_cache["is_dark"] = True
-    zone._luminance_dev_ids = []
     assert zone.is_dark() is True
 
 
@@ -153,6 +249,43 @@ def test_averages_multiple_sensors(zone):
     zone._is_dark_state = None
     _sensors(zone, 2000, 4000)  # avg 3000
     assert zone.is_dark() is False
+
+
+# --------------------------------------------------------------------------
+# Hysteresis value validation
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["not a number", None, -250, float("nan"), float("inf"), "1e400", "-inf"],
+)
+def test_unusable_hysteresis_falls_back_to_zero_and_warns(zone, bad, caplog):
+    """nan and inf are the dangerous ones, and they pass float() and `< 0`.
+
+    A nan band makes `avg < threshold` always False, so the zone silently never
+    turns its lights on again. An inf band makes it always dark. Both are worse
+    than the malformed strings the setter was originally written for.
+    """
+    with caplog.at_level(logging.WARNING, logger="Plugin"):
+        zone.luminance_hysteresis = bad
+    assert zone.luminance_hysteresis == 0
+    assert any("hysteresis" in r.message.lower() for r in caplog.records)
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+def test_unusable_hysteresis_cannot_disable_darkness_detection(zone, bad):
+    """The behavioural consequence, not just the stored value."""
+    zone.luminance_hysteresis = bad
+    zone._is_dark_state = True
+    _sensors(zone, 0)  # pitch dark
+    assert zone.is_dark() is True
+
+
+def test_valid_hysteresis_is_stored(zone):
+    zone.luminance_hysteresis = 400
+    assert zone.luminance_hysteresis == 400
+    assert math.isfinite(zone.luminance_hysteresis)
 
 
 # --------------------------------------------------------------------------
@@ -177,54 +310,125 @@ def test_no_luminance_devices_configured_does_not_warn(zone, caplog):
 
 def test_unreadable_sensor_holds_previous_state(zone):
     """A failed read must not be mistaken for a genuine darkness reading."""
-    import indigo
-
     zone._is_dark_state = False
-    indigo.devices[90500] = type("Dev", (), {"id": 90500})()  # no sensorValue
-    zone._luminance_dev_ids = [90500]
-    zone._runtime_cache.pop("is_dark", None)
-
+    _broken_sensor(zone)  # no sensorValue attribute
     assert zone.is_dark() is False  # held, not flipped to True
 
 
 def test_unreadable_sensor_warns(zone, caplog):
     """Not crashing is right; staying silent is not."""
-    import indigo
-
     zone._is_dark_state = False
-    indigo.devices[90501] = type("Dev", (), {"id": 90501})()
-    zone._luminance_dev_ids = [90501]
-    zone._runtime_cache.pop("is_dark", None)
-
+    _broken_sensor(zone, 90501)
     with caplog.at_level(logging.WARNING, logger="Plugin"):
         zone.is_dark()
     assert any("luminance" in r.message.lower() for r in caplog.records)
 
 
-def test_unreadable_sensor_with_no_prior_state_defaults_dark_and_warns(zone, caplog):
-    """Safe fallback for a lighting plugin is light, but say so."""
-    import indigo
+def test_unreadable_sensor_warns_once_per_outage(zone, caplog):
+    """A permanently dead sensor must not warn on every evaluation.
 
+    is_dark() runs on every device change in the zone, so an unconditional
+    warning floods the event log exactly when the user needs to read it.
+    """
+    zone._is_dark_state = False
+    zone._last_luminance_read = None
+    _broken_sensor(zone, 90502)
+    with caplog.at_level(logging.WARNING, logger="Plugin"):
+        for _ in range(5):
+            zone._runtime_cache.pop("is_dark", None)
+            zone.is_dark()
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+
+
+def test_recovery_after_an_outage_re_arms_the_warning(zone, caplog):
+    """Second outage must warn again, and recovery should be announced."""
+    zone._is_dark_state = False
+    _broken_sensor(zone, 90503)
+    with caplog.at_level(logging.INFO, logger="Plugin"):
+        zone.is_dark()
+        _sensors(zone, 100)  # recovered
+        zone.is_dark()
+        assert any("recovered" in r.message.lower() for r in caplog.records)
+        caplog.clear()
+        _broken_sensor(zone, 90504)
+        zone.is_dark()
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+def test_a_stale_hold_escalates_to_error(zone, caplog):
+    """Holding is a bridge, not a steady state.
+
+    A sensor whose battery dies at 02:00 would otherwise pin the zone dark and
+    run its lights all the following day behind a single old warning.
+    """
+    import time
+
+    from auto_lights.zone import LUMINANCE_HOLD_MAX_SECONDS
+
+    zone._is_dark_state = True
+    zone._last_luminance_read = time.time() - (LUMINANCE_HOLD_MAX_SECONDS + 60)
+    _broken_sensor(zone, 90505)
+    with caplog.at_level(logging.WARNING, logger="Plugin"):
+        assert zone.is_dark() is True
+    assert any(r.levelno == logging.ERROR for r in caplog.records)
+
+
+def test_a_held_failure_does_not_seed_the_band(zone):
+    """Kills the "commit the held value to _is_dark_state" mutation.
+
+    Seeding it would mean a dead sensor at cold start fabricates a dark state,
+    so when the sensor recovers the zone applies the full band on top of a value
+    it never measured — holding the lights on well past where it should.
+    """
+    zone._luminance_hysteresis = 500
     zone._is_dark_state = None
-    indigo.devices[90502] = type("Dev", (), {"id": 90502})()
-    zone._luminance_dev_ids = [90502]
-    zone._runtime_cache.pop("is_dark", None)
+    _broken_sensor(zone, 90506)
 
+    assert zone.is_dark() is True
+    assert zone._is_dark_state is None, "a failure must not seed hysteresis state"
+
+    # Recovered: 2600 is above the bare threshold, and with no seeded state
+    # there is no band to hold it dark.
+    _sensors(zone, 2600)
+    assert zone.is_dark() is False
+
+
+def test_unreadable_sensor_with_no_prior_state_assumes_dark_and_warns(zone, caplog):
+    """Fail-safe for a lighting plugin is to assume dark (lights on), but say so.
+
+    This is the one case where the old silent behaviour is preserved, so the
+    warning is what makes it not a swallow.
+    """
+    zone._is_dark_state = None
+    _broken_sensor(zone, 90507)
     with caplog.at_level(logging.WARNING, logger="Plugin"):
         result = zone.is_dark()
     assert result is True
     assert any("luminance" in r.message.lower() for r in caplog.records)
 
 
+def test_boolean_sensor_value_is_unreadable_not_zero_lux(zone):
+    """bool is a subclass of int; True would otherwise average as 1 lux.
+
+    1 lux reads as pitch dark, so a naive numeric check turns a broken sensor
+    into a confident "turn the lights on".
+    """
+    zone._is_dark_state = False
+    _broken_sensor(zone, 90508, sensorValue=True)
+    assert zone.is_dark() is False  # held, not a 1-lux "dark"
+
+
+def test_string_sensor_value_is_unreadable(zone):
+    zone._is_dark_state = False
+    _broken_sensor(zone, 90509, sensorValue="450")
+    assert zone.is_dark() is False
+
+
 def test_non_numeric_sensor_value_is_not_summed(zone):
     """sensorValue present but None previously reached sum() and raised."""
-    import indigo
-
     zone._is_dark_state = False
-    indigo.devices[90503] = type("Dev", (), {"id": 90503, "sensorValue": None})()
-    zone._luminance_dev_ids = [90503]
-    zone._runtime_cache.pop("is_dark", None)
-
+    _broken_sensor(zone, 90510, sensorValue=None)
     assert zone.is_dark() is False  # held previous state, no TypeError
 
 
@@ -242,12 +446,119 @@ def test_one_failed_sensor_does_not_discard_a_working_one(zone):
 
     zone._luminance_hysteresis = 0
     zone._is_dark_state = None
-    indigo.devices[90504] = type("Dev", (), {"id": 90504, "sensorValue": 4000})()
-    indigo.devices[90505] = type("Dev", (), {"id": 90505})()  # no sensorValue
-    zone._luminance_dev_ids = [90504, 90505]
+    indigo.devices[90520] = type(
+        "Dev", (), {"id": 90520, "sensorValue": 4000, "name": "Good"}
+    )()
+    indigo.devices[90521] = type("Dev", (), {"id": 90521, "name": "Bad"})()
+    zone._luminance_dev_ids = [90520, 90521]
     zone._runtime_cache.pop("is_dark", None)
 
     assert zone.is_dark() is False  # 4000 alone, not treated as total failure
+
+
+def test_partial_failure_is_announced(zone, caplog):
+    """A zone silently averaging 1 of 3 sensors is an honest-looking wrong answer."""
+    import indigo
+
+    zone._is_dark_state = None
+    indigo.devices[90530] = type(
+        "Dev", (), {"id": 90530, "sensorValue": 4000, "name": "Good"}
+    )()
+    indigo.devices[90531] = type("Dev", (), {"id": 90531, "name": "Bad"})()
+    zone._luminance_dev_ids = [90530, 90531]
+    zone._runtime_cache.pop("is_dark", None)
+
+    with caplog.at_level(logging.WARNING, logger="Plugin"):
+        zone.is_dark()
+    assert any("unreadable" in r.message.lower() for r in caplog.records)
+
+
+def test_deleted_device_is_unreadable_not_zero_lux(zone, monkeypatch):
+    """A device removed from Indigo must not read as maximum darkness.
+
+    The test stub auto-creates unknown device ids with sensorValue defaulting to
+    0, so without this monkeypatch a deleted luminance device silently becomes a
+    perfect 0-lux reading — the most dangerous possible wrong answer, and one no
+    test could otherwise see. A plain dict raises KeyError like real Indigo.
+    """
+    import indigo
+
+    monkeypatch.setattr(indigo, "devices", {})
+    zone._is_dark_state = False
+    zone._luminance_dev_ids = [99999]
+    zone._runtime_cache.pop("is_dark", None)
+
+    assert zone.is_dark() is False  # held, not a fabricated 0-lux "dark"
+
+
+# --------------------------------------------------------------------------
+# The luminance property shares the same reader
+# --------------------------------------------------------------------------
+
+
+def test_luminance_property_survives_non_numeric_sensor_value(zone):
+    """The crash is_dark() was hardened against also lived here, and ran first.
+
+    luminance is rendered as an Indigo device state before is_dark() in the
+    runtime-state list, and sync_indigo_device has no except clause — so this
+    raising took the whole zone evaluation down regardless of is_dark().
+    """
+    import indigo
+
+    indigo.devices[90540] = type(
+        "Dev", (), {"id": 90540, "sensorValue": None, "name": "Bad"}
+    )()
+    indigo.devices[90541] = type(
+        "Dev", (), {"id": 90541, "sensorValue": 300, "name": "Good"}
+    )()
+    zone._luminance_dev_ids = [90540, 90541]
+    zone._runtime_cache.pop("luminance", None)
+
+    assert zone.luminance == 300
+
+
+def test_luminance_and_is_dark_agree_on_what_is_readable(zone):
+    """They were separate loops with different notions of readable.
+
+    luminance summed True as 1 lux while is_dark() discarded it, so the plan
+    could report a luminance the darkness decision had never used.
+    """
+    zone._is_dark_state = False
+    _broken_sensor(zone, 90550, sensorValue=True)
+
+    assert zone.is_dark() is False  # bool discarded -> held
+    assert zone.luminance == 0  # not 1 lux from the bool
+
+
+def test_luminance_property_survives_a_deleted_device(zone, monkeypatch):
+    import indigo
+
+    monkeypatch.setattr(indigo, "devices", {})
+    zone._luminance_dev_ids = [99998]
+    zone._runtime_cache.pop("luminance", None)
+    assert zone.luminance == 0
+
+
+# --------------------------------------------------------------------------
+# Effective threshold surfaced to callers
+# --------------------------------------------------------------------------
+
+
+def test_effective_threshold_widens_only_while_dark(zone):
+    zone._luminance_hysteresis = 500
+
+    zone._is_dark_state = False
+    assert zone.effective_darkness_threshold == 2500
+
+    zone._is_dark_state = True
+    assert zone.effective_darkness_threshold == 3000
+
+
+def test_effective_threshold_equals_minimum_without_hysteresis(zone):
+    zone._luminance_hysteresis = 0
+    for prior in (None, True, False):
+        zone._is_dark_state = prior
+        assert zone.effective_darkness_threshold == 2500
 
 
 # --------------------------------------------------------------------------
@@ -291,6 +602,19 @@ def test_hysteresis_field_is_generated_from_the_real_schema():
     assert isinstance(form._fields["luminance_hysteresis"], IntegerField)
 
 
+def test_hysteresis_is_not_published_as_a_duplicate_device_state():
+    """It is a config field, published via x-sync_to_indigo.
+
+    Listing it in zone_indigo_device_runtime_states as well makes
+    getDeviceStateList emit the same key twice, so it appears duplicated in
+    Indigo's trigger and control-page state pickers.
+    """
+    from auto_lights.zone import Zone
+
+    runtime_keys = [s["key"] for s in Zone.zone_indigo_device_runtime_states]
+    assert "luminance_hysteresis" not in runtime_keys
+
+
 def test_hysteresis_is_read_from_zone_config():
     """Third link in the chain: schema -> form -> config -> Zone.
 
@@ -319,19 +643,3 @@ def test_absent_hysteresis_key_leaves_default_untouched():
 
     z.from_config_dict({"minimum_luminance_settings": {"minimum_luminance": 2500}})
     assert z.luminance_hysteresis == 0
-
-
-@pytest.mark.parametrize("bad", ["not a number", None, -250])
-def test_bad_hysteresis_falls_back_to_zero_and_warns(bad, caplog):
-    """Never let a malformed value silently become a huge sticky band."""
-    from auto_lights.zone import Zone
-
-    z = Zone.__new__(Zone)
-    z._name = "TestZone"
-    z.logger = logging.getLogger("Plugin")
-    z._luminance_hysteresis = 0
-
-    with caplog.at_level(logging.WARNING, logger="Plugin"):
-        z.luminance_hysteresis = bad
-    assert z.luminance_hysteresis == 0
-    assert any("hysteresis" in r.message.lower() for r in caplog.records)
