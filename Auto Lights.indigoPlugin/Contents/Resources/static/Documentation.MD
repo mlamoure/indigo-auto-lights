@@ -131,6 +131,48 @@ Luminance, if provided, is used in a number of ways:
 Setting a minimum brightness:
 
 - **Minimum Luminance**: Minimum luminance can be set via Indigo variable, or statically in the Zone configuration.
+- **Luminance Hysteresis**: Extra luminance required before the Zone stops being considered dark, in the same units as
+  Minimum Luminance (i.e. whatever your luminance sensors report). Defaults to `0`, which disables the band — darkness is
+  then the same bare comparison as before.
+
+#### Why hysteresis matters
+
+With no hysteresis, darkness is a bare `average luminance < minimum luminance` test. A reading that hovers near the
+threshold therefore turns the lights on and off repeatedly — on a broken-cloud afternoon this can cycle every couple of
+minutes for as long as someone is in the room.
+
+This is worse than ordinary sensor noise would suggest whenever **the luminance sensor is in the room it controls**,
+because it also measures the lights it is gating. Turning them on raises its own reading, which can push it back over
+the threshold, which turns them off, which lowers the reading again. That is a feedback loop, not just jitter.
+
+Hysteresis is applied **only when leaving the dark state**, so it never delays turning lights on — only turning them
+off. With a Minimum Luminance of `2500` and a hysteresis of `500`, lights come on below `2500` and do not go off until
+the Zone reaches `3000`.
+
+> **NOTE:** Set the value wider than your lights' own contribution at the sensor, or the loop will still ring. Measure
+> it by reading the sensor with the Zone's lights off and then at full brightness, after dark, and take the difference.
+
+The band is cleared when the plugin restarts, so a Zone that was being held dark inside the band re-evaluates against the
+plain Minimum Luminance on the first reading after a reload. On a borderline afternoon that can turn the lights off once,
+immediately after a restart.
+
+#### When luminance sensors cannot be read
+
+This applies whether or not you use hysteresis.
+
+If a Zone has luminance devices configured but none of them can be read — deleted device, flat battery, source plugin
+stopped, a sensor reporting a non-numeric value while its plugin starts up — Auto Lights **holds the previous darkness
+decision** rather than assuming darkness, and logs a warning naming the devices. Assuming darkness would be
+indistinguishable from a real reading and would silently switch the Zone's lights on.
+
+- The warning is logged **once per outage**, not once per evaluation, and a matching message is logged when readings
+  recover.
+- If some sensors are readable and others are not, the readable ones are averaged and the thinning is logged.
+- After five minutes with no real reading the warning **escalates to an error** on every evaluation. Holding is meant to
+  bridge a dropped report, not to run a Zone blind all day.
+
+A Zone with **no** luminance devices configured is a different thing entirely — that is a deliberate choice to run
+without a luminance gate, is always treated as dark, and logs nothing.
 
 ---
 
