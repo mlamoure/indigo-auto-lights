@@ -22,6 +22,31 @@ except ImportError:
 
 logger = logging.getLogger("Plugin")
 
+# Brightness confirmation tolerance, in percentage points.
+#
+# Device plugins that carry level in a native non-percentage range scale a
+# commanded percentage out and back, and several truncate in both directions
+# (zigbee2mqtt: 30% -> int(76.5)=76 -> int(29.8)=29). Confirming on exact
+# equality then never succeeds for 95 of the 101 percentages, so healthy
+# hardware gets suppressed for the life of the lighting period. A band of 1
+# absorbs a 0-254 or 0-99 round trip and is smaller than any meaningful
+# brightness step, so genuine failures still fail.
+BRIGHTNESS_CONFIRM_TOLERANCE = 1
+
+
+def _brightness_matches(actual, target_level) -> bool:
+    """Return True if a reported brightness satisfies the commanded one.
+
+    Off (0) and full (100) compare exactly: "off" must never mean "nearly
+    off", and a light that failed to switch must still read as a failure.
+    Only intermediate targets get the tolerance band.
+    """
+    actual = int(actual)
+    target_level = int(target_level)
+    if target_level <= 0 or target_level >= 100:
+        return actual == target_level
+    return abs(actual - target_level) <= BRIGHTNESS_CONFIRM_TOLERANCE
+
 
 class PerfClock:
     """Per-event monotonic clock carried through the pipeline so each stage
@@ -52,18 +77,20 @@ def _check_confirm(device, target_level, target_bool) -> bool:
         f"_check_confirm called for '{device.name}' with target_level={target_level}, target_bool={target_bool}",
     )
     if isinstance(device, indigo.DimmerDevice):
-        result = device.brightness == target_level
+        result = _brightness_matches(device.brightness, target_level)
     elif isinstance(device, indigo.RelayDevice):
         want = target_bool if target_bool is not None else (target_level == 100)
         result = device.onState == want
     else:
         senseme = "com.pennypacker.indigoplugin.senseme"
         if device.pluginId == senseme:
-            result = int(device.states.get("brightness", 0)) == target_level
+            result = _brightness_matches(
+                device.states.get("brightness", 0), target_level
+            )
         elif hasattr(device, "brightness"):
-            result = int(device.brightness) == target_level
+            result = _brightness_matches(device.brightness, target_level)
         elif "brightness" in getattr(device, "states", {}):
-            result = int(device.states["brightness"]) == target_level
+            result = _brightness_matches(device.states["brightness"], target_level)
         else:
             # Cannot confirm state — assume NOT at target so command is sent
             result = False
