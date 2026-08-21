@@ -96,6 +96,9 @@ If a light stops responding reliably, Auto Lights now tries to fail safely inste
 - **Device failure suppression**  
   If a light fails to confirm **3 commands in a row**, Auto Lights temporarily stops sending commands to that specific device. Other lights in the zone can continue working normally.
 
+- **Brightness is confirmed within 1 percentage point**  
+  Some device plugins carry brightness in a native range (zigbee 0–254, Z-Wave 0–99) and report a percentage back one point below the one that was commanded — ask for 30%, the device honestly says 29%. Auto Lights accepts that, so healthy dimmers are not suppressed for a rounding difference. Fully off and fully on must still match exactly, so a light that failed to switch is still treated as a failure.
+
 - **How the device starts working again**  
   Suppression clears automatically once the device's actual state matches what Auto Lights expects. In practice, that usually means the device starts reporting correct on/off or brightness state again after the hardware problem is fixed.
 
