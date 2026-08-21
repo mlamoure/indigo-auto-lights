@@ -223,13 +223,15 @@
           "device_period_map": {
             "type": "object",
             "title": "Device to Lighting Period Mappings",
-            "tooltip": "Maps On / Off Lights to your lighting periods.  By default all lights for the Zone are included in all Lighting Periods, but this can be tweaked here.  When a light is excluded from a Lighting Period, it will not be turned on by Auto Lights script.  However, it will be turned off if the zone is not present.",
+            "tooltip": "Maps On / Off Lights to your lighting periods.  By default all lights for the Zone are included in all Lighting Periods, but this can be tweaked here.  When a light is excluded from a Lighting Period, it will not be turned on by Auto Lights script.  However, it will be turned off if the zone is not present.  You can also pick a brightness (1-100) for a light in a period, which overrides the Zone's calculated brightness for that light alone.  The period's Limit Brightness still applies as a ceiling.",
             "patternProperties": {
               "^[0-9]+$": {
                 "type": "object",
                 "patternProperties": {
                   "^[0-9]+$": {
-                    "type": "boolean"
+                    "type": ["boolean", "integer"],
+                    "minimum": 1,
+                    "maximum": 100
                   }
                 }
               }

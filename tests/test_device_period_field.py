@@ -44,3 +44,52 @@ def test_process_overwrites_with_posted_data():
       "101": {"1": True,  "2": False},
       "102": {"1": False, "2": True},
     }
+
+
+def test_process_accepts_explicit_brightness():
+    # A cell may post a brightness level instead of include/exclude
+    formdata = {
+        "device_period_map-101-1": "10",
+        "device_period_map-101-2": "exclude",
+        "device_period_map-102-1": "100",
+        "device_period_map-102-2": "include",
+    }
+    form = DummyForm()
+    f = form._fields['device_period_map']
+    f.process(formdata=formdata, data={})
+    assert f.data == {
+        "101": {"1": 10, "2": False},
+        "102": {"1": 100, "2": True},
+    }
+    # Levels must be ints, not strings, so the zone can compare them numerically
+    assert isinstance(f.data["101"]["1"], int)
+
+
+@pytest.mark.parametrize("bad_value", ["0", "101", "-5", "", "banana", "50.5"])
+def test_process_rejects_invalid_brightness(bad_value):
+    # Anything outside 1-100 falls back to plain inclusion rather than being
+    # written into the config
+    formdata = {"device_period_map-101-1": bad_value}
+    form = DummyForm()
+    f = form._fields['device_period_map']
+    f.process(formdata=formdata, data={})
+    assert f.data == {"101": {"1": True}}
+
+
+def test_widget_marks_saved_brightness_as_selected():
+    form = DummyForm()
+    f = form._fields['device_period_map']
+    f.process(formdata=None, data={"101": {"1": 25}, "102": {"1": False}})
+    html = str(f.widget(f))
+    assert '<option value="25" selected>25%</option>' in html
+    assert '<option value="exclude" selected>Exclude from Period</option>' in html
+
+
+def test_widget_renders_off_ladder_value():
+    # A hand-edited config may hold a level the preset dropdown does not offer;
+    # it still has to render as the selected option or saving would lose it
+    form = DummyForm()
+    f = form._fields['device_period_map']
+    f.process(formdata=None, data={"101": {"1": 37}})
+    html = str(f.widget(f))
+    assert '<option value="37" selected>37%</option>' in html

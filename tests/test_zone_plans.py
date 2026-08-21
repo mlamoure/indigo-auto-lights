@@ -49,6 +49,9 @@ SCENARIOS = [
     "scenario9_limit_brightness.yaml",
     "scenario10_global_off.yaml",
     "scenario11_variable_threshold.yaml",
+    "scenario12_per_device_brightness.yaml",
+    "scenario13_per_device_brightness_limit.yaml",
+    "scenario14_limit_brightness_adjust_false.yaml",
 ]
 
 @pytest.mark.parametrize("fname", SCENARIOS)

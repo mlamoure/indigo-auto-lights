@@ -1270,13 +1270,25 @@ class Zone(AutoLightsBase):
                         ]
                     )
                     continue
-                if not self.adjust_brightness:
+                dev_brightness = self.dev_period_brightness(dev_id, period)
+                if dev_brightness is not None:
+                    brightness = dev_brightness
+                    plan_contribs.append(
+                        (
+                            "🎚️",
+                            f"{indigo.devices[dev_id].name} is set to {dev_brightness}% for this period",
+                        )
+                    )
+                elif not self.adjust_brightness:
                     brightness = 100
                 else:
-                    raw = math.ceil(
+                    brightness = math.ceil(
                         (1 - (self.luminance / self.minimum_luminance)) * 100
                     )
-                    brightness = min(raw, limit_b) if limit_b is not None else raw
+                # limit_brightness is a ceiling on whichever source produced the
+                # value above, not just the luminance-derived one
+                if limit_b is not None:
+                    brightness = min(brightness, limit_b)
                 new_targets.append({"dev_id": dev_id, "brightness": brightness})
 
             # force-off any on-lights that are excluded from this period,
@@ -1396,6 +1408,43 @@ class Zone(AutoLightsBase):
         )
         self._debug_log(f"has_device: dev_id={dev_id}, result={result}")
         return result
+
+    def dev_period_brightness(
+        self, dev_id: int, lighting_period: LightingPeriod
+    ) -> Union[int, None]:
+        """
+        Returns the explicit brightness configured for a device in a lighting period.
+
+        A device_period_map cell may hold:
+          - False   -> the device is excluded from the period (see
+                       has_dev_lighting_mapping_exclusion)
+          - True    -> the device is included with no explicit level, so the
+                       zone's normal brightness calculation applies
+          - 1..100  -> the device is included and driven to this brightness
+
+        Args:
+            dev_id (int): The Indigo device ID to check
+            lighting_period (LightingPeriod): The lighting period to check against
+
+        Returns:
+            int | None: The configured brightness, or None if the device has no
+                        explicit level for this period.
+        """
+        value = self.device_period_map.get(str(dev_id), {}).get(str(lighting_period.id))
+
+        # bool is a subclass of int, so it must be rejected before the int check
+        if isinstance(value, bool) or not isinstance(value, int):
+            return None
+
+        if not 1 <= value <= 100:
+            self.logger.warning(
+                f"Zone '{self._name}': device {dev_id} has an out-of-range brightness "
+                f"of {value} for period '{lighting_period.name}' (expected 1-100). "
+                f"Ignoring it and using the zone's calculated brightness instead."
+            )
+            return None
+
+        return value
 
     @property
     def zone_index(self) -> int:
