@@ -154,7 +154,7 @@
               "luminance_hysteresis": {
                 "type": "integer",
                 "x-sync_to_indigo": true,
-                "title": "Luminance Hysteresis",
+                "title": "Luminance Hysteresis (lux, 0 = off)",
                 "tooltip": "Extra luminance required before the zone stops being considered dark, in the same units your luminance sensors report. Without it, a reading hovering near the threshold turns the lights on and off repeatedly. This matters most when the luminance sensor is in the room it controls, because it also measures the lights it is gating: switching them on raises the reading and can push it back over the threshold. Set this wider than the lights' own contribution at the sensor — measure it after dark by reading the sensor with the zone's lights off, then at full brightness. The band is cleared when the plugin restarts. 0 disables hysteresis.",
                 "default": 0
               },
@@ -162,7 +162,7 @@
                 "type": "boolean",
                 "x-sync_to_indigo": true,
                 "title": "Adjust Dimmer Brightness",
-                "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.",
+                "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.  Ignored for any device that has an explicit brightness set for the period: the order is per-device level first, then this calculation, then a flat 100 — and Limit Brightness caps whichever of those applied.",
                 "default": true
               }
             }
