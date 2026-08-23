@@ -162,7 +162,7 @@
                 "type": "boolean",
                 "x-sync_to_indigo": true,
                 "title": "Adjust Dimmer Brightness",
-                "tooltip": "When turning on a light, it will calculate the brightness level based on the 1 - (current luminance / minimum luminance) x 100.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.  Ignored for any device that has an explicit brightness set for the period: the order is per-device level first, then this calculation, then a flat 100 — and Limit Brightness caps whichever of those applied.",
+                "tooltip": "When turning on a light, the brightness level is calculated as 1 - (current luminance / darkness threshold) x 100, where the darkness threshold is Minimum Luminance, widened by Luminance Hysteresis while the Zone is being held dark — so the level stays above zero inside the band.  Auto Lights will continuously adjust the dimmer as the luminance in the zone changes.  Ignored for any device that has an explicit brightness set for the period: the order is per-device level first, then this calculation, then a flat 100 — and Limit Brightness caps whichever of those applied.",
                 "default": true
               }
             }

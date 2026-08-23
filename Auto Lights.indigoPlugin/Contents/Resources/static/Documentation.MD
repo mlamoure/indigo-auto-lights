@@ -126,7 +126,10 @@ Luminance, if provided, is used in a number of ways:
 2. If the luminance of the Zone changes to be below the minimum luminance while present, then the lights will be turned
    on.
 3. **Adjust Dimmer Brightness**: If turned on, the brightness of a dimmer device will be set to:
-    - [1 - (current luminance / minimum luminance)] x 100
+    - [1 - (current luminance / darkness threshold)] x 100
+
+   The darkness threshold is Minimum Luminance; while Luminance Hysteresis is holding the Zone dark it is Minimum
+   Luminance + Luminance Hysteresis, so the computed level stays above zero and decays smoothly across the band.
 
 > **NOTE:** If you provide more than one Luminance device, the current luminance is calculated as the average across all
 > sensors.
@@ -151,6 +154,10 @@ the threshold, which turns them off, which lowers the reading again. That is a f
 Hysteresis is applied **only when leaving the dark state**, so it never delays turning lights on — only turning them
 off. With a Minimum Luminance of `2500` and a hysteresis of `500`, lights come on below `2500` and do not go off until
 the Zone reaches `3000`.
+
+When **Adjust Dimmer Brightness** is on, the brightness calculation divides by this same widened threshold, so inside
+the band the level tapers toward 1% rather than snapping to off; the lights only turn off once the Zone leaves the
+band.
 
 > **NOTE:** Set the value wider than your lights' own contribution at the sensor, or the loop will still ring. Measure
 > it by reading the sensor with the Zone's lights off and then at full brightness, after dark, and take the difference.
