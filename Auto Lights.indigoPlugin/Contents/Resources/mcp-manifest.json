@@ -1,0 +1,259 @@
+{
+  "manifest_version": 1,
+  "provider": {
+    "plugin_id": "com.vtmikel.autolights",
+    "display_name": "Auto Lights"
+  },
+  "tool_prefix": "autolights",
+  "invoke_action_id": "mcp_tool_invoke",
+  "tools": [
+    {
+      "name": "get_config",
+      "description": "Return the full Auto Lights configuration (plugin_config, zones, lighting_periods) plus a zone_indexes list. Zones are addressed by array index; lighting periods by their stable integer id.",
+      "write": false,
+      "timeout_seconds": 15,
+      "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "list_zones",
+      "description": "List zones as {zone_index, name} pairs. zone_index is positional and shifts when zones are created or deleted, so re-list before acting on stale indexes.",
+      "write": false,
+      "timeout_seconds": 15,
+      "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "get_zone",
+      "description": "Return one zone by zone_index. Pass expected_name to fail with a conflict error if the index no longer points at that zone.",
+      "write": false,
+      "timeout_seconds": 15,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "zone_index": {"type": "integer", "description": "Position of the zone in the zones array (from list_zones)."},
+          "expected_name": {"type": "string", "description": "Optional guard: the name this zone is expected to have."}
+        },
+        "required": ["zone_index"]
+      }
+    },
+    {
+      "name": "create_zone",
+      "description": "Append a new zone. The whole config is validated before saving; validation errors come back with precise field paths. Saving reloads the automation engine and resets all zone locks, so put the complete zone in one call.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "zone": {
+            "type": "object",
+            "description": "The zone to create. Only 'name' is required; omitted sections get engine defaults.",
+            "properties": {
+              "name": {"type": "string", "description": "Zone name, used in logs and the web UI."},
+              "lighting_period_ids": {"type": "array", "items": {"type": "integer"}, "description": "IDs of lighting periods linked to this zone."},
+              "device_settings": {
+                "type": "object",
+                "properties": {
+                  "on_lights_dev_ids": {"type": "array", "items": {"type": "integer"}, "description": "Indigo device IDs turned on and off by the zone."},
+                  "off_lights_dev_ids": {"type": "array", "items": {"type": "integer"}, "description": "Indigo device IDs the zone only turns off."},
+                  "luminance_dev_ids": {"type": "array", "items": {"type": "integer"}, "description": "Luminance sensor device IDs; multiple are averaged."},
+                  "presence_dev_ids": {"type": "array", "items": {"type": "integer"}, "description": "Presence/motion sensor device IDs."}
+                },
+                "required": ["on_lights_dev_ids", "presence_dev_ids"]
+              },
+              "minimum_luminance_settings": {
+                "type": "object",
+                "properties": {
+                  "minimum_luminance": {"type": "integer", "description": "Below this luminance the zone counts as dark."},
+                  "minimum_luminance_use_variable": {"type": "boolean", "description": "Take the minimum luminance from an Indigo variable instead."},
+                  "minimum_luminance_var_id": {"type": "integer", "description": "Variable ID holding the minimum luminance."},
+                  "adjust_brightness": {"type": "boolean", "description": "Continuously scale dimmer brightness from ambient luminance."}
+                }
+              },
+              "behavior_settings": {
+                "type": "object",
+                "properties": {
+                  "lock_duration": {"type": "integer", "description": "Minutes a manual change locks the zone; -1 uses the plugin default."},
+                  "extend_lock_when_active": {"type": "boolean", "description": "Extend the lock while presence is detected."},
+                  "lock_extension_duration": {"type": "integer", "description": "Minutes to extend the lock by; -1 uses the plugin default."},
+                  "unlock_when_no_presence": {"type": "boolean", "description": "Unlock the zone once presence clears."},
+                  "off_lights_behavior": {"type": "string", "enum": ["do not adjust unless no presence", "force off unless zone is locked"], "description": "When to act on the off-lights list during an On-and-Off period."}
+                }
+              },
+              "advanced_settings": {
+                "type": "object",
+                "properties": {
+                  "exclude_from_lock_dev_ids": {"type": "array", "items": {"type": "integer"}, "description": "Devices whose manual changes never lock the zone."}
+                }
+              },
+              "device_period_map": {"type": "object", "description": "Per-device lighting-period participation: {\"<device_id>\": {\"<period_id>\": bool}}."},
+              "global_behavior_variables_map": {"type": "object", "description": "Per-zone enablement of global behavior variables: {\"<var_id>\": bool}."}
+            },
+            "required": ["name"]
+          }
+        },
+        "required": ["zone"]
+      }
+    },
+    {
+      "name": "update_zone",
+      "description": "Partially update the zone at zone_index. Supplied section objects merge field-by-field into the existing section; scalars and arrays are replaced whole. Pass expected_name to guard against index drift. Saving resets all zone locks, so batch every change to the zone into one call.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "zone_index": {"type": "integer", "description": "Position of the zone in the zones array (from list_zones)."},
+          "zone": {"type": "object", "description": "Partial zone: any subset of the create_zone zone properties."},
+          "expected_name": {"type": "string", "description": "Optional guard: the name this zone is expected to have."}
+        },
+        "required": ["zone_index", "zone"]
+      }
+    },
+    {
+      "name": "delete_zone",
+      "description": "Delete the zone at zone_index. expected_name is REQUIRED because indexes shift; the delete fails with a conflict error if the name does not match. Later zone indexes shift down by one.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "zone_index": {"type": "integer", "description": "Position of the zone in the zones array (from list_zones)."},
+          "expected_name": {"type": "string", "description": "Required guard: the exact name of the zone being deleted."}
+        },
+        "required": ["zone_index", "expected_name"]
+      }
+    },
+    {
+      "name": "list_lighting_periods",
+      "description": "List all lighting periods (stable integer ids, name, mode, time window).",
+      "write": false,
+      "timeout_seconds": 15,
+      "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "get_lighting_period",
+      "description": "Return one lighting period by its stable integer id.",
+      "write": false,
+      "timeout_seconds": 15,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "period_id": {"type": "integer", "description": "The lighting period's id."}
+        },
+        "required": ["period_id"]
+      }
+    },
+    {
+      "name": "create_lighting_period",
+      "description": "Create a lighting period; the id is assigned automatically (max existing id + 1) and omitted fields get schema defaults. Saving resets all zone locks.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string", "description": "Lighting period name."},
+              "mode": {"type": "string", "enum": ["On and Off", "Off Only"], "description": "On and Off: fully manage lights; Off Only: only turn lights off."},
+              "from_time_hour": {"type": "integer", "minimum": 0, "maximum": 23, "description": "Start hour (0-23)."},
+              "from_time_minute": {"type": "integer", "enum": [0, 15, 30, 45], "description": "Start minute (quarter hours only)."},
+              "to_time_hour": {"type": "integer", "minimum": 0, "maximum": 23, "description": "End hour (0-23)."},
+              "to_time_minute": {"type": "integer", "enum": [0, 15, 30, 45], "description": "End minute (quarter hours only)."},
+              "lock_duration": {"type": "integer", "description": "Lock-duration override in minutes for this period; -1 to disable."},
+              "limit_brightness": {"type": "integer", "description": "Maximum dimmer brightness during this period; -1 to disable."}
+            }
+          }
+        },
+        "required": ["period"]
+      }
+    },
+    {
+      "name": "update_lighting_period",
+      "description": "Partially update the lighting period with the given id (supplied fields replace existing ones; the id itself is immutable). Saving resets all zone locks.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "period_id": {"type": "integer", "description": "The lighting period's id."},
+          "period": {"type": "object", "description": "Partial period: any subset of the create_lighting_period period properties."}
+        },
+        "required": ["period_id", "period"]
+      }
+    },
+    {
+      "name": "delete_lighting_period",
+      "description": "Delete a lighting period by id. Refuses with a conflict error if any zone references it, unless force=true, which also removes the references from zones. Saving resets all zone locks.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "period_id": {"type": "integer", "description": "The lighting period's id."},
+          "force": {"type": "boolean", "description": "Delete even when referenced by zones, scrubbing the references."}
+        },
+        "required": ["period_id"]
+      }
+    },
+    {
+      "name": "update_plugin_config",
+      "description": "Partially update global plugin settings (supplied keys replace existing ones). Saving resets all zone locks.",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "plugin_config": {
+            "type": "object",
+            "properties": {
+              "default_lock_duration": {"type": "integer", "description": "Default zone lock duration in minutes."},
+              "default_lock_extension_duration": {"type": "integer", "description": "Default lock extension in minutes."},
+              "global_behavior_variables": {
+                "type": "array",
+                "description": "Variables that force all lights off when their condition matches (OR semantics).",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "var_id": {"type": "integer", "description": "Indigo variable ID."},
+                    "comparison_type": {"type": "string", "enum": ["is TRUE (bool)", "is FALSE (bool)", "is equal to (str, lower())", "is not equal to (str, lower())"], "description": "How to compare the variable's value."},
+                    "var_value": {"type": "string", "description": "Value compared against for the string comparison types."}
+                  },
+                  "required": ["var_id", "var_value"]
+                }
+              }
+            }
+          }
+        },
+        "required": ["plugin_config"]
+      }
+    },
+    {
+      "name": "list_backups",
+      "description": "List manual and automatic config backups (newest first). An automatic backup is taken before every save.",
+      "write": false,
+      "timeout_seconds": 15,
+      "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "create_backup",
+      "description": "Create a manual backup of the current config and return its filename.",
+      "write": true,
+      "timeout_seconds": 15,
+      "inputSchema": {"type": "object", "properties": {}, "required": []}
+    },
+    {
+      "name": "restore_backup",
+      "description": "Restore a backup by filename and reload the automation engine (resets all zone locks).",
+      "write": true,
+      "timeout_seconds": 60,
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "backup_type": {"type": "string", "enum": ["manual", "auto"], "description": "Which backup set the file belongs to."},
+          "backup_file": {"type": "string", "description": "Backup filename from list_backups."}
+        },
+        "required": ["backup_type", "backup_file"]
+      }
+    }
+  ]
+}

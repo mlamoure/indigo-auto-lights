@@ -48,6 +48,10 @@ class Plugin(indigo.PluginBase):
 
         self._agent = None
         self._iws_web_handler = None  # IWS web handler for config interface (lazy init)
+        self._config_editor = (
+            None  # WebConfigEditor shared by web UI + MCP API (lazy init)
+        )
+        self._tool_dispatcher = None  # MCP tool dispatcher (lazy init)
         self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
 
         # Configure logging levels based on plugin preferences.
@@ -156,6 +160,14 @@ class Plugin(indigo.PluginBase):
         urls = self._get_web_config_urls()
         for url_info in urls:
             self.logger.info(f"   {url_info['label']}: {url_info['url']}")
+
+        # Announce our MCP tool manifest so the MCP Server plugin (if
+        # installed) re-registers our tools without needing a restart.
+        # Harmless when nothing subscribes.
+        try:
+            indigo.server.broadcastToSubscribers("mcp_tools_updated")
+        except Exception as e:
+            self.logger.debug(f"mcp_tools_updated broadcast failed: {e}")
 
         self.logger.debug("Plugin startup complete")
 
@@ -304,6 +316,34 @@ class Plugin(indigo.PluginBase):
 
         self._agent.process_all_zones()
 
+    def _get_config_editor(self: indigo.PluginBase):
+        """
+        Lazily create the WebConfigEditor shared by the web UI and the MCP
+        tool API. Saving through it auto-backups the config and hot-reloads
+        the automation engine via the reload callback.
+        """
+        if self._config_editor is None:
+            from config_web_editor.config_editor import WebConfigEditor
+
+            # In Indigo plugins, os.getcwd() returns the Server Plugin directory
+            schema_file = os.path.join(
+                os.getcwd(), "config_web_editor/config/config_schema.json"
+            )
+            backup_dir = os.path.join(os.path.dirname(self._config_file_str), "backups")
+            auto_backup_dir = os.path.join(
+                os.path.dirname(self._config_file_str), "auto_backups"
+            )
+
+            self._config_editor = WebConfigEditor(
+                self._config_file_str,
+                schema_file,
+                backup_dir,
+                auto_backup_dir,
+                flask_app=None,  # No Flask app for IWS mode
+            )
+            self._config_editor.reload_config_callback = self._init_config_and_agent
+        return self._config_editor
+
     def _init_iws_web_handler(self: indigo.PluginBase):
         """
         Initialize the IWS web handler for the configuration interface.
@@ -312,30 +352,9 @@ class Plugin(indigo.PluginBase):
         Uses lazy initialization - called on first web request to avoid __file__ issues.
         """
         try:
-            from config_web_editor.config_editor import WebConfigEditor
             from config_web_editor.iws_web_handler import IWSWebHandler
 
-            # Set up WebConfigEditor
-            # In Indigo plugins, os.getcwd() returns the Server Plugin directory
-            current_dir = os.getcwd()
-            schema_file = os.path.join(
-                current_dir, "config_web_editor/config/config_schema.json"
-            )
-            backup_dir = os.path.join(os.path.dirname(self._config_file_str), "backups")
-            auto_backup_dir = os.path.join(
-                os.path.dirname(self._config_file_str), "auto_backups"
-            )
-
-            config_editor = WebConfigEditor(
-                self._config_file_str,
-                schema_file,
-                backup_dir,
-                auto_backup_dir,
-                flask_app=None,  # No Flask app for IWS mode
-            )
-
-            # Set up reload callback for when config is saved
-            config_editor.reload_config_callback = self._init_config_and_agent
+            config_editor = self._get_config_editor()
 
             # Initialize IWS web handler
             self._iws_web_handler = IWSWebHandler(
@@ -563,6 +582,37 @@ class Plugin(indigo.PluginBase):
     ########################################
     # IWS Action Handlers
     ########################################
+
+    def handle_mcp_tool_invoke(self, action, dev=None, caller_waiting_for_result=True):
+        """
+        MCP tool provider endpoint, called cross-plugin by the MCP Server
+        plugin (com.vtmikel.mcp_server) via executeAction. The tool name and
+        a JSON-string arguments payload arrive in action.props; the reply is
+        always a JSON-string envelope (see mcp_api.tool_dispatcher).
+        """
+        try:
+            if self._tool_dispatcher is None:
+                from mcp_api.config_tools import ConfigToolService
+                from mcp_api.tool_dispatcher import ToolDispatcher
+
+                self._tool_dispatcher = ToolDispatcher(
+                    ConfigToolService(self._get_config_editor())
+                )
+        except Exception as e:
+            self.logger.exception("Failed to initialize the MCP tool dispatcher")
+            return json.dumps(
+                {
+                    "status": "error",
+                    "error": {
+                        "type": "internal",
+                        "message": f"MCP tool dispatcher failed to initialize: {e}",
+                    },
+                }
+            )
+
+        tool = action.props.get("tool", "")
+        arguments = action.props.get("arguments", "{}")
+        return self._tool_dispatcher.dispatch(tool, arguments)
 
     def handle_web_ui(self, action, dev=None, callerWaitingForResult=True):
         """
