@@ -100,12 +100,26 @@ def _send_command(device_id, target_level, target_bool) -> None:
     )
     if is_fan or isinstance(device, indigo.DimmerDevice):
         if is_fan:
+            # Cross-plugin executeAction raises if the target plugin is
+            # stopped or the call fails; the confirmation poll in
+            # send_to_indigo() treats the missed state change as a failure.
             sense_plugin = indigo.server.getPlugin(senseme)
-            sense_plugin.executeAction(
-                "fanLightBrightness",
-                deviceId=device_id,
-                props={"lightLevel": str(target_level)},
-            )
+            if not sense_plugin.isRunning():
+                logger.error(
+                    f"_send_command: SenseME plugin is not running; cannot set light level for '{device.name}'"
+                )
+                return
+            try:
+                sense_plugin.executeAction(
+                    "fanLightBrightness",
+                    deviceId=device_id,
+                    props={"lightLevel": str(target_level)},
+                )
+            except Exception as exc:
+                logger.error(
+                    f"_send_command: SenseME fanLightBrightness failed for '{device.name}': {exc}"
+                )
+                return
             logger.debug(
                 f"_send_command: senseme fanLightBrightness for '{device.name}' -> {target_level}"
             )
