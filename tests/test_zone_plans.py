@@ -52,6 +52,7 @@ SCENARIOS = [
     "scenario12_per_device_brightness.yaml",
     "scenario13_per_device_brightness_limit.yaml",
     "scenario14_limit_brightness_adjust_false.yaml",
+    "scenario16_zero_minimum_adjust_true.yaml",
 ]
 
 @pytest.mark.parametrize("fname", SCENARIOS)
@@ -72,3 +73,124 @@ def test_locked_zone(load_scenario):
     zone.locked = True
     result = cfg.agent.process_zone(zone)
     assert result is False
+
+# --------------------------------------------------------------------------
+# Hysteresis band + adjust_brightness (issue #7)
+#
+# scenario15 configures minimum_luminance=100, luminance_hysteresis=50, so the
+# effective darkness threshold widens to 150 once the zone is dark. These tests
+# hold that band and drive the brightness formula through it — deliberately
+# not part of the SCENARIOS matrix above, since each needs to prime the
+# Schmitt trigger before the single assertion the parametrized test makes.
+# --------------------------------------------------------------------------
+
+def _enter_band(zone, sensor_dev_id, dark_lux, band_lux):
+    """Prime the Schmitt trigger dark, then move the reading into the band."""
+    import indigo
+    indigo.devices[sensor_dev_id].sensorValue = dark_lux
+    zone._runtime_cache.clear()
+    assert zone.is_dark() is True
+    indigo.devices[sensor_dev_id].sensorValue = band_lux
+
+def test_band_held_dark_with_adjust_brightness_keeps_a_positive_level(load_scenario):
+    """Kills the divide-by-bare-minimum mutation.
+
+    Old code divided by minimum_luminance (100): ceil((1-120/100)*100) is
+    negative, clamps to 0, and the ON branch turns the dimmer off. Dividing by
+    the effective threshold (150) instead gives 20.
+    """
+    data, cfg = load_scenario(
+        "tests/configs/scenario15_hysteresis_band_adjust_true.yaml"
+    )
+    zone = cfg.zones[0]
+    _enter_band(zone, 201, dark_lux=40, band_lux=120)
+
+    plan = zone.calculate_target_brightness()
+
+    assert plan.new_targets == [{"dev_id": 101, "brightness": 20}]
+    assert not any("turned off" in msg for _emoji, msg in plan.device_changes)
+
+def test_brightness_decays_monotonically_to_one_across_the_hysteresis_band(
+    load_scenario,
+):
+    """No cliff at the old minimum_luminance boundary.
+
+    Old code gave 34/0/0 at 99/100/101 lux (the 0s from the negative term
+    clamping once luminance passed the bare minimum). Dividing by the widened
+    150 threshold instead, the level decays smoothly to 34/34/33.
+    """
+    import indigo
+    data, cfg = load_scenario(
+        "tests/configs/scenario15_hysteresis_band_adjust_true.yaml"
+    )
+    zone = cfg.zones[0]
+    _enter_band(zone, 201, dark_lux=40, band_lux=60)
+
+    levels = []
+    for lux in (60, 80, 99, 100, 101, 120, 149):
+        indigo.devices[201].sensorValue = lux
+        plan = zone.calculate_target_brightness()
+        assert len(plan.new_targets) == 1
+        levels.append(plan.new_targets[0]["brightness"])
+
+    assert levels == [60, 47, 34, 34, 33, 20, 1]
+    assert all(level >= 1 for level in levels)
+    assert all(a >= b for a, b in zip(levels, levels[1:])), "must be non-increasing"
+
+def test_leaving_the_band_turns_lights_off_only_at_the_widened_threshold(load_scenario):
+    """At exactly minimum + hysteresis, is_dark() flips and the OFF path fires."""
+    import indigo
+    data, cfg = load_scenario(
+        "tests/configs/scenario15_hysteresis_band_adjust_true.yaml"
+    )
+    zone = cfg.zones[0]
+    _enter_band(zone, 201, dark_lux=40, band_lux=120)
+
+    indigo.devices[201].sensorValue = 150  # == minimum (100) + hysteresis (50)
+    plan = zone.calculate_target_brightness()
+
+    assert plan.new_targets == [{"dev_id": 101, "brightness": 0}]
+
+def test_band_held_dark_with_adjust_brightness_off_still_targets_full_brightness(
+    load_scenario,
+):
+    """Regression guard: passes pre-fix too. adjust_brightness=False bypasses
+    the formula entirely, so this is unaffected by the divisor change — kept
+    here because the other adjust-off cases (scenarios 1 and 14) never
+    exercise a widened band.
+    """
+    data, cfg = load_scenario(
+        "tests/configs/scenario15_hysteresis_band_adjust_true.yaml"
+    )
+    zone = cfg.zones[0]
+    _enter_band(zone, 201, dark_lux=40, band_lux=120)
+    zone.adjust_brightness = False
+
+    plan = zone.calculate_target_brightness()
+
+    assert plan.new_targets == [{"dev_id": 101, "brightness": 100}]
+
+def test_negative_term_from_a_stale_luminance_reading_still_clamps_to_zero(
+    load_scenario, monkeypatch
+):
+    """Kills the "remove the max(0, ...) clamp" mutation.
+
+    is_dark() and the formula both read luminance, but not atomically:
+    variable-backed thresholds re-read Indigo between the two calls, so they
+    can disagree in production. Simulate that by monkeypatching the luminance
+    property to a value inconsistent with the real (in-band) sensor reading
+    is_dark() used, and confirm the clamp still holds at 0 rather than going
+    negative.
+    """
+    from auto_lights.zone import Zone
+
+    data, cfg = load_scenario(
+        "tests/configs/scenario15_hysteresis_band_adjust_true.yaml"
+    )
+    zone = cfg.zones[0]
+    _enter_band(zone, 201, dark_lux=40, band_lux=120)
+    monkeypatch.setattr(Zone, "luminance", property(lambda self: 10_000))
+
+    plan = zone.calculate_target_brightness()
+
+    assert plan.new_targets == [{"dev_id": 101, "brightness": 0}]

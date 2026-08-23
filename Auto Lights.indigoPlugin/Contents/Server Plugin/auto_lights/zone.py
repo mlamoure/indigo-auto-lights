@@ -1064,7 +1064,9 @@ class Zone(AutoLightsBase):
 
         Exposed because the user-facing plan log needs to report the widened
         value: printing the bare minimum next to a `is dark = True` computed
-        from the widened one reads as a bug.
+        from the widened one reads as a bug. It is also the divisor for the
+        adjust_brightness calculation, so the computed level stays positive
+        and continuous inside the band.
         """
         if self._is_dark_state:
             return self.minimum_luminance + self.luminance_hysteresis
@@ -1518,20 +1520,36 @@ class Zone(AutoLightsBase):
                 elif not self.adjust_brightness:
                     brightness = 100
                 else:
-                    # Clamped because hysteresis breaks the old invariant that
-                    # darkness implies luminance < minimum_luminance: while the
-                    # band holds the zone dark, luminance can exceed the minimum
-                    # and this term goes negative (e.g. 2600/2500 -> -4), which
-                    # was passed straight to the device unclamped.
-                    brightness = max(
-                        0,
-                        min(
-                            100,
-                            math.ceil(
-                                (1 - (self.luminance / self.minimum_luminance)) * 100
+                    # Divide by the effective darkness threshold, not the bare
+                    # minimum. While hysteresis holds the zone dark, luminance
+                    # can sit above minimum_luminance, and dividing by the
+                    # minimum made this term negative (e.g. 2600/2500 -> -4),
+                    # clamping to 0 and turning dimmers OFF in the branch whose
+                    # plan says "turning on lights" (issue #7). Here is_dark()
+                    # has just returned True from a real reading, so the
+                    # effective threshold is minimum + hysteresis and
+                    # luminance < threshold strictly: the term is positive and
+                    # ceil() yields at least 1. With hysteresis 0 the divisor
+                    # is the bare minimum, so behaviour there is unchanged.
+                    # The clamp is kept as defence-in-depth for readings that
+                    # move between is_dark() and this line (variable-backed
+                    # thresholds re-read Indigo on every access).
+                    threshold = self.effective_darkness_threshold
+                    if threshold <= 0:
+                        # A zero/negative threshold cannot express "fraction of
+                        # the way to bright"; a zone dark under it is simply
+                        # dark. Also avoids ZeroDivisionError for a configured
+                        # minimum of 0 (previously a live crash for a zone with
+                        # no luminance sensors, where darkness defaults True).
+                        brightness = 100
+                    else:
+                        brightness = max(
+                            0,
+                            min(
+                                100,
+                                math.ceil((1 - (self.luminance / threshold)) * 100),
                             ),
-                        ),
-                    )
+                        )
                 # limit_brightness is a ceiling on whichever source produced the
                 # value above, not just the luminance-derived one
                 if limit_b is not None:
