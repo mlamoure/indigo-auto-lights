@@ -363,8 +363,8 @@ class IWSWebHandler:
             # Convert IWS body_params dict to MultiDict for WTForms
             form_data = dict_to_multidict(body_params)
 
-            # Load config
-            config_data = self.config_editor.load_config()
+            # Load config (strict: never read-modify-write a corrupt file)
+            config_data = self.config_editor.load_config_strict()
             zones_data = config_data.get("zones", [])
             zone_schema = self.config_editor.config_schema["properties"]["zones"]["items"]
 
@@ -430,7 +430,7 @@ class IWSWebHandler:
         flash = {}
 
         try:
-            config_data = self.config_editor.load_config()
+            config_data = self.config_editor.load_config_strict()
             zones_data = config_data.get("zones", [])
 
             index = int(zone_id)
@@ -465,7 +465,7 @@ class IWSWebHandler:
             form_data = dict_to_multidict(body_params)
             logger.debug(f"_post_plugin_config: Parsed form data keys: {list(form_data.keys())}")
 
-            config_data = self.config_editor.load_config()
+            config_data = self.config_editor.load_config_strict()
             plugin_schema = self.config_editor.config_schema["properties"]["plugin_config"]
 
             PluginFormClass = generate_form_class_from_schema(plugin_schema)
@@ -511,7 +511,7 @@ class IWSWebHandler:
             form_data = dict_to_multidict(body_params)
             logger.debug(f"Form data parsed successfully")
 
-            config_data = self.config_editor.load_config()
+            config_data = self.config_editor.load_config_strict()
             periods_data = config_data.get("lighting_periods", [])
             period_schema = self.config_editor.config_schema["properties"]["lighting_periods"]["items"]
 
@@ -591,7 +591,7 @@ class IWSWebHandler:
         flash = {}
 
         try:
-            config_data = self.config_editor.load_config()
+            config_data = self.config_editor.load_config_strict()
             periods_data = config_data.get("lighting_periods", [])
 
             # Convert period_id to integer

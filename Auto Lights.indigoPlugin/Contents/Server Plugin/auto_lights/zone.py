@@ -299,29 +299,26 @@ class Zone(AutoLightsBase):
                 self.unlock_when_no_presence = bs["unlock_when_no_presence"]
             if "off_lights_behavior" in bs:
                 self.off_lights_behavior = bs["off_lights_behavior"]
-            # load the advanced_settings.exclude_from_lock_dev_ids from the config
-            if "advanced_settings" in cfg:
-                adv = cfg["advanced_settings"]
-                if "exclude_from_lock_dev_ids" in adv:
-                    self.exclude_from_lock_dev_ids = adv["exclude_from_lock_dev_ids"]
-            if "device_period_map" in cfg:
-                self._device_period_map = cfg["device_period_map"]
-            else:
-                self._device_period_map = {}
-                for dev_id in self._on_lights_dev_ids:
-                    self._device_period_map[str(dev_id)] = {
-                        str(period.id): True for period in self.lighting_periods
-                    }
-            # load global behavior variables map
-            if "global_behavior_variables_map" in cfg:
-                self._global_behavior_variables_map = cfg[
-                    "global_behavior_variables_map"
-                ]
-            else:
-                self._global_behavior_variables_map = {
-                    str(v["var_id"]): True
-                    for v in self._config.global_behavior_variables
+        # These are top-level zone keys, independent of behavior_settings —
+        # they must load even when a zone dict omits that section.
+        if "advanced_settings" in cfg:
+            adv = cfg["advanced_settings"]
+            if "exclude_from_lock_dev_ids" in adv:
+                self.exclude_from_lock_dev_ids = adv["exclude_from_lock_dev_ids"]
+        if "device_period_map" in cfg:
+            self._device_period_map = cfg["device_period_map"]
+        else:
+            self._device_period_map = {}
+            for dev_id in self._on_lights_dev_ids:
+                self._device_period_map[str(dev_id)] = {
+                    str(period.id): True for period in self.lighting_periods
                 }
+        if "global_behavior_variables_map" in cfg:
+            self._global_behavior_variables_map = cfg["global_behavior_variables_map"]
+        else:
+            self._global_behavior_variables_map = {
+                str(v["var_id"]): True for v in self._config.global_behavior_variables
+            }
 
     # (4) Properties
     @property

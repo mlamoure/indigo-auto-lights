@@ -59,19 +59,32 @@ class WebConfigEditor:
         with self.schema_file.open(mode="r", encoding="utf-8") as f:
             return json.load(f)
 
-    def load_config(self):
+    @staticmethod
+    def _default_config() -> Dict[str, Any]:
+        return {"plugin_config": {}, "zones": [], "lighting_periods": []}
+
+    def load_config_strict(self) -> Dict[str, Any]:
         """
         Load the JSON config and normalize any legacy lighting period modes.
+
+        A missing file yields the default empty config; a corrupt or
+        unreadable file raises. Every read-modify-write path must use this
+        method so a corrupt config can never be silently replaced by an
+        empty one.
         """
         try:
             with open(self.config_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        except Exception:
-            data = {"plugin_config": {}, "zones": [], "lighting_periods": []}
+        except FileNotFoundError:
+            return self._default_config()
+        except json.JSONDecodeError as e:
+            raise json.JSONDecodeError(
+                f"Config file {self.config_file} is not valid JSON: {e.msg}",
+                e.doc,
+                e.pos,
+            ) from e
 
         # Normalize legacy mode strings in lighting periods
-        from auto_lights.lighting_period_mode import LightingPeriodMode
-
         for period in data.get("lighting_periods", []):
             raw_mode = period.get("mode", "")
             try:
@@ -80,6 +93,19 @@ class WebConfigEditor:
                 period["mode"] = LightingPeriodMode.OFF_ONLY.value
 
         return data
+
+    def load_config(self):
+        """
+        Lenient load for display-only paths: a corrupt file is logged and
+        rendered as an empty config instead of raising.
+        """
+        try:
+            return self.load_config_strict()
+        except Exception:
+            logger.exception(
+                f"Failed to load config {self.config_file}; treating as empty"
+            )
+            return self._default_config()
 
     def save_config(self, config_data: Dict[str, Any]) -> None:
         """
@@ -97,9 +123,14 @@ class WebConfigEditor:
                 str(self.auto_backup_dir), keep=20, prefix="auto_backup_"
             )
 
-        # Write new config
-        with self.config_file.open("w") as f:
+        # Write new config atomically (temp file in the same directory +
+        # rename) so a crash mid-write never leaves a truncated config
+        tmp_path = self.config_file.with_name(self.config_file.name + ".tmp")
+        with tmp_path.open("w", encoding="utf-8") as f:
             json.dump(config_data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, self.config_file)
 
         # Notify plugin to reload config immediately if callback is registered
         try:
