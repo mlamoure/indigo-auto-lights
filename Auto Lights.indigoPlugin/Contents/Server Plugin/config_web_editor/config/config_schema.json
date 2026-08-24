@@ -313,11 +313,12 @@
               0,
               15,
               30,
-              45
+              45,
+              59
             ],
             "default": 45,
             "title": "To Time Minute",
-            "tooltip": "Specify the ending minute for the lighting period."
+            "tooltip": "Specify the ending minute for the lighting period.  59 ends the period at the top of the hour (e.g. 23:59 for end of day)."
           },
           "lock_duration": {
             "type": "integer",
