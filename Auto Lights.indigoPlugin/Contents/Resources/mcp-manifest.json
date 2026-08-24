@@ -158,7 +158,7 @@
               "from_time_hour": {"type": "integer", "minimum": 0, "maximum": 23, "description": "Start hour (0-23)."},
               "from_time_minute": {"type": "integer", "enum": [0, 15, 30, 45], "description": "Start minute (quarter hours only)."},
               "to_time_hour": {"type": "integer", "minimum": 0, "maximum": 23, "description": "End hour (0-23)."},
-              "to_time_minute": {"type": "integer", "enum": [0, 15, 30, 45], "description": "End minute (quarter hours only)."},
+              "to_time_minute": {"type": "integer", "enum": [0, 15, 30, 45, 59], "description": "End minute (quarter hours, or 59 for end-of-day periods like 23:59)."},
               "lock_duration": {"type": "integer", "description": "Lock-duration override in minutes for this period; -1 to disable."},
               "limit_brightness": {"type": "integer", "description": "Maximum dimmer brightness during this period; -1 to disable."}
             }
