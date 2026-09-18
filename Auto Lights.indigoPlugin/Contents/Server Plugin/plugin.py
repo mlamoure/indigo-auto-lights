@@ -55,10 +55,8 @@ class Plugin(indigo.PluginBase):
         self._log_non_events = bool(plugin_prefs.get("log_non_events", False))
 
         # Configure logging levels based on plugin preferences.
-        self.log_level = int(plugin_prefs.get("log_level", logging.INFO))
+        self._apply_log_level(int(plugin_prefs.get("log_level", logging.INFO)))
         self.logger.debug(f"{self.log_level=}")
-        self.indigo_log_handler.setLevel(self.log_level)
-        self.plugin_file_handler.setLevel(logging.DEBUG)
 
         # Determine configuration file path based on plugin log file location.
         self._config_file_str = self.plugin_file_handler.baseFilename.replace(
@@ -66,6 +64,24 @@ class Plugin(indigo.PluginBase):
         ).replace("/plugin.log", "/config/auto_lights_conf.json")
 
     # Removed test_connections() - no longer needed with direct indigo object access
+
+    def _apply_log_level(self: indigo.PluginBase, level: int) -> None:
+        """
+        Apply one log level to the logger and both Indigo-provided handlers.
+
+        Indigo's PluginBase defaults the file handler to DEBUG regardless of the
+        plugin's own setting; here the "Event Logging Level" preference governs both
+        the Indigo Event Log and the plugin's own plugin.log (GitHub issue #7 — a
+        file handler stuck at DEBUG wrote gigabytes per day and starved the event
+        queue on busy installs). Setting the logger itself lets the many debug calls
+        per device update return before a LogRecord is even built.
+
+        :param level: a logging level such as logging.INFO
+        """
+        self.log_level = level
+        self.logger.setLevel(level)
+        self.indigo_log_handler.setLevel(level)
+        self.plugin_file_handler.setLevel(level)
 
     def _get_web_config_urls(self: indigo.PluginBase) -> list[dict[str, str]]:
         """
@@ -264,10 +280,8 @@ class Plugin(indigo.PluginBase):
             self._agent.config.log_non_events = self._log_non_events
 
             # Update logging configuration
-            self.log_level = int(values_dict.get("log_level", logging.INFO))
+            self._apply_log_level(int(values_dict.get("log_level", logging.INFO)))
             self.logger.debug(f"{self.log_level=}")
-            self.indigo_log_handler.setLevel(self.log_level)
-            self.plugin_file_handler.setLevel(self.log_level)
 
     def get_zone_list(
         self: indigo.PluginBase, filter="", values_dict=None, type_id="", target_id=0
