@@ -104,7 +104,9 @@ Access these settings via **Plugins > Auto Lights > Configure…** in Indigo:
    - 40 (Error Messages)
    - 50 (Critical Errors Only)
 
-   Choose a level based on how much detail you need in your Indigo logs.
+   This level applies to both the Indigo Event Log and the plugin's own `plugin.log` file
+   (under Indigo's `Logs/com.vtmikel.autolights/`). Leave it at Informational unless you are
+   debugging: at Debugging, a busy install writes hundreds of megabytes of `plugin.log` per day.
 
 2. **Log non-action-taken events to the Indigo Event Log**
    When enabled, the plugin will log extra information about why actions were not taken (e.g., "Zone locked", "Luminance too high").
