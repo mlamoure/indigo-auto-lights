@@ -177,7 +177,7 @@ class Plugin(indigo.PluginBase):
         for url_info in urls:
             self.logger.info(f"   {url_info['label']}: {url_info['url']}")
 
-        # Announce our MCP tool manifest so the MCP Server plugin (if
+        # Announce our MCP tool manifest so the MCP Advanced Tools plugin (if
         # installed) re-registers our tools without needing a restart.
         # Harmless when nothing subscribes.
         try:
@@ -599,7 +599,7 @@ class Plugin(indigo.PluginBase):
 
     def handle_mcp_tool_invoke(self, action, dev=None, caller_waiting_for_result=True):
         """
-        MCP tool provider endpoint, called cross-plugin by the MCP Server
+        MCP tool provider endpoint, called cross-plugin by MCP Advanced Tools
         plugin (com.vtmikel.mcp_server) via executeAction. The tool name and
         a JSON-string arguments payload arrive in action.props; the reply is
         always a JSON-string envelope (see mcp_api.tool_dispatcher).
