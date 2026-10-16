@@ -74,8 +74,8 @@ There are two ways to access the web configuration interface:
 ## AI Configuration via MCP Tools
 
 Auto Lights is an MCP tool provider for the
-[Indigo MCP Server](https://github.com/mlamoure/indigo-mcp-server) plugin (v2026.8.1+). When
-both plugins are installed, AI assistants connected to the MCP Server can read and edit the
+[MCP Advanced Tools](https://github.com/mlamoure/indigo-mcp-server) plugin (formerly MCP Server; v2026.8.1+). When
+both plugins are installed, AI assistants connected to MCP Advanced Tools can read and edit the
 Auto Lights configuration through validated, self-describing tools (`autolights_get_config`,
 `autolights_update_zone`, `autolights_create_lighting_period`, …) instead of editing the JSON
 config file by hand.
@@ -84,7 +84,7 @@ config file by hand.
   hidden `mcp_tool_invoke` action.
 - Every change is validated against the config schema before saving, auto-backed-up, and
   hot-reloaded into the automation engine (note: each save resets all zone locks).
-- No extra configuration is needed — the MCP Server discovers the manifest automatically.
+- No extra configuration is needed — MCP Advanced Tools discovers the manifest automatically.
 
 ## Documentation
 
