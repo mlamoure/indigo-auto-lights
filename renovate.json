@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "constraints": {
+    "python": "3.13"
+  },
+  "constraintsFiltering": "strict",
+  "description": "This plugin runs inside Indigo's embedded Python (3.13 in Indigo 2025.2 and 2026.1), not an interpreter we choose. Strict constraint filtering makes Renovate offer only PyPI releases whose Requires-Python accepts 3.13. Keep the constraint a single version, not a range: Renovate's pep440 versioning cannot compare two ranges, so \"==3.13.*\" would reject every current release. Raise it by hand when Perceptive Automation ships a new Python with Indigo.",
+  "packageRules": [
+    {
+      "description": "Keep the Python constraint above fixed. Renovate tracks `constraints.python` as a tool-constraint dependency and would otherwise propose moving it to the newest Python. Raise it by hand when Indigo ships a new Python.",
+      "matchDepTypes": [
+        "tool-constraint"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Runtime dependencies: the bundle's requirements.txt (Indigo pip-installs it into Contents/Packages) and the root requirements.txt list the same packages. Batch their non-major updates into one PR that bumps both files together; majors and pytest stay separate PRs.",
+      "matchManagers": [
+        "pip_requirements"
+      ],
+      "matchPackageNames": [
+        "!pytest"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "plugin runtime dependencies"
+    },
+    {
+      "description": "If a CI workflow is added, it must test the interpreter Indigo uses (3.13), not the newest Python. Bump it by hand together with the constraint above.",
+      "matchDepNames": [
+        "python"
+      ],
+      "allowedVersions": "<3.14"
+    }
+  ]
+}
