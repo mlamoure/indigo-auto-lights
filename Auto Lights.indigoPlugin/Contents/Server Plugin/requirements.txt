@@ -1,14 +1,6 @@
-# Core dependencies for IWS mode
-WTForms~=3.2.1          # Form generation and validation
-Jinja2~=3.1.6           # Template rendering
-Werkzeug~=3.1.5         # MultiDict for WTForms (security fix)
-MarkupSafe~=3.0.3       # Jinja2 dependency (updated)
-python-dotenv~=1.2.1    # Environment configuration
-pytest~=8.4.2           # Testing
-PyYAML~=6.0.3           # Test config loading (updated)
-
-# Removed Flask dependencies (migrated to IWS):
-# Flask~=3.1.2          - Replaced by Indigo Web Server
-# Flask-WTF~=1.2.2      - Using WTForms directly
-# requests~=2.32.5      - Using direct indigo objects
-# click, blinker, itsdangerous, certifi, urllib3, idna, charset-normalizer
+# Runtime dependencies: Indigo installs these on every server that runs the plugin.
+# Keep test and development tools out of this file (they go in the repo-root requirements.txt).
+WTForms~=3.3.2          # Web editor forms and validation (3.4 drops the tuple choices the editor uses)
+Jinja2~=3.1.6           # Web editor templates
+Werkzeug~=3.1.9         # MultiDict for WTForms form data
+MarkupSafe~=3.0.4       # Markup in custom widgets; Jinja2 dependency

@@ -1,14 +1,10 @@
-# Core dependencies for IWS mode
-WTForms~=3.2.1          # Form generation and validation
-Jinja2~=3.1.6           # Template rendering
-Werkzeug~=3.1.5         # MultiDict for WTForms (security fix)
-MarkupSafe~=3.0.3       # Jinja2 dependency (updated)
-python-dotenv~=1.2.1    # Environment configuration
-pytest~=9.0.2           # Testing
-PyYAML~=6.0.3           # Test config loading (updated)
+# Plugin runtime dependencies: keep in sync with
+# "Auto Lights.indigoPlugin/Contents/Server Plugin/requirements.txt"
+WTForms~=3.3.2          # 3.4 drops the tuple choices the web editor uses
+Jinja2~=3.1.6
+Werkzeug~=3.1.9
+MarkupSafe~=3.0.4
 
-# Removed Flask dependencies (migrated to IWS):
-# Flask~=3.1.2          - Replaced by Indigo Web Server
-# Flask-WTF~=1.2.2      - Using WTForms directly
-# requests~=2.32.5      - Using direct indigo objects
-# click, blinker, itsdangerous, certifi, urllib3, idna, charset-normalizer
+# Development and tests
+pytest~=9.2
+PyYAML~=6.0.4           # Test scenario configs (tests/configs/*.yaml)

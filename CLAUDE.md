@@ -165,16 +165,17 @@ All Flask-related code has been preserved (commented out) for rollback capabilit
 
 ### Dependencies
 
-**Current (IWS mode)**:
-- WTForms~=3.2.1 - Form generation and validation
+**Current (IWS mode)**, in the bundle's `Contents/Server Plugin/requirements.txt` (Indigo pip-installs it on every server that runs the plugin, so runtime dependencies only):
+- WTForms~=3.3.2 - Form generation and validation. Stay below 3.4: it removes tuple `choices`, which the form helpers and `_form_macros.html` (`dict(field.choices)`, `for val, lbl in field.choices`) rely on.
 - Jinja2~=3.1.6 - Template rendering
-- Werkzeug~=3.1.3 - MultiDict for WTForms
-- MarkupSafe~=3.0.2 - Jinja2 dependency
-- python-dotenv~=1.1.1 - Environment configuration
-- pytest~=8.4.1 - Testing
+- Werkzeug~=3.1.9 - MultiDict for WTForms
+- MarkupSafe~=3.0.4 - Markup in custom widgets; Jinja2 dependency
+
+The repo-root `requirements.txt` repeats the runtime pins and adds the test tools (pytest, PyYAML for `tests/configs/*.yaml`).
 
 **Removed (Flask mode)**:
 - Flask, Flask-WTF, requests, click, blinker, itsdangerous, certifi, urllib3, idna, charset-normalizer
+- python-dotenv (only the legacy Flask `web_config_app.py` imports it)
 
 ## Indigo Web Server (IWS) Integration Reference
 
